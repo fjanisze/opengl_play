@@ -50,6 +50,19 @@ opengl_ui::opengl_ui(int win_width,
     glfwMakeContextCurrent(window_ctx);
 }
 
+GLfloat mycos(double val){
+    return (GLfloat)cos(val) * 0.5;
+}
+
+
+GLfloat mysin(double val){
+    return (GLfloat)sin(val) * 0.5;
+}
+
+GLfloat torad(double val){
+    return val * M_PI/180;
+}
+
 void opengl_ui::enter_main_loop()
 {
     //We need to load the shaders
@@ -58,11 +71,16 @@ void opengl_ui::enter_main_loop()
     if(!shaders.create_shader_program()){
         return;
     }
+
+    glm::ivec2 v1 = glm::ivec2(0,0),
+              v2 = glm::ivec2(90,90),
+              v3 = glm::ivec2(180,180);
+
     //Triagle vertex coordinates
     GLfloat vertices[] = {
-        -0.5,-0.5,0,
-        0.5,-0.5,0,
-        0,0.5,0
+        mycos(torad(v1.x)),mysin(torad(v1.y)),0,
+        mycos(torad(v2.x)),mysin(torad(v2.y)),0,
+        mycos(torad(v3.x)),mysin(torad(v3.y)),0
     };
     //We need to create a vertice buffer object
     GLuint vertices_vbo;
@@ -80,7 +98,7 @@ void opengl_ui::enter_main_loop()
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(vertices),
                  vertices,
-                 GL_STATIC_DRAW);
+                 GL_DYNAMIC_DRAW);
 
     /*
      * Now we need to link the vertex attributes
@@ -101,8 +119,10 @@ void opengl_ui::enter_main_loop()
     //now we have our object configured and ready to be rendered
 
     LOG2("Entering main loop!");
+    double fps_counter = 0;
     while(!glfwWindowShouldClose(window_ctx))
     {
+        auto start_timer = std::chrono::high_resolution_clock::now();
         glfwPollEvents();
         glClearColor(.5,.5,.5,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -118,9 +138,38 @@ void opengl_ui::enter_main_loop()
                      3); //Amount of vertices, we have 3 vertices
 
         //When we're done unbind the vao
-        glBindVertexArray(vertices_vao);
+        glBindVertexArray(0);
 
         glfwSwapBuffers(window_ctx);
+
+        //Update the coordinates
+        v1.x = (v1.x + 1) % 360;
+        v1.y = (v1.y + 1) % 360;
+
+        v2.x = (v2.x + 1) % 360;
+        v2.y = (v2.y + 1) % 360;
+
+        v3.x = (v3.x + 1) % 360;
+        v3.y = (v3.y + 1) % 360;
+
+        //Update the vertex array
+        GLfloat newvertices[] = {
+                mycos(torad(v1.x)),mysin(torad(v1.y)),0,
+                mycos(torad(v2.x)),mysin(torad(v2.y)),0,
+                mycos(torad(v3.x)),mysin(torad(v3.y)),0
+         };
+
+        //Update the vao buffer
+        glBufferSubData(GL_ARRAY_BUFFER,
+                        0,
+                        sizeof(newvertices),
+                        newvertices);
+        //just end calculating the fps
+        auto end_timer = std::chrono::high_resolution_clock::now();
+        fps_counter = 1000 /
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                           end_timer-start_timer).count();
+        LOG1("fps: ",fps_counter);
     }
 }
 
