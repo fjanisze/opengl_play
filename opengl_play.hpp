@@ -35,6 +35,15 @@ const std::string simple_fragment_shader = {
         "}\n\0"
 };
 
+const std::string simple_fragment_shader2 = {
+    "#version 330 core\n"
+        "out vec4 color;\n"
+        "void main()\n"
+        "{\n"
+        "color = vec4(0.7f, 0.7f, 0.7f, 1.0f);\n"
+        "}\n\0"
+};
+
 class my_small_shaders
 {
     GLuint vertex_shader,
@@ -58,13 +67,16 @@ enum class rotation_direction
     right
 };
 
+#define AMOUNT_OF_POINTS 120*4
+
 class opengl_ui
 {
-
     glm::ivec2 my_triangle[3];
-    GLfloat    vertices[9];
+    int        points_count;
+    GLfloat    vertices[ 3 * 3 + AMOUNT_OF_POINTS * 3];
     GLFWwindow* window_ctx;
-    my_small_shaders shaders;
+    my_small_shaders shaders,
+                     shader2;
     int win_h,
         win_w;
     void setup_callbacks();

@@ -72,6 +72,21 @@ void opengl_ui::rotate_triangle(rotation_direction dir,
         my_triangle[i].x = ( my_triangle[i].x + amount ) % 360;
         my_triangle[i].y = ( my_triangle[i].y + amount ) % 360;
     }
+
+    if(points_count>0){
+        int i = points_count * 3 - 1;
+        for(;( i - 3 ) >= 3 * 3 ;--i)
+        {
+            vertices[ i ] = vertices[ i - 3 ];
+        }
+    }
+
+    vertices[ 3 * 3     ] = vertices[0];
+    vertices[ 3 * 3 + 1 ] = vertices[1];
+    vertices[ 3 * 3 + 2 ] = vertices[2];
+
+    points_count = std::min(points_count + 1,
+                            AMOUNT_OF_POINTS);
 }
 
 void opengl_ui::setup_callbacks()
@@ -136,6 +151,8 @@ void opengl_ui::init_my_triangle()
     my_triangle[0] = glm::ivec2(90,90),
     my_triangle[1] = glm::ivec2(225,225),
     my_triangle[2] = glm::ivec2(315,315);
+
+    points_count = 0;
 }
 
 void opengl_ui::update_vertices()
@@ -155,7 +172,10 @@ void opengl_ui::enter_main_loop()
     //We need to load the shaders
     shaders.load_fragment_shader(simple_fragment_shader);
     shaders.load_vertex_shader(simple_vertex_shader);
-    if(!shaders.create_shader_program()){
+
+    shader2.load_fragment_shader(simple_fragment_shader2);
+    shader2.load_vertex_shader(simple_vertex_shader);
+    if(!shaders.create_shader_program() || !shader2.create_shader_program()){
         return;
     }
 
@@ -203,7 +223,7 @@ void opengl_ui::enter_main_loop()
     while(!glfwWindowShouldClose(window_ctx))
     {
         glfwPollEvents();
-        glClearColor(.5,.5,.5,1.0);
+        glClearColor(0,0,0,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
         //Enable the shaders
@@ -215,6 +235,12 @@ void opengl_ui::enter_main_loop()
         glDrawArrays(GL_TRIANGLES,//Type of primitive to draw
                      0,//Start index in the vertex array, is 0 in our case
                      3); //Amount of vertices, we have 3 vertices
+
+        shader2.use_shaders();
+        glDrawArrays(GL_POINTS,
+                     3,
+                     AMOUNT_OF_POINTS);
+
 
         //When we're done unbind the vao
         glBindVertexArray(0);
