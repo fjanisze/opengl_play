@@ -3,9 +3,84 @@
 namespace opengl_play
 {
 
+namespace
+{
+    //Saved context for the GLFW callbacks
+    opengl_ui* ui_instance;
+    //Global for the mouse callback
+    int left_button_state = GLFW_RELEASE;
+    //This coordinate is needed to calculate the delta movement
+    glm::dvec2 last_know_mouse_position = {0,0};
+}
+
+GLfloat mycos(double val){
+    return (GLfloat)cos(val) * 0.5;
+}
+
+
+GLfloat mysin(double val){
+    return (GLfloat)sin(val) * 0.5;
+}
+
+GLfloat torad(double val){
+    return val * M_PI/180;
+}
+
+void opengl_ui::mouse_click_callback(GLFWwindow *ctx,
+                                     int button,
+                                     int action,
+                                     int)
+{
+    if(button == GLFW_MOUSE_BUTTON_LEFT)
+    {
+        if(action == GLFW_PRESS)
+        {
+            left_button_state = action;
+            glfwGetCursorPos(ui_instance->get_win_ctx(),
+                             &last_know_mouse_position.x,
+                             &last_know_mouse_position.y);
+        }
+        else
+            left_button_state = GLFW_RELEASE;
+    }
+}
+
+void opengl_ui::cursor_pos_callback(GLFWwindow *ctx,
+                                    double x,
+                                    double y)
+{
+    if(left_button_state == GLFW_PRESS)
+    {
+        double delta_x = x - last_know_mouse_position.x,
+               delta_y = y - last_know_mouse_position.y; //y not used yet
+
+        rotation_direction dir = delta_x > 0 ? rotation_direction::right :
+                                               rotation_direction::left;
+
+        ui_instance->rotate_triangle(dir, delta_x);
+
+        last_know_mouse_position.x = x;
+        last_know_mouse_position.y = y;
+    }
+}
+
+void opengl_ui::rotate_triangle(rotation_direction dir,
+                                int amount)
+{
+    for(int i{0};i<3;i++)
+    {
+        my_triangle[i].x = ( my_triangle[i].x + amount ) % 360;
+        my_triangle[i].y = ( my_triangle[i].y + amount ) % 360;
+    }
+}
+
 void opengl_ui::setup_callbacks()
 {
 
+    glfwSetMouseButtonCallback(window_ctx,
+                               mouse_click_callback);
+    glfwSetCursorPosCallback(window_ctx,
+                             cursor_pos_callback);
 }
 
 void opengl_ui::update_viewport()
@@ -48,19 +123,31 @@ opengl_ui::opengl_ui(int win_width,
     }
 
     glfwMakeContextCurrent(window_ctx);
+
+    init_my_triangle();
+    //Save the instance pointer
+    ui_instance = this;
+    //Init the callbacks
+    setup_callbacks();
 }
 
-GLfloat mycos(double val){
-    return (GLfloat)cos(val) * 0.5;
+void opengl_ui::init_my_triangle()
+{
+    my_triangle[0] = glm::ivec2(90,90),
+    my_triangle[1] = glm::ivec2(225,225),
+    my_triangle[2] = glm::ivec2(315,315);
 }
 
-
-GLfloat mysin(double val){
-    return (GLfloat)sin(val) * 0.5;
-}
-
-GLfloat torad(double val){
-    return val * M_PI/180;
+void opengl_ui::update_vertices()
+{
+    std::size_t tr_idx = 0;
+    for(std::size_t i = 0;i<9;i+=3)
+    {
+        vertices[i    ] = mycos(torad(my_triangle[tr_idx].x));
+        vertices[i + 1] = mysin(torad(my_triangle[tr_idx].y));
+        vertices[i + 2] = 0;
+        ++tr_idx;
+    }
 }
 
 void opengl_ui::enter_main_loop()
@@ -72,16 +159,9 @@ void opengl_ui::enter_main_loop()
         return;
     }
 
-    glm::ivec2 v1 = glm::ivec2(0,0),
-              v2 = glm::ivec2(90,90),
-              v3 = glm::ivec2(180,180);
+    //First update
+    update_vertices();
 
-    //Triagle vertex coordinates
-    GLfloat vertices[] = {
-        mycos(torad(v1.x)),mysin(torad(v1.y)),0,
-        mycos(torad(v2.x)),mysin(torad(v2.y)),0,
-        mycos(torad(v3.x)),mysin(torad(v3.y)),0
-    };
     //We need to create a vertice buffer object
     GLuint vertices_vbo;
     GLuint vertices_vao;
@@ -122,7 +202,6 @@ void opengl_ui::enter_main_loop()
     double fps_counter = 0;
     while(!glfwWindowShouldClose(window_ctx))
     {
-        auto start_timer = std::chrono::high_resolution_clock::now();
         glfwPollEvents();
         glClearColor(.5,.5,.5,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -143,34 +222,19 @@ void opengl_ui::enter_main_loop()
         glfwSwapBuffers(window_ctx);
 
         //Update the coordinates
-        v1.x = (v1.x + 1) % 360;
-        v1.y = (v1.y + 1) % 360;
-
-        v2.x = (v2.x + 1) % 360;
-        v2.y = (v2.y + 1) % 360;
-
-        v3.x = (v3.x + 1) % 360;
-        v3.y = (v3.y + 1) % 360;
-
-        //Update the vertex array
-        GLfloat newvertices[] = {
-                mycos(torad(v1.x)),mysin(torad(v1.y)),0,
-                mycos(torad(v2.x)),mysin(torad(v2.y)),0,
-                mycos(torad(v3.x)),mysin(torad(v3.y)),0
-         };
+        update_vertices();
 
         //Update the vao buffer
         glBufferSubData(GL_ARRAY_BUFFER,
                         0,
-                        sizeof(newvertices),
-                        newvertices);
-        //just end calculating the fps
-        auto end_timer = std::chrono::high_resolution_clock::now();
-        fps_counter = 1000 /
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                           end_timer-start_timer).count();
-        LOG1("fps: ",fps_counter);
+                        sizeof(vertices),
+                        vertices);
     }
+}
+
+GLFWwindow *opengl_ui::get_win_ctx()
+{
+    return window_ctx;
 }
 
 opengl_ui::~opengl_ui()

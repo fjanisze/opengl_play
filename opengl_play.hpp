@@ -52,17 +52,37 @@ public:
     void use_shaders();
 };
 
+enum class rotation_direction
+{
+    left,
+    right
+};
+
 class opengl_ui
 {
+
+    glm::ivec2 my_triangle[3];
+    GLfloat    vertices[9];
     GLFWwindow* window_ctx;
     my_small_shaders shaders;
     int win_h,
         win_w;
     void setup_callbacks();
     void update_viewport();
+    void init_my_triangle();
+    void rotate_triangle(rotation_direction dir, int amount);
+    void update_vertices();
+    static void mouse_click_callback(GLFWwindow* ctx,
+                                     int button,
+                                     int action,
+                                     int);
+    static void cursor_pos_callback(GLFWwindow* ctx,
+                                    double x,
+                                    double y);
 public:
     opengl_ui(int win_width, int win_heigth);
     void enter_main_loop();
+    GLFWwindow *get_win_ctx();
     virtual ~opengl_ui();
 };
 
