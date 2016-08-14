@@ -64,6 +64,14 @@ void opengl_ui::cursor_pos_callback(GLFWwindow *ctx,
     }
 }
 
+void opengl_ui::window_resize_callback(GLFWwindow *ctx,
+                                       int width,
+                                       int height)
+{
+    ui_instance->update_viewport(height,width);
+    ui_instance->image_update_needed();
+}
+
 void opengl_ui::rotate_triangle(rotation_direction dir,
                                 int amount)
 {
@@ -87,6 +95,8 @@ void opengl_ui::rotate_triangle(rotation_direction dir,
 
     points_count = std::min(points_count + 1,
                             AMOUNT_OF_POINTS);
+    //After every rotation an update is needed
+    render_update_needed = true;
 }
 
 void opengl_ui::setup_callbacks()
@@ -96,6 +106,8 @@ void opengl_ui::setup_callbacks()
                                mouse_click_callback);
     glfwSetCursorPosCallback(window_ctx,
                              cursor_pos_callback);
+    glfwSetWindowSizeCallback(window_ctx,
+                              window_resize_callback);
 }
 
 void opengl_ui::update_viewport()
@@ -124,7 +136,6 @@ opengl_ui::opengl_ui(int win_width,
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
     //Create the window
     window_ctx = glfwCreateWindow(win_width,
@@ -142,6 +153,9 @@ opengl_ui::opengl_ui(int win_width,
     init_my_triangle();
     //Save the instance pointer
     ui_instance = this;
+    //Set to true if there's something to update
+    //is true now since we need an initial update
+    render_update_needed = true;
     //Init the callbacks
     setup_callbacks();
 }
@@ -223,6 +237,13 @@ void opengl_ui::enter_main_loop()
     while(!glfwWindowShouldClose(window_ctx))
     {
         glfwPollEvents();
+
+        //Do not draw anythin if is not needed
+        if(false == render_update_needed)
+        {
+            continue;
+        }
+
         glClearColor(0,0,0,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -247,6 +268,7 @@ void opengl_ui::enter_main_loop()
 
         glfwSwapBuffers(window_ctx);
 
+
         //Update the coordinates
         update_vertices();
 
@@ -255,12 +277,30 @@ void opengl_ui::enter_main_loop()
                         0,
                         sizeof(vertices),
                         vertices);
+
+        //Till the next update
+        render_update_needed = false;
     }
 }
 
 GLFWwindow *opengl_ui::get_win_ctx()
 {
     return window_ctx;
+}
+
+void opengl_ui::image_update_needed()
+{
+    render_update_needed = true;
+}
+
+void opengl_ui::update_viewport(int new_win_h,
+                                int new_win_w)
+{
+    win_h = new_win_h;
+    win_w = new_win_w;
+    glViewport(0,0,
+               win_w,
+               win_h);
 }
 
 opengl_ui::~opengl_ui()

@@ -71,6 +71,7 @@ enum class rotation_direction
 
 class opengl_ui
 {
+    bool       render_update_needed;
     glm::ivec2 my_triangle[3];
     int        points_count;
     GLfloat    vertices[ 3 * 3 + AMOUNT_OF_POINTS * 3];
@@ -91,10 +92,16 @@ class opengl_ui
     static void cursor_pos_callback(GLFWwindow* ctx,
                                     double x,
                                     double y);
+    static void window_resize_callback(GLFWwindow* ctx,
+                                       int width,
+                                       int height);
 public:
     opengl_ui(int win_width, int win_heigth);
-    void enter_main_loop();
+    void        enter_main_loop();
     GLFWwindow *get_win_ctx();
+    void        image_update_needed();
+    void        update_viewport(int new_win_h,
+                                int new_win_w);
     virtual ~opengl_ui();
 };
 
