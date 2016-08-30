@@ -173,13 +173,23 @@ void opengl_ui::prepare_for_main_loop()
     init_my_triangle();
 
     //Add text info text
-    info1 = std::make_shared<text_renderer::renderable_text>();
-    info1->set_color(glm::vec3(.5f,.5f,.5f));
-    info1->set_position(glm::fvec2(50,50));
-    info1->set_scale(1);
-    info1->set_text("Magda napierdalamy do silowni!!");
-    info1->set_window_size(win_h,
+    random_text = std::make_shared<text_renderer::renderable_text>();
+    random_text->set_color(glm::vec3(.5f,1,0));
+    random_text->set_position(glm::fvec2(50,50));
+    random_text->set_scale(.5f);
+    random_text->set_text("Magda napierdalamy do silowni!!");
+    random_text->set_window_size(win_h,
                            win_w);
+
+    //Add text info text
+    position_info_text = std::make_shared<text_renderer::renderable_text>();
+    position_info_text->set_color(glm::vec3(1,1,1));
+    position_info_text->set_position(glm::fvec2(50,100));
+    position_info_text->set_scale(.35f);
+    position_info_text->set_text("");
+    position_info_text->set_window_size(win_h,
+                           win_w);
+
     //Save the instance pointer
     ui_instance = this;
     //Set to true if there's something to update
@@ -208,6 +218,12 @@ void opengl_ui::update_vertices()
         vertices[i + 2] = 0;
         ++tr_idx;
     }
+    GLfloat x_text_pos = vertices[0]*win_w/2 + win_h/2,
+            y_text_pos = vertices[1]*win_h/2 + win_h/2;
+    position_info_text->set_position(glm::fvec2(x_text_pos,y_text_pos));
+    std::stringstream new_text;
+    new_text << "X:" << x_text_pos<<",Y:"<<y_text_pos;
+    position_info_text->set_text(new_text.str());
 }
 
 
@@ -310,7 +326,8 @@ void opengl_ui::enter_main_loop()
         glBindVertexArray(0);
 
         //Draw the info text
-        info1->render_text();
+        random_text->render_text();
+        position_info_text->render_text();
 
         glfwSwapBuffers(window_ctx);
 
@@ -328,7 +345,7 @@ void opengl_ui::enter_main_loop()
                         vertices);
 
         //Till the next update
-        render_update_needed = true;
+        render_update_needed = false;
     }
 }
 

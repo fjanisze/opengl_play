@@ -157,7 +157,7 @@ namespace logging
 
         log_stream << log_line_number++ <<" "<< std::chrono::system_clock::now().time_since_epoch().count() <<" ";
 
- //       log_stream << thread_name[ std::this_thread::get_id() ] <<" ";
+        log_stream << thread_name[ std::this_thread::get_id() ] <<" ";
 
 		switch( severity )
 		{

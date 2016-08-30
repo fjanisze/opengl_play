@@ -63,7 +63,8 @@ class opengl_ui
     GLFWwindow* window_ctx;
     shaders::my_small_shaders shaders,
                               shader2;
-    text_renderer::rendr_text info1;
+    text_renderer::rendr_text random_text,
+                              position_info_text;
     int win_h,
         win_w;
     void setup_callbacks();
