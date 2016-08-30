@@ -150,7 +150,36 @@ opengl_ui::opengl_ui(int win_width,
 
     glfwMakeContextCurrent(window_ctx);
 
+    //Init GLEW
+    glewExperimental = GL_TRUE;
+    GLenum glew_init_status = glewInit();
+    if(glew_init_status != GLEW_OK){
+        ERR("Unable to initialize GLEW: ",
+            glewGetErrorString(glew_init_status));
+        throw std::runtime_error("GLEW Init failed!");
+    }
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    update_viewport();
+}
+
+void opengl_ui::prepare_for_main_loop()
+{
+    LOG3("opengl_ui, preparing the remaining environment.");
+    check_for_errors();
     init_my_triangle();
+
+    //Add text info text
+    info1 = std::make_shared<text_renderer::renderable_text>();
+    info1->set_color(glm::vec3(.5f,.5f,.5f));
+    info1->set_position(glm::fvec2(50,50));
+    info1->set_scale(1);
+    info1->set_text("Magda napierdalamy do silowni!!");
+    info1->set_window_size(win_h,
+                           win_w);
     //Save the instance pointer
     ui_instance = this;
     //Set to true if there's something to update
@@ -179,6 +208,20 @@ void opengl_ui::update_vertices()
         vertices[i + 2] = 0;
         ++tr_idx;
     }
+}
+
+
+int opengl_ui::check_for_errors()
+{
+    int error_count = 0;
+    GLenum error = GL_NO_ERROR;
+
+    while( (error = glGetError()) != GL_NO_ERROR){
+        ERR("OpenGL ERROR in opengl_ui: ",
+            error);
+        ++error_count;
+    }
+    return error_count;
 }
 
 void opengl_ui::enter_main_loop()
@@ -230,10 +273,11 @@ void opengl_ui::enter_main_loop()
 
     //unbind the vao, we're ready to go
     glBindVertexArray(0);
+
+    check_for_errors();
     //now we have our object configured and ready to be rendered
 
     LOG2("Entering main loop!");
-    double fps_counter = 0;
     while(!glfwWindowShouldClose(window_ctx))
     {
         glfwPollEvents();
@@ -262,15 +306,20 @@ void opengl_ui::enter_main_loop()
                      3,
                      AMOUNT_OF_POINTS);
 
-
         //When we're done unbind the vao
         glBindVertexArray(0);
+
+        //Draw the info text
+        info1->render_text();
 
         glfwSwapBuffers(window_ctx);
 
 
         //Update the coordinates
         update_vertices();
+
+        glBindBuffer(GL_ARRAY_BUFFER,
+                     vertices_vbo);
 
         //Update the vao buffer
         glBufferSubData(GL_ARRAY_BUFFER,
@@ -279,7 +328,7 @@ void opengl_ui::enter_main_loop()
                         vertices);
 
         //Till the next update
-        render_update_needed = false;
+        render_update_needed = true;
     }
 }
 
@@ -315,14 +364,8 @@ opengl_ui::~opengl_ui()
 int main()
 {
     opengl_play::opengl_ui entry(800,600);
+    log_inst.set_thread_name("MAIN");
 
-    //Init GLEW
-    glewExperimental = GL_TRUE;
-    if(glewInit() != GLEW_OK){
-        ERR("Unable to initialize GLEW!");
-    }
-    else
-    {
-        entry.enter_main_loop();
-    }
+    entry.prepare_for_main_loop();
+    entry.enter_main_loop();
 }

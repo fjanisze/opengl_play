@@ -72,6 +72,14 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory("./glfw/")
 
+
+#########################################################
+# FIND FREETYPE
+#########################################################
+find_package(Freetype REQUIRED)
+include_directories(${FREETYPE_INCLUDE_DIRS})
+link_directories(${FREETYPE_LIBRARIES})
+
 #########################################################
 # Remaining stuff
 #########################################################

@@ -13,6 +13,7 @@
 #include <chrono>
 #include "logger/logger.hpp"
 #include "shaders.hpp"
+#include "text_rendering.hpp"
 
 
 namespace opengl_play
@@ -62,6 +63,7 @@ class opengl_ui
     GLFWwindow* window_ctx;
     shaders::my_small_shaders shaders,
                               shader2;
+    text_renderer::rendr_text info1;
     int win_h,
         win_w;
     void setup_callbacks();
@@ -69,6 +71,7 @@ class opengl_ui
     void init_my_triangle();
     void rotate_triangle(rotation_direction dir, int amount);
     void update_vertices();
+    int check_for_errors();
     static void mouse_click_callback(GLFWwindow* ctx,
                                      int button,
                                      int action,
@@ -81,6 +84,7 @@ class opengl_ui
                                        int height);
 public:
     opengl_ui(int win_width, int win_heigth);
+    void        prepare_for_main_loop();
     void        enter_main_loop();
     GLFWwindow *get_win_ctx();
     void        image_update_needed();

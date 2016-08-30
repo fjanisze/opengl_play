@@ -48,6 +48,7 @@ public:
     void load_fragment_shader(const std::string& body);
     bool create_shader_program();
     void use_shaders();
+    GLuint get_program();
 };
 
 }

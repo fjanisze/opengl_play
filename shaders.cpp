@@ -83,5 +83,10 @@ void my_small_shaders::use_shaders()
     glUseProgram(shader_program);
 }
 
+GLuint my_small_shaders::get_program()
+{
+    return shader_program;
+}
+
 
 }
