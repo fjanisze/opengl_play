@@ -26,6 +26,13 @@ font_texture_loader::font_texture_loader() :
     }
 }
 
+font_texture_loader::~font_texture_loader()
+{
+    if(freetype_lib != 0){
+        FT_Done_FreeType(freetype_lib);
+    }
+}
+
 /*
  * Attemp to load a new texture set from the path provided in
  * font_name. Return nullptr if the operations fails

@@ -110,7 +110,7 @@ void opengl_ui::setup_callbacks()
                               window_resize_callback);
 }
 
-void opengl_ui::update_viewport()
+void opengl_ui::get_current_ctx_viewport()
 {
     glfwGetFramebufferSize(window_ctx,
                            &win_w,
@@ -118,6 +118,8 @@ void opengl_ui::update_viewport()
     glViewport(0,0,
                win_w,
                win_h);
+
+    update_win_size_infotext();
 }
 
 opengl_ui::opengl_ui(int win_width,
@@ -163,7 +165,9 @@ opengl_ui::opengl_ui(int win_width,
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    update_viewport();
+    triangle_color.x = 1.0f;
+    triangle_color.y = 1.0f;
+    triangle_color.z = 1.0f;
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -173,12 +177,12 @@ void opengl_ui::prepare_for_main_loop()
     init_my_triangle();
 
     //Add text info text
-    random_text = std::make_shared<text_renderer::renderable_text>();
-    random_text->set_color(glm::vec3(.5f,1,0));
-    random_text->set_position(glm::fvec2(50,50));
-    random_text->set_scale(.5f);
-    random_text->set_text("Magda napierdalamy do silowni!!");
-    random_text->set_window_size(win_h,
+    window_size_text = std::make_shared<text_renderer::renderable_text>();
+    window_size_text->set_color(glm::vec3(.5f,1,0));
+    window_size_text->set_position(glm::fvec2(50,50));
+    window_size_text->set_scale(.5f);
+    window_size_text->set_text("");
+    window_size_text->set_window_size(win_h,
                            win_w);
 
     //Add text info text
@@ -197,6 +201,8 @@ void opengl_ui::prepare_for_main_loop()
     render_update_needed = true;
     //Init the callbacks
     setup_callbacks();
+
+    get_current_ctx_viewport();
 }
 
 void opengl_ui::init_my_triangle()
@@ -208,8 +214,11 @@ void opengl_ui::init_my_triangle()
     points_count = 0;
 }
 
+
 void opengl_ui::update_vertices()
 {
+    //I need to coordinates to be in NDC format
+    //(Normalized Device Coordinates)
     std::size_t tr_idx = 0;
     for(std::size_t i = 0;i<9;i+=3)
     {
@@ -218,12 +227,54 @@ void opengl_ui::update_vertices()
         vertices[i + 2] = 0;
         ++tr_idx;
     }
+    //Update the text information
     GLfloat x_text_pos = vertices[0]*win_w/2 + win_h/2,
             y_text_pos = vertices[1]*win_h/2 + win_h/2;
     position_info_text->set_position(glm::fvec2(x_text_pos,y_text_pos));
     std::stringstream new_text;
     new_text << "X:" << x_text_pos<<",Y:"<<y_text_pos;
     position_info_text->set_text(new_text.str());
+}
+
+void opengl_ui::update_triangle_color()
+{
+    static const float color_delta = 0.01f;
+    static int idx = 0;
+    float* colors[3] = { &triangle_color.x,
+                         &triangle_color.y,
+                         &triangle_color.z };
+    if(*(colors[idx]) - color_delta < 0){
+        *(colors[idx]) = 0;
+        if(idx == 2){
+            triangle_color = glm::vec3(1.0,1.0,1.0);
+            idx = 0;
+        }
+        else ++idx;
+    }else{
+        *(colors[idx]) -= color_delta;
+    }
+    //Upload the new uniform information
+    GLint vertex_colors = glGetUniformLocation(shaders.get_program(),
+                                               "selected_color");
+    if(vertex_colors < 0){
+        ERR("Unable to load the uniform \"selected_color\"");
+    }
+    else{
+        glUseProgram(shaders.get_program());
+        glUniform4f(vertex_colors,triangle_color.x,
+                    triangle_color.y,
+                    triangle_color.z,
+                    1.0f);
+    }
+}
+
+void opengl_ui::update_win_size_infotext()
+{
+  //  window_size_text->set_window_size(win_h,win_w);
+  //  position_info_text->set_window_size(win_h,win_w);
+    std::stringstream text;
+    text << "Window size: "<<win_h<<"/"<<win_w;
+    window_size_text->set_text(text.str());
 }
 
 
@@ -254,6 +305,7 @@ void opengl_ui::enter_main_loop()
 
     //First update
     update_vertices();
+    update_triangle_color();
 
     //We need to create a vertice buffer object
     GLuint vertices_vbo;
@@ -326,14 +378,15 @@ void opengl_ui::enter_main_loop()
         glBindVertexArray(0);
 
         //Draw the info text
-        random_text->render_text();
+        window_size_text->render_text();
         position_info_text->render_text();
 
         glfwSwapBuffers(window_ctx);
 
 
-        //Update the coordinates
+        //Update the triangle data
         update_vertices();
+        update_triangle_color();
 
         glBindBuffer(GL_ARRAY_BUFFER,
                      vertices_vbo);
@@ -364,9 +417,12 @@ void opengl_ui::update_viewport(int new_win_h,
 {
     win_h = new_win_h;
     win_w = new_win_w;
+
     glViewport(0,0,
                win_w,
                win_h);
+
+    update_win_size_infotext();
 }
 
 opengl_ui::~opengl_ui()

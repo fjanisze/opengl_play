@@ -22,27 +22,27 @@ namespace text_renderer
 
 const std::string simple_vertex_shader = {
     "#version 330 core\n"
-        "layout (location = 0) in vec4 vertex;\n"
-        "out vec2 TexCoords;"
-        "uniform mat4 projection;\n"
-        "void main()\n"
-        "{\n"
-        "gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);\n"
-        "TexCoords = vertex.zw;\n"
-        "}\0"
+    "layout (location = 0) in vec4 vertex;\n"
+    "out vec2 TexCoords;"
+    "uniform mat4 projection;\n"
+    "void main()\n"
+    "{\n"
+    "gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);\n"
+    "TexCoords = vertex.zw;\n"
+    "}\0"
 };
 
 const std::string simple_fragment_shader = {
     "#version 330 core\n"
     "in vec2 TexCoords;\n"
-        "out vec4 color;\n"
-        "uniform sampler2D text;\n"
-        "uniform vec3 textColor;\n"
-        "void main()\n"
-        "{\n"
-        "vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);\n"
-        "color = vec4(textColor, 1.0) * sampled;\n"
-        "}\n\0"
+    "out vec4 color;\n"
+    "uniform sampler2D text;\n"
+    "uniform vec3 textColor;\n"
+    "void main()\n"
+    "{\n"
+    "vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);\n"
+    "color = vec4(textColor, 1.0) * sampled;\n"
+    "}\n\0"
 };
 
 // Holds all state information relevant to a character as loaded using FreeType
@@ -79,6 +79,7 @@ class font_texture_loader
     font_type_id default_font_id;
 public:
     font_texture_loader();
+    ~font_texture_loader();
     std::pair<font_type_id,font_texture_ptr> load_new_textureset(const std::string& font_name);
     font_texture_ptr get_texture(font_type_id id);
     font_type_id get_default_font_id();
@@ -91,7 +92,7 @@ using rendr_text = std::shared_ptr<renderable_text>;
 class renderable_text
 {
     GLuint VAO,VBO;
-    //Shared between all the instances of renderable_text
+
     font_texture_loader  font_loader;
     shaders::my_small_shaders text_render_shader;
     font_texture_ptr     font_texture;

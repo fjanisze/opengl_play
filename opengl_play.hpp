@@ -14,6 +14,7 @@
 #include "logger/logger.hpp"
 #include "shaders.hpp"
 #include "text_rendering.hpp"
+#include <functional>
 
 
 namespace opengl_play
@@ -31,9 +32,10 @@ const std::string simple_vertex_shader = {
 const std::string simple_fragment_shader = {
     "#version 330 core\n"
         "out vec4 color;\n"
+        "uniform vec4 selected_color;\n"
         "void main()\n"
         "{\n"
-        "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "color = selected_color;\n"
         "}\n\0"
 };
 
@@ -58,20 +60,23 @@ class opengl_ui
 {
     bool       render_update_needed;
     glm::ivec2 my_triangle[3];
+    glm::vec3  triangle_color;
     int        points_count;
     GLfloat    vertices[ 3 * 3 + AMOUNT_OF_POINTS * 3];
     GLFWwindow* window_ctx;
     shaders::my_small_shaders shaders,
                               shader2;
-    text_renderer::rendr_text random_text,
+    text_renderer::rendr_text window_size_text,
                               position_info_text;
     int win_h,
         win_w;
     void setup_callbacks();
-    void update_viewport();
+    void get_current_ctx_viewport();
     void init_my_triangle();
     void rotate_triangle(rotation_direction dir, int amount);
     void update_vertices();
+    void update_triangle_color();
+    void update_win_size_infotext();
     int check_for_errors();
     static void mouse_click_callback(GLFWwindow* ctx,
                                      int button,
