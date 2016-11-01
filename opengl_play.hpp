@@ -61,25 +61,11 @@ enum class rotation_direction
 class opengl_ui
 {
     bool       render_update_needed;
-    glm::ivec2 my_triangle[3];
-    int        triangle_color_idx[3];
-    bool       triangle_color_dir[3];
-    int        points_count;
-    GLfloat    vertices[ 6 * 3 + AMOUNT_OF_POINTS * 3];
     GLFWwindow* window_ctx;
-    shaders::my_small_shaders shaders,
-                              shader2;
-    text_renderer::rendr_text window_size_text,
-                              position_info_text;
     int win_h,
         win_w;
     void setup_callbacks();
     void get_current_ctx_viewport();
-    void init_my_triangle();
-    void rotate_triangle(rotation_direction dir, int amount);
-    void update_vertices();
-    void update_triangle_color();
-    void update_win_size_infotext();
     int check_for_errors();
     static void mouse_click_callback(GLFWwindow* ctx,
                                      int button,

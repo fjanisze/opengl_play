@@ -13,6 +13,7 @@
 #include <queue>
 #include <atomic>
 #include <cassert>
+#include "date.h"
 
 #ifndef LOG_HPP
 #define LOG_HPP
@@ -61,7 +62,7 @@ namespace logging
 	};
 
 	/*
-	 * the Logger class, shall be instantiated with a specific log_policy
+	 * the Logger 		using namespace data;class, shall be instantiated with a specific log_policy
 	 */
 
 	template< typename log_policy >
@@ -155,7 +156,12 @@ namespace logging
 		std::stringstream log_stream;
 		//Prepare the header
 
-        log_stream << log_line_number++ <<" "<< std::chrono::system_clock::now().time_since_epoch().count() <<" ";
+		auto now = std::chrono::system_clock::now();
+
+		{
+			using namespace date;
+			log_stream << log_line_number++ <<" "<< now <<" ";
+		}
 
         log_stream << thread_name[ std::this_thread::get_id() ] <<" ";
 
