@@ -51,12 +51,6 @@ void opengl_ui::cursor_pos_callback(GLFWwindow *ctx,
 {
     if(left_button_state == GLFW_PRESS)
     {
-        double delta_x = x - last_know_mouse_position.x,
-               delta_y = y - last_know_mouse_position.y; //y not used yet
-
-        rotation_direction dir = delta_x > 0 ? rotation_direction::right :
-                                               rotation_direction::left;
-
         last_know_mouse_position.x = x;
         last_know_mouse_position.y = y;
     }
@@ -111,7 +105,7 @@ opengl_ui::opengl_ui(int win_width,
     //Create the window
     window_ctx = glfwCreateWindow(win_width,
                                   win_heigth,
-                                  "texture play",
+								  "texture play",
                                   nullptr,
                                   nullptr);
     if(window_ctx == nullptr){
@@ -177,13 +171,13 @@ void opengl_ui::enter_main_loop()
         //Do not draw anythin if is not needed
         if(false == render_update_needed)
         {
-            continue;
+			continue;
         }
 
-        glClearColor(0,0,0,1.0);
+		glClearColor(0,0,0,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glfwSwapBuffers(window_ctx);
+		glfwSwapBuffers(window_ctx);
 
         //Till the next update
         render_update_needed = false;

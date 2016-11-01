@@ -19,48 +19,9 @@
 namespace opengl_play
 {
 
-const std::string simple_vertex_shader = {
-    "#version 330 core\n"
-        "layout (location = 0) in vec3 position;\n"
-        "layout (location = 1) in vec3 selected_color;\n"
-        "out vec3 color;\n"
-        "void main()\n"
-        "{\n"
-        "gl_Position = vec4(position, 1.0f);\n"
-        "color = selected_color;\n"
-        "}\0"
-};
-
-const std::string simple_fragment_shader = {
-    "#version 330 core\n"
-        "out vec4 final_color;\n"
-        "in vec3 color;\n"
-        "void main()\n"
-        "{\n"
-        "final_color = vec4(color,1.0f);\n"
-        "}\n\0"
-};
-
-const std::string simple_fragment_shader2 = {
-    "#version 330 core\n"
-        "out vec4 color;\n"
-        "void main()\n"
-        "{\n"
-        "color = vec4(0.7f, 0.7f, 0.7f, 1.0f);\n"
-        "}\n\0"
-};
-
-enum class rotation_direction
-{
-    left,
-    right
-};
-
-#define AMOUNT_OF_POINTS 120*4
-
 class opengl_ui
 {
-    bool       render_update_needed;
+	bool        render_update_needed;
     GLFWwindow* window_ctx;
     int win_h,
         win_w;
