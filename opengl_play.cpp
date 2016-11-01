@@ -83,15 +83,15 @@ void opengl_ui::rotate_triangle(rotation_direction dir,
 
     if(points_count>0){
         int i = points_count * 3 - 1;
-        for(;( i - 3 ) >= 3 * 3 ;--i)
+        for(;( i - 3 ) >= 6 * 3 ;--i)
         {
             vertices[ i ] = vertices[ i - 3 ];
         }
     }
 
-    vertices[ 3 * 3     ] = vertices[0];
-    vertices[ 3 * 3 + 1 ] = vertices[1];
-    vertices[ 3 * 3 + 2 ] = vertices[2];
+    vertices[ 6 * 3     ] = vertices[0];
+    vertices[ 6 * 3 + 1 ] = vertices[1];
+    vertices[ 6 * 3 + 2 ] = vertices[2];
 
     points_count = std::min(points_count + 1,
                             AMOUNT_OF_POINTS);
@@ -165,9 +165,17 @@ opengl_ui::opengl_ui(int win_width,
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    triangle_color.x = 1.0f;
-    triangle_color.y = 1.0f;
-    triangle_color.z = 1.0f;
+    triangle_color_idx[0] = 0;
+    triangle_color_idx[1] = 1;
+    triangle_color_idx[2] = 2;
+
+    triangle_color_dir[0] = true;
+    triangle_color_dir[1] = true;
+    triangle_color_dir[2] = true;
+
+    //This will force the initial color to white
+    for(int i{0};i<3*6;++i)
+        vertices[i] = 1.0f;
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -220,7 +228,7 @@ void opengl_ui::update_vertices()
     //I need to coordinates to be in NDC format
     //(Normalized Device Coordinates)
     std::size_t tr_idx = 0;
-    for(std::size_t i = 0;i<9;i+=3)
+    for(std::size_t i = 0;i<6*3;i+=6)
     {
         vertices[i    ] = mycos(torad(my_triangle[tr_idx].x));
         vertices[i + 1] = mysin(torad(my_triangle[tr_idx].y));
@@ -238,33 +246,38 @@ void opengl_ui::update_vertices()
 
 void opengl_ui::update_triangle_color()
 {
-    static const float color_delta = 0.01f;
-    static int idx = 0;
-    float* colors[3] = { &triangle_color.x,
-                         &triangle_color.y,
-                         &triangle_color.z };
-    if(*(colors[idx]) - color_delta < 0){
-        *(colors[idx]) = 0;
-        if(idx == 2){
-            triangle_color = glm::vec3(1.0,1.0,1.0);
-            idx = 0;
+    const float color_delta = 0.01f;
+    //Color offsets, note the way the vertex data are arranged
+    //int the VBO memory: 3*float + 3*float,3*float + 3*float...
+    //3 for the vertex position and 3 for the color
+    static const int offset[3] = {3,9,15};
+
+    auto possible_op = [this,&color_delta](GLfloat& vrtx,int idx) -> bool {
+        if(triangle_color_dir[idx]){
+            if(vrtx - color_delta < 0)
+                return false;
+            vrtx -= color_delta;
         }
-        else ++idx;
-    }else{
-        *(colors[idx]) -= color_delta;
-    }
-    //Upload the new uniform information
-    GLint vertex_colors = glGetUniformLocation(shaders.get_program(),
-                                               "selected_color");
-    if(vertex_colors < 0){
-        ERR("Unable to load the uniform \"selected_color\"");
-    }
-    else{
-        glUseProgram(shaders.get_program());
-        glUniform4f(vertex_colors,triangle_color.x,
-                    triangle_color.y,
-                    triangle_color.z,
-                    1.0f);
+        else{
+            if(vrtx + color_delta > 1.0f)
+                return false;
+            vrtx += color_delta;
+        }
+        return true;
+    };
+
+    for(int cur_vrtx{0};cur_vrtx < 3;++cur_vrtx){
+        int& idx = triangle_color_idx[cur_vrtx];
+        GLfloat& vrtx = vertices[offset[cur_vrtx]+idx];
+        if(possible_op(vrtx,cur_vrtx) == false){
+            if(idx == 2){
+                triangle_color_dir[cur_vrtx] ^= 1;
+                idx = cur_vrtx;
+            }
+            else{
+                idx = (idx + 1) % 3;
+            }
+       }
     }
 }
 
@@ -335,9 +348,17 @@ void opengl_ui::enter_main_loop()
                           3, //size of the vertex attribute, 3 vertex
                           GL_FLOAT, //type of the attribute
                           GL_FALSE, //no need to normalize
-                          3 * sizeof(GLfloat), //stride size (we have 3 vertex, each 3*float)
+                          6 * sizeof(GLfloat), //stride size (we have 3 vertex + 3 colors)
                           nullptr);//Offset where the data begin, 0 in our case
     glEnableVertexAttribArray(0); //the location is 0, look at the VS
+
+    glVertexAttribPointer(1, //Attribute 1 (position)
+                          3, //size of the vertex attribute, 3 vertex
+                          GL_FLOAT, //type of the attribute
+                          GL_FALSE, //no need to normalize
+                          6 * sizeof(GLfloat), //stride size (we have 3 vertex + 3 colors)
+                          (GLvoid*)(3*sizeof(GLfloat)));//Offset where the data begin
+    glEnableVertexAttribArray(1);
 
     //unbind the vao, we're ready to go
     glBindVertexArray(0);

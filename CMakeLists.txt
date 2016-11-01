@@ -5,16 +5,21 @@ cmake_minimum_required(VERSION 2.8)
 # C++1y
 #########################################################
 
+SET(COMPILER_OPT_LVL "-O2")
+
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++1z" COMPILER_SUPPORTS_CXX1Z)
 CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
+
 if(COMPILER_SUPPORTS_CXX1Z)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    set(CPP_VER_FLAG "-std=c++1z")
 elseif(COMPILER_SUPPORTS_CXX1Y)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    set(CPP_VER_FLAG "-std=c++1z")
 else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
+
+set(CMAKE_CXX_FLAGS "${CPP_VER_FLAG} ${COMPILER_OPT_LVL}")
 
 #########################################################
 # PTHREAD

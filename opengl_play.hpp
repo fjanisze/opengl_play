@@ -14,7 +14,6 @@
 #include "logger/logger.hpp"
 #include "shaders.hpp"
 #include "text_rendering.hpp"
-#include <functional>
 
 
 namespace opengl_play
@@ -23,19 +22,22 @@ namespace opengl_play
 const std::string simple_vertex_shader = {
     "#version 330 core\n"
         "layout (location = 0) in vec3 position;\n"
+        "layout (location = 1) in vec3 selected_color;\n"
+        "out vec3 color;\n"
         "void main()\n"
         "{\n"
-        "gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+        "gl_Position = vec4(position, 1.0f);\n"
+        "color = selected_color;\n"
         "}\0"
 };
 
 const std::string simple_fragment_shader = {
     "#version 330 core\n"
-        "out vec4 color;\n"
-        "uniform vec4 selected_color;\n"
+        "out vec4 final_color;\n"
+        "in vec3 color;\n"
         "void main()\n"
         "{\n"
-        "color = selected_color;\n"
+        "final_color = vec4(color,1.0f);\n"
         "}\n\0"
 };
 
@@ -60,9 +62,10 @@ class opengl_ui
 {
     bool       render_update_needed;
     glm::ivec2 my_triangle[3];
-    glm::vec3  triangle_color;
+    int        triangle_color_idx[3];
+    bool       triangle_color_dir[3];
     int        points_count;
-    GLfloat    vertices[ 3 * 3 + AMOUNT_OF_POINTS * 3];
+    GLfloat    vertices[ 6 * 3 + AMOUNT_OF_POINTS * 3];
     GLFWwindow* window_ctx;
     shaders::my_small_shaders shaders,
                               shader2;
