@@ -127,6 +127,8 @@ opengl_ui::opengl_ui(int win_width,
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	object = std::make_shared<little_object>();
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -177,6 +179,10 @@ void opengl_ui::enter_main_loop()
 		glClearColor(0,0,0,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
+		object->prepare_for_render();
+		object->render();
+		object->clean_after_render();
+
 		glfwSwapBuffers(window_ctx);
 
         //Till the next update
@@ -209,7 +215,74 @@ opengl_ui::~opengl_ui()
 {
     if(window_ctx!=nullptr){
         glfwTerminate();
-    }
+	}
+}
+
+void little_object::init_vertices()
+{
+	vertices[0] = {-0.5f, -0.5f, 0.0f };
+	vertices[1] = { 0.5f, -0.5f, 0.0f };
+	vertices[2] = {-0.5f,  0.5f, 0.0f };
+
+	vertices[3] = {-0.5f,  0.5f, 0.0f };
+	vertices[4] = { 0.5f, -0.5f, 0.0f };
+	vertices[5] = { 0.5f,  0.5f, 0.0f };
+
+	for(int i{0};i<6;++i)
+	{
+		vertex_data[3*i    ] = vertices[i].x;
+		vertex_data[3*i + 1] = vertices[i].y;
+		vertex_data[3*i + 2] = vertices[i].z;
+	}
+}
+
+little_object::little_object()
+{
+	LOG1("little_object::little_object(): Construction.");
+
+	obj_shader.load_vertex_shader(lit_ob_vertex_sh);
+	obj_shader.load_fragment_shader(lit_ob_frag_sh);
+
+	if(!obj_shader.create_shader_program()){
+		ERR("Unable to create the shader program!");
+		throw std::runtime_error("Shader program creation failure!");
+	}
+
+	init_vertices();
+	glGenBuffers(1,&VBO);
+	glGenVertexArrays(1,&VAO);
+
+	//Save this condiguration in VAO.
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER,VBO);
+	glBufferData(GL_ARRAY_BUFFER,
+				 sizeof(vertex_data),
+				 vertex_data,
+				 GL_STATIC_DRAW);
+	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,
+						  3 * sizeof(GLfloat),
+						  (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glBindVertexArray(0);
+}
+
+void little_object::prepare_for_render()
+{
+	//Load the shader and bind the VAO
+	obj_shader.use_shaders();
+	glBindVertexArray(VAO);
+}
+
+void little_object::render()
+{
+	glDrawArrays(GL_TRIANGLES,0,6);
+}
+
+void little_object::clean_after_render()
+{
+	//Unbind the VAO
+	glBindVertexArray(0);
 }
 
 }

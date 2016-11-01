@@ -19,10 +19,47 @@
 namespace opengl_play
 {
 
+
+static std::string lit_ob_vertex_sh = {
+	"#version 330 core\n"
+	"layout (location = 0) in vec3 position;\n"
+	"void main()\n"
+	"{\n"
+	"gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+	"}\0"
+};
+
+static std::string lit_ob_frag_sh = {
+	"#version 330 core\n"
+	"out vec4 color;\n"
+	"void main()\n"
+	"{\n"
+	"color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+	"}\n\0"
+};
+
+class little_object
+{
+	GLuint VAO,VBO,EBO;
+	glm::vec3 vertices[6];
+	GLfloat   vertex_data[18];
+	shaders::my_small_shaders obj_shader;
+
+	void init_vertices();
+public:
+	little_object();
+	void prepare_for_render();
+	void render();
+	void clean_after_render();
+};
+
+using little_object_ptr = std::shared_ptr<little_object>;
+
 class opengl_ui
 {
-	bool        render_update_needed;
-    GLFWwindow* window_ctx;
+	bool          render_update_needed;
+	GLFWwindow*   window_ctx;
+	little_object_ptr object;
     int win_h,
         win_w;
     void setup_callbacks();
