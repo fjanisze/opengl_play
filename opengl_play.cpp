@@ -172,7 +172,7 @@ void opengl_ui::enter_main_loop()
 			continue;
         }
 
-		glClearColor(0,0,0,1.0);
+		glClearColor(0.5,0.5,0.5,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
 		object->prepare_for_render();
@@ -216,21 +216,70 @@ opengl_ui::~opengl_ui()
 
 void little_object::init_vertices()
 {
-	vertices[0] = { 0.5f,  0.5f, 0.0f };
-	vertices[1] = { 0.5f, -0.5f, 0.0f };
-	vertices[2] = {-0.5f, -0.5f, 0.0f };
-	vertices[3] = {-0.5f,  0.5f, 0.0f };
+	vertices[0] = { 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
+	vertices[1] = { 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
+	vertices[2] = {-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+	vertices[3] = {-0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
 
 	for(int i{0};i<4;++i)
 	{
-		vertex_data[3*i    ] = vertices[i].x;
-		vertex_data[3*i + 1] = vertices[i].y;
-		vertex_data[3*i + 2] = vertices[i].z;
+		vertex_data[8*i    ] = vertices[i].x;
+		vertex_data[8*i + 1] = vertices[i].y;
+		vertex_data[8*i + 2] = vertices[i].z;
+		vertex_data[8*i + 3] = vertices[i].r;
+		vertex_data[8*i + 4] = vertices[i].g;
+		vertex_data[8*i + 5] = vertices[i].b;
+		vertex_data[8*i + 6] = vertices[i].t_x;
+		vertex_data[8*i + 7] = vertices[i].t_y;
 	}
 
 	int i{0};
 	for(auto idx:{0, 1, 3, 1, 2, 3})
 		vertex_idxs[i++] = idx;
+}
+
+void little_object::load_texture()
+{
+	LOG1("Creating the texture for little_object");
+	//Load the texture image
+	byte_t* image = SOIL_load_image("../textures/container.jpg",
+								   &tex_width,
+								   &tex_height,
+								   0,
+								   SOIL_LOAD_RGB);
+	if(image == nullptr){
+		ERR("Unable to load the texture!");
+		throw std::runtime_error("Texture loading failed!");
+	}
+	LOG1("Loaded texture size: ",tex_width,"/",tex_height);
+	//Create the texture
+	glGenTextures(1,&TEX);
+	glBindTexture(GL_TEXTURE_2D,TEX);
+
+	//Texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D,
+					GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,
+					GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D,
+					GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,
+					GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D,	0,
+				 GL_RGB,
+				 tex_width,
+				 tex_height,
+				 0,
+				 GL_RGB,
+				 GL_UNSIGNED_BYTE,
+				 image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D,0);
+	check_for_errors();
 }
 
 little_object::little_object()
@@ -246,6 +295,7 @@ little_object::little_object()
 	}
 
 	init_vertices();
+
 	glGenVertexArrays(1,&VAO);
 	glGenBuffers(1,&VBO);
 	glGenBuffers(1,&EBO);
@@ -267,12 +317,24 @@ little_object::little_object()
 				 GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,
-						  3 * sizeof(GLfloat),
+						  8 * sizeof(GLfloat),
 						  (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
+	glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,
+						  8 * sizeof(GLfloat),
+						  (GLvoid*)(3*sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,
+						  8 * sizeof(GLfloat),
+						  (GLvoid*)(6*sizeof(GLfloat)));
+	glEnableVertexAttribArray(2);
+
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
+
+	load_texture();
 
 	check_for_errors();
 }
@@ -287,6 +349,7 @@ little_object::~little_object()
 void little_object::prepare_for_render()
 {
 	//Load the shader and bind the VAO
+	glBindTexture(GL_TEXTURE_2D, TEX);
 	obj_shader.use_shaders();
 	glBindVertexArray(VAO);
 }

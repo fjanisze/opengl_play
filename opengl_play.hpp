@@ -14,7 +14,7 @@
 #include "logger/logger.hpp"
 #include "shaders.hpp"
 #include "text_rendering.hpp"
-
+#include <SOIL/SOIL.h>
 
 namespace opengl_play
 {
@@ -23,27 +23,48 @@ int check_for_errors();
 
 const std::string lit_ob_vertex_sh = "#version 330 core\n"
 	"layout (location = 0) in vec3 position;\n"
+	"layout (location = 1) in vec3 color;\n"
+	"layout (location = 2) in vec2 tex_coord;\n"
+	"out vec3 out_color;\n"
+	"out vec2 texture_coords;\n"
 	"void main()\n"
 	"{\n"
-	"gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+	"gl_Position = vec4(position, 1.0);\n"
+	"out_color = color;\n"
+	"texture_coords = tex_coord;\n"
 	"}\0";
 
 const std::string lit_ob_frag_sh = "#version 330 core\n"
+	"in vec3 out_color;\n"
+	"in vec2 texture_coords;\n"
 	"out vec4 color;\n"
+	"uniform sampler2D loaded_texture;\n"
 	"void main()\n"
 	"{\n"
-	"color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+	"color = texture(loaded_texture,texture_coords);\n"
 	"}\n\0";
+
+typedef unsigned char byte_t;
+
+struct vertex_info
+{
+	GLfloat x,y,z;
+	GLfloat r,g,b;
+	GLfloat t_x,t_y;//Texture coordinates
+};
 
 class little_object
 {
 	GLuint VAO,VBO,EBO;
-	glm::vec3 vertices[4];
+	GLuint TEX;
+	GLint  tex_width,tex_height;
+	vertex_info vertices[4];
 	GLuint    vertex_idxs[6];
-	GLfloat   vertex_data[12];
+	GLfloat   vertex_data[8*4];
 	shaders::my_small_shaders obj_shader;
 
 	void init_vertices();
+	void load_texture();
 public:
 	little_object();
 	~little_object();

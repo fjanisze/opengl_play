@@ -86,6 +86,12 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 link_directories(${FREETYPE_LIBRARIES})
 
 #########################################################
+# FIND SOIL
+#########################################################
+add_subdirectory("./SOIL/")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/SOIL/")
+
+#########################################################
 # Remaining stuff
 #########################################################
 
@@ -107,7 +113,8 @@ target_link_libraries(
     ${GLEW_LIBRARIES}
     ${FREETYPE_LIBRARIES}
     ${GLM_LIBRARY_DIRS}
-    glfw)
+    glfw
+    SOIL)
 
 
 
