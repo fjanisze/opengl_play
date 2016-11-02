@@ -3,6 +3,19 @@
 namespace opengl_play
 {
 
+int check_for_errors()
+{
+	int error_count = 0;
+	GLenum error = GL_NO_ERROR;
+
+	while( (error = glGetError()) != GL_NO_ERROR){
+		ERR("OpenGL ERROR in opengl_ui: ",
+			error);
+		++error_count;
+	}
+	return error_count;
+}
+
 namespace
 {
     //Saved context for the GLFW callbacks
@@ -124,10 +137,6 @@ opengl_ui::opengl_ui(int win_width,
         throw std::runtime_error("GLEW Init failed!");
     }
 
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	object = std::make_shared<little_object>();
 }
 
@@ -147,26 +156,13 @@ void opengl_ui::prepare_for_main_loop()
     get_current_ctx_viewport();
 }
 
-int opengl_ui::check_for_errors()
-{
-    int error_count = 0;
-    GLenum error = GL_NO_ERROR;
-
-    while( (error = glGetError()) != GL_NO_ERROR){
-        ERR("OpenGL ERROR in opengl_ui: ",
-            error);
-        ++error_count;
-    }
-    return error_count;
-}
-
 void opengl_ui::enter_main_loop()
 {
     check_for_errors();
     //now we have our object configured and ready to be rendered
 
     LOG2("Entering main loop!");
-    while(!glfwWindowShouldClose(window_ctx))
+	while(!glfwWindowShouldClose(window_ctx))
     {
         glfwPollEvents();
 
@@ -186,8 +182,8 @@ void opengl_ui::enter_main_loop()
 		glfwSwapBuffers(window_ctx);
 
         //Till the next update
-        render_update_needed = false;
-    }
+		render_update_needed = false;
+	}
 }
 
 GLFWwindow *opengl_ui::get_win_ctx()
@@ -220,20 +216,21 @@ opengl_ui::~opengl_ui()
 
 void little_object::init_vertices()
 {
-	vertices[0] = {-0.5f, -0.5f, 0.0f };
+	vertices[0] = { 0.5f,  0.5f, 0.0f };
 	vertices[1] = { 0.5f, -0.5f, 0.0f };
-	vertices[2] = {-0.5f,  0.5f, 0.0f };
-
+	vertices[2] = {-0.5f, -0.5f, 0.0f };
 	vertices[3] = {-0.5f,  0.5f, 0.0f };
-	vertices[4] = { 0.5f, -0.5f, 0.0f };
-	vertices[5] = { 0.5f,  0.5f, 0.0f };
 
-	for(int i{0};i<6;++i)
+	for(int i{0};i<4;++i)
 	{
 		vertex_data[3*i    ] = vertices[i].x;
 		vertex_data[3*i + 1] = vertices[i].y;
 		vertex_data[3*i + 2] = vertices[i].z;
 	}
+
+	int i{0};
+	for(auto idx:{0, 1, 3, 1, 2, 3})
+		vertex_idxs[i++] = idx;
 }
 
 little_object::little_object()
@@ -249,22 +246,42 @@ little_object::little_object()
 	}
 
 	init_vertices();
-	glGenBuffers(1,&VBO);
 	glGenVertexArrays(1,&VAO);
+	glGenBuffers(1,&VBO);
+	glGenBuffers(1,&EBO);
 
 	//Save this condiguration in VAO.
 	glBindVertexArray(VAO);
+
 	glBindBuffer(GL_ARRAY_BUFFER,VBO);
 	glBufferData(GL_ARRAY_BUFFER,
 				 sizeof(vertex_data),
 				 vertex_data,
 				 GL_STATIC_DRAW);
+
+	//Setup the Element Buffer Object
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+				 sizeof(vertex_idxs),
+				 vertex_idxs,
+				 GL_STATIC_DRAW);
+
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,
 						  3 * sizeof(GLfloat),
 						  (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
+
+	check_for_errors();
+}
+
+little_object::~little_object()
+{
+	glDeleteVertexArrays(1,&VAO);
+	glDeleteBuffers(1,&VBO);
+	glDeleteBuffers(1,&EBO);
 }
 
 void little_object::prepare_for_render()
@@ -276,7 +293,7 @@ void little_object::prepare_for_render()
 
 void little_object::render()
 {
-	glDrawArrays(GL_TRIANGLES,0,6);
+	glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 }
 
 void little_object::clean_after_render()
