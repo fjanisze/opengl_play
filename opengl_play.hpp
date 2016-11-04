@@ -11,6 +11,7 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <map>
 #include "logger/logger.hpp"
 #include "shaders.hpp"
 #include "text_rendering.hpp"
@@ -39,9 +40,11 @@ const std::string lit_ob_frag_sh = "#version 330 core\n"
 	"in vec2 texture_coords;\n"
 	"out vec4 color;\n"
 	"uniform sampler2D loaded_texture;\n"
+	"uniform sampler2D loaded_texture_2;\n"
 	"void main()\n"
 	"{\n"
-	"color = texture(loaded_texture,texture_coords);\n"
+	"color = mix(texture(loaded_texture,texture_coords),\n"
+	"			 texture(loaded_texture_2,texture_coords),0.2);\n"
 	"}\n\0";
 
 typedef unsigned char byte_t;
@@ -53,10 +56,19 @@ struct vertex_info
 	GLfloat t_x,t_y;//Texture coordinates
 };
 
+struct texture_info
+{
+	GLuint texture;
+	GLint  width, height;
+	operator GLuint(){
+		return texture;
+	}
+};
+
 class little_object
 {
 	GLuint VAO,VBO,EBO;
-	GLuint TEX;
+	std::map<std::string,texture_info> textures;
 	GLint  tex_width,tex_height;
 	vertex_info vertices[4];
 	GLuint    vertex_idxs[6];
@@ -64,7 +76,7 @@ class little_object
 	shaders::my_small_shaders obj_shader;
 
 	void init_vertices();
-	void load_texture();
+	texture_info load_texture(const std::string& filename);
 public:
 	little_object();
 	~little_object();

@@ -49,6 +49,9 @@ public:
     bool create_shader_program();
     void use_shaders();
     GLuint get_program();
+	operator GLuint(){
+		return shader_program;
+	}
 };
 
 }

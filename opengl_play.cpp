@@ -216,10 +216,10 @@ opengl_ui::~opengl_ui()
 
 void little_object::init_vertices()
 {
-	vertices[0] = { 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
-	vertices[1] = { 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
-	vertices[2] = {-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-	vertices[3] = {-0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
+	vertices[0] = { 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
+	vertices[1] = { 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
+	vertices[2] = {-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+	vertices[3] = {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
 
 	for(int i{0};i<4;++i)
 	{
@@ -238,23 +238,24 @@ void little_object::init_vertices()
 		vertex_idxs[i++] = idx;
 }
 
-void little_object::load_texture()
+texture_info little_object::load_texture(const std::string &filename)
 {
 	LOG1("Creating the texture for little_object");
+	texture_info TEX;
 	//Load the texture image
-	byte_t* image = SOIL_load_image("../textures/container.jpg",
-								   &tex_width,
-								   &tex_height,
+	byte_t* image = SOIL_load_image(filename.c_str(),
+								   &TEX.width,
+								   &TEX.height,
 								   0,
 								   SOIL_LOAD_RGB);
 	if(image == nullptr){
 		ERR("Unable to load the texture!");
 		throw std::runtime_error("Texture loading failed!");
 	}
-	LOG1("Loaded texture size: ",tex_width,"/",tex_height);
+	LOG1("Loaded texture size: ",TEX.width,"/",TEX.height);
 	//Create the texture
-	glGenTextures(1,&TEX);
-	glBindTexture(GL_TEXTURE_2D,TEX);
+	glGenTextures(1,&TEX.texture);
+	glBindTexture(GL_TEXTURE_2D,TEX.texture);
 
 	//Texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D,
@@ -269,8 +270,8 @@ void little_object::load_texture()
 
 	glTexImage2D(GL_TEXTURE_2D,	0,
 				 GL_RGB,
-				 tex_width,
-				 tex_height,
+				 TEX.width,
+				 TEX.height,
 				 0,
 				 GL_RGB,
 				 GL_UNSIGNED_BYTE,
@@ -280,6 +281,8 @@ void little_object::load_texture()
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D,0);
 	check_for_errors();
+
+	return TEX;
 }
 
 little_object::little_object()
@@ -334,7 +337,10 @@ little_object::little_object()
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
 
-	load_texture();
+	textures.insert(std::make_pair("container",
+				load_texture("../textures/container.jpg")));
+	textures.insert(std::make_pair("face",
+				load_texture("../textures/awesomeface.png")));
 
 	check_for_errors();
 }
@@ -349,8 +355,21 @@ little_object::~little_object()
 void little_object::prepare_for_render()
 {
 	//Load the shader and bind the VAO
-	glBindTexture(GL_TEXTURE_2D, TEX);
+	glBindTexture(GL_TEXTURE_2D, textures["face"]);
 	obj_shader.use_shaders();
+
+	//Activate the two texture.
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,
+				  textures["container"]);
+	//This uniform is for the texture unit 0
+	glUniform1i(glGetUniformLocation(obj_shader,
+					"loaded_texture"),0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D,
+				  textures["face"]);
+	glUniform1i(glGetUniformLocation(obj_shader,
+					"loaded_texture_2"),1);
 	glBindVertexArray(VAO);
 }
 
