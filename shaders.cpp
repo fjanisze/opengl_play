@@ -47,7 +47,37 @@ void my_small_shaders::load_fragment_shader(const std::string &body)
 {
     load_shader_generic(fragment_shader,
                         body,
-                        GL_FRAGMENT_SHADER);
+						GL_FRAGMENT_SHADER);
+}
+
+std::string my_small_shaders::read_shader_body(const std::string &filename)
+{
+	std::ifstream in_file(filename.c_str());
+	std::string shader_body;
+	if(!in_file){
+		ERR("Unable to open the file ",
+			filename);
+	}
+	else
+	{
+		std::size_t file_size = 0;
+		in_file.seekg(0, std::ios_base::end);
+		file_size = in_file.tellg();
+		in_file.seekg(0,std::ios_base::beg);
+
+		try{
+			shader_body.resize(file_size);
+			in_file.read(&shader_body[0],
+					 file_size);
+		}catch(std::exception& ex){
+			ERR(ex.what());
+			throw;
+		}
+
+
+	}
+
+	return shader_body;
 }
 
 bool my_small_shaders::create_shader_program()

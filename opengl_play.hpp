@@ -22,31 +22,6 @@ namespace opengl_play
 
 int check_for_errors();
 
-const std::string lit_ob_vertex_sh = "#version 330 core\n"
-	"layout (location = 0) in vec3 position;\n"
-	"layout (location = 1) in vec3 color;\n"
-	"layout (location = 2) in vec2 tex_coord;\n"
-	"out vec3 out_color;\n"
-	"out vec2 texture_coords;\n"
-	"void main()\n"
-	"{\n"
-	"gl_Position = vec4(position, 1.0);\n"
-	"out_color = color;\n"
-	"texture_coords = tex_coord;\n"
-	"}\0";
-
-const std::string lit_ob_frag_sh = "#version 330 core\n"
-	"in vec3 out_color;\n"
-	"in vec2 texture_coords;\n"
-	"out vec4 color;\n"
-	"uniform sampler2D loaded_texture;\n"
-	"uniform sampler2D loaded_texture_2;\n"
-	"void main()\n"
-	"{\n"
-	"color = mix(texture(loaded_texture,texture_coords),\n"
-	"			 texture(loaded_texture_2,texture_coords),0.2);\n"
-	"}\n\0";
-
 typedef unsigned char byte_t;
 
 struct vertex_info
