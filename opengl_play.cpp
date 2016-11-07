@@ -18,164 +18,164 @@ int check_for_errors()
 
 namespace
 {
-    //Saved context for the GLFW callbacks
-    opengl_ui* ui_instance;
-    //Global for the mouse callback
-    int left_button_state = GLFW_RELEASE;
-    //This coordinate is needed to calculate the delta movement
-    glm::dvec2 last_know_mouse_position = {0,0};
+//Saved context for the GLFW callbacks
+opengl_ui* ui_instance;
+//Global for the mouse callback
+int left_button_state = GLFW_RELEASE;
+//This coordinate is needed to calculate the delta movement
+glm::dvec2 last_know_mouse_position = {0,0};
 }
 
 GLfloat mycos(double val){
-    return (GLfloat)cos(val) * 0.5;
+	return (GLfloat)cos(val) * 0.5;
 }
 
 
 GLfloat mysin(double val){
-    return (GLfloat)sin(val) * 0.5;
+	return (GLfloat)sin(val) * 0.5;
 }
 
 GLfloat torad(double val){
-    return val * M_PI/180;
+	return val * M_PI/180;
 }
 
 void mouse_click_callback(GLFWwindow *ctx,
-                                     int button,
-                                     int action,
-                                     int)
+						  int button,
+						  int action,
+						  int)
 {
-    if(button == GLFW_MOUSE_BUTTON_LEFT)
-    {
-        if(action == GLFW_PRESS)
-        {
-            left_button_state = action;
-            glfwGetCursorPos(ui_instance->get_win_ctx(),
-                             &last_know_mouse_position.x,
-                             &last_know_mouse_position.y);
-        }
-        else
-            left_button_state = GLFW_RELEASE;
-    }
+	if(button == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		if(action == GLFW_PRESS)
+		{
+			left_button_state = action;
+			glfwGetCursorPos(ui_instance->get_win_ctx(),
+							 &last_know_mouse_position.x,
+							 &last_know_mouse_position.y);
+		}
+		else
+			left_button_state = GLFW_RELEASE;
+	}
 	ui_instance->ui_mouse_click(button,action);
 	ui_instance->image_update_needed();
 }
 
 void cursor_pos_callback(GLFWwindow *ctx,
-                                    double x,
-                                    double y)
+						 double x,
+						 double y)
 {
-    if(left_button_state == GLFW_PRESS)
-    {
-        last_know_mouse_position.x = x;
-        last_know_mouse_position.y = y;
-    }
+	if(left_button_state == GLFW_PRESS)
+	{
+		last_know_mouse_position.x = x;
+		last_know_mouse_position.y = y;
+	}
 }
 
 void window_resize_callback(GLFWwindow *ctx,
-                                       int width,
-                                       int height)
+							int width,
+							int height)
 {
-    ui_instance->update_viewport(height,width);
-    ui_instance->image_update_needed();
+	ui_instance->update_viewport(height,width);
+	ui_instance->image_update_needed();
 }
 
 void opengl_ui::setup_callbacks()
 {
 
-    glfwSetMouseButtonCallback(window_ctx,
-                               mouse_click_callback);
-    glfwSetCursorPosCallback(window_ctx,
-                             cursor_pos_callback);
-    glfwSetWindowSizeCallback(window_ctx,
-                              window_resize_callback);
+	glfwSetMouseButtonCallback(window_ctx,
+							   mouse_click_callback);
+	glfwSetCursorPosCallback(window_ctx,
+							 cursor_pos_callback);
+	glfwSetWindowSizeCallback(window_ctx,
+							  window_resize_callback);
 }
 
 void opengl_ui::get_current_ctx_viewport()
 {
-    glfwGetFramebufferSize(window_ctx,
-                           &win_w,
-                           &win_h);
-    glViewport(0,0,
-               win_w,
-               win_h);
+	glfwGetFramebufferSize(window_ctx,
+						   &win_w,
+						   &win_h);
+	glViewport(0,0,
+			   win_w,
+			   win_h);
 }
 
 opengl_ui::opengl_ui(int win_width,
-                     int win_heigth) :
-    win_h{ win_heigth },
-    win_w{ win_width }
+					 int win_heigth) :
+	win_h{ win_heigth },
+	win_w{ win_width }
 {
-    LOG1("Creating window, ",win_width,"/",win_heigth);
-    //Setup GLFW
-    if(glfwInit() != GLFW_TRUE)
-    {
-        ERR("Unable to initialize GLFW");
-        throw std::runtime_error("GLFW init failed");
-    }
+	LOG1("Creating window, ",win_width,"/",win_heigth);
+	//Setup GLFW
+	if(glfwInit() != GLFW_TRUE)
+	{
+		ERR("Unable to initialize GLFW");
+		throw std::runtime_error("GLFW init failed");
+	}
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    //Create the window
-    window_ctx = glfwCreateWindow(win_width,
-                                  win_heigth,
+	//Create the window
+	window_ctx = glfwCreateWindow(win_width,
+								  win_heigth,
 								  "texture play",
-                                  nullptr,
-                                  nullptr);
-    if(window_ctx == nullptr){
-        ERR("Unable to create the window!");
-        throw std::runtime_error("Window creation failed");
-    }
+								  nullptr,
+								  nullptr);
+	if(window_ctx == nullptr){
+		ERR("Unable to create the window!");
+		throw std::runtime_error("Window creation failed");
+	}
 
-    glfwMakeContextCurrent(window_ctx);
+	glfwMakeContextCurrent(window_ctx);
 
-    //Init GLEW
-    glewExperimental = GL_TRUE;
-    GLenum glew_init_status = glewInit();
-    if(glew_init_status != GLEW_OK){
-        ERR("Unable to initialize GLEW: ",
-            glewGetErrorString(glew_init_status));
-        throw std::runtime_error("GLEW Init failed!");
-    }
+	//Init GLEW
+	glewExperimental = GL_TRUE;
+	GLenum glew_init_status = glewInit();
+	if(glew_init_status != GLEW_OK){
+		ERR("Unable to initialize GLEW: ",
+			glewGetErrorString(glew_init_status));
+		throw std::runtime_error("GLEW Init failed!");
+	}
 
 	object = std::make_shared<little_object>();
 }
 
 void opengl_ui::prepare_for_main_loop()
 {
-    LOG3("opengl_ui, preparing the remaining environment.");
-    check_for_errors();
-    //Save the instance pointer
-    ui_instance = this;
+	LOG3("opengl_ui, preparing the remaining environment.");
+	check_for_errors();
+	//Save the instance pointer
+	ui_instance = this;
 
-    //Set to true if there's something to update
-    //is true now since we need an initial update
-    render_update_needed = true;
-    //Init the callbacks
-    setup_callbacks();
+	//Set to true if there's something to update
+	//is true now since we need an initial update
+	render_update_needed = true;
+	//Init the callbacks
+	setup_callbacks();
 
-    get_current_ctx_viewport();
+	get_current_ctx_viewport();
 }
 
 void opengl_ui::enter_main_loop()
 {
-    check_for_errors();
-    //now we have our object configured and ready to be rendered
+	check_for_errors();
+	//now we have our object configured and ready to be rendered
 
-    LOG2("Entering main loop!");
+	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
-    {
-        glfwPollEvents();
+	{
+		glfwPollEvents();
 
-        //Do not draw anythin if is not needed
-        if(false == render_update_needed)
-        {
+		//Do not draw anythin if is not needed
+		if(false == render_update_needed)
+		{
 			continue;
-        }
+		}
 
 		glClearColor(0.5,0.5,0.5,1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		object->prepare_for_render();
 		object->render();
@@ -183,29 +183,29 @@ void opengl_ui::enter_main_loop()
 
 		glfwSwapBuffers(window_ctx);
 
-        //Till the next update
+		//Till the next update
 		render_update_needed = false;
 	}
 }
 
 GLFWwindow *opengl_ui::get_win_ctx()
 {
-    return window_ctx;
+	return window_ctx;
 }
 
 void opengl_ui::image_update_needed()
 {
-    render_update_needed = true;
+	render_update_needed = true;
 }
 
 void opengl_ui::update_viewport(int new_win_h,
-                                int new_win_w)
+								int new_win_w)
 {
-    win_h = new_win_h;
-    win_w = new_win_w;
+	win_h = new_win_h;
+	win_w = new_win_w;
 
-    glViewport(0,0,
-               win_w,
+	glViewport(0,0,
+			   win_w,
 			   win_h);
 }
 
@@ -216,8 +216,8 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 
 opengl_ui::~opengl_ui()
 {
-    if(window_ctx!=nullptr){
-        glfwTerminate();
+	if(window_ctx!=nullptr){
+		glfwTerminate();
 	}
 }
 
@@ -251,10 +251,10 @@ texture_info little_object::load_texture(const std::string &filename, GLint wrap
 	texture_info TEX;
 	//Load the texture image
 	byte_t* image = SOIL_load_image(filename.c_str(),
-								   &TEX.width,
-								   &TEX.height,
-								   0,
-								   SOIL_LOAD_RGB);
+									&TEX.width,
+									&TEX.height,
+									0,
+									SOIL_LOAD_RGB);
 	if(image == nullptr){
 		ERR("Unable to load the texture!");
 		throw std::runtime_error("Texture loading failed!");
@@ -363,9 +363,9 @@ little_object::little_object() :
 	glBindVertexArray(0);
 
 	textures.insert(std::make_pair("container",
-				load_texture("../textures/container.jpg")));
+								   load_texture("../textures/container.jpg")));
 	textures.insert(std::make_pair("face",
-				load_texture("../textures/awesomeface.png")));
+								   load_texture("../textures/awesomeface.png")));
 
 	check_for_errors();
 }
@@ -389,13 +389,13 @@ void little_object::prepare_for_render()
 				  textures["container"]);
 	//This uniform is for the texture unit 0
 	glUniform1i(glGetUniformLocation(obj_shader,
-					"loaded_texture"),0);
+									 "loaded_texture"),0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D,
 				  textures["face"]);
 	glUniform1i(glGetUniformLocation(obj_shader,
-					"loaded_texture_2"),1);
+									 "loaded_texture_2"),1);
 
 	//Setup the mix ratio
 	glUniform1f(glGetUniformLocation(obj_shader,
@@ -419,9 +419,9 @@ void little_object::clean_after_render()
 
 int main()
 {
-    opengl_play::opengl_ui entry(800,600);
-    log_inst.set_thread_name("MAIN");
+	opengl_play::opengl_ui entry(800,600);
+	log_inst.set_thread_name("MAIN");
 
-    entry.prepare_for_main_loop();
-    entry.enter_main_loop();
+	entry.prepare_for_main_loop();
+	entry.enter_main_loop();
 }

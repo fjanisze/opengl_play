@@ -81,20 +81,20 @@ class opengl_ui
 	bool          render_update_needed;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
-    int win_h,
-        win_w;
-    void setup_callbacks();
-    void get_current_ctx_viewport();
+	int win_h,
+	win_w;
+	void setup_callbacks();
+	void get_current_ctx_viewport();
 public:
-    opengl_ui(int win_width, int win_heigth);
-    void        prepare_for_main_loop();
-    void        enter_main_loop();
-    GLFWwindow *get_win_ctx();
-    void        image_update_needed();
-    void        update_viewport(int new_win_h,
-                                int new_win_w);
+	opengl_ui(int win_width, int win_heigth);
+	void        prepare_for_main_loop();
+	void        enter_main_loop();
+	GLFWwindow *get_win_ctx();
+	void        image_update_needed();
+	void        update_viewport(int new_win_h,
+								int new_win_w);
 	void		ui_mouse_click(GLint button,GLint action);
-    virtual ~opengl_ui();
+	virtual ~opengl_ui();
 };
 
 }
