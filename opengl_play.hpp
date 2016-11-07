@@ -43,6 +43,7 @@ struct texture_info
 class little_object
 {
 	GLuint VAO,VBO,EBO;
+	GLfloat current_mix_ratio;
 	std::map<std::string,texture_info> textures;
 	GLint  tex_width,tex_height;
 	vertex_info vertices[4];
@@ -51,16 +52,29 @@ class little_object
 	shaders::my_small_shaders obj_shader;
 
 	void init_vertices();
-	texture_info load_texture(const std::string& filename);
+	texture_info load_texture(const std::string& filename,
+							  GLint wrapping_method = GL_REPEAT);
 public:
 	little_object();
 	~little_object();
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
+	void mouse_click(GLint button,GLint action);
 };
 
 using little_object_ptr = std::shared_ptr<little_object>;
+
+void mouse_click_callback(GLFWwindow* ctx,
+						  int button,
+						  int action,
+						  int);
+void cursor_pos_callback(GLFWwindow* ctx,
+						 double x,
+						 double y);
+void window_resize_callback(GLFWwindow* ctx,
+							int width,
+							int height);
 
 class opengl_ui
 {
@@ -71,16 +85,6 @@ class opengl_ui
         win_w;
     void setup_callbacks();
     void get_current_ctx_viewport();
-    static void mouse_click_callback(GLFWwindow* ctx,
-                                     int button,
-                                     int action,
-                                     int);
-    static void cursor_pos_callback(GLFWwindow* ctx,
-                                    double x,
-                                    double y);
-    static void window_resize_callback(GLFWwindow* ctx,
-                                       int width,
-                                       int height);
 public:
     opengl_ui(int win_width, int win_heigth);
     void        prepare_for_main_loop();
@@ -89,6 +93,7 @@ public:
     void        image_update_needed();
     void        update_viewport(int new_win_h,
                                 int new_win_w);
+	void		ui_mouse_click(GLint button,GLint action);
     virtual ~opengl_ui();
 };
 

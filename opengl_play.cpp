@@ -39,7 +39,7 @@ GLfloat torad(double val){
     return val * M_PI/180;
 }
 
-void opengl_ui::mouse_click_callback(GLFWwindow *ctx,
+void mouse_click_callback(GLFWwindow *ctx,
                                      int button,
                                      int action,
                                      int)
@@ -56,9 +56,11 @@ void opengl_ui::mouse_click_callback(GLFWwindow *ctx,
         else
             left_button_state = GLFW_RELEASE;
     }
+	ui_instance->ui_mouse_click(button,action);
+	ui_instance->image_update_needed();
 }
 
-void opengl_ui::cursor_pos_callback(GLFWwindow *ctx,
+void cursor_pos_callback(GLFWwindow *ctx,
                                     double x,
                                     double y)
 {
@@ -69,7 +71,7 @@ void opengl_ui::cursor_pos_callback(GLFWwindow *ctx,
     }
 }
 
-void opengl_ui::window_resize_callback(GLFWwindow *ctx,
+void window_resize_callback(GLFWwindow *ctx,
                                        int width,
                                        int height)
 {
@@ -204,7 +206,12 @@ void opengl_ui::update_viewport(int new_win_h,
 
     glViewport(0,0,
                win_w,
-               win_h);
+			   win_h);
+}
+
+void opengl_ui::ui_mouse_click(GLint button, GLint action)
+{
+	object->mouse_click(button,action);
 }
 
 opengl_ui::~opengl_ui()
@@ -238,7 +245,7 @@ void little_object::init_vertices()
 		vertex_idxs[i++] = idx;
 }
 
-texture_info little_object::load_texture(const std::string &filename)
+texture_info little_object::load_texture(const std::string &filename, GLint wrapping_method)
 {
 	LOG1("Creating the texture for little_object");
 	texture_info TEX;
@@ -259,9 +266,9 @@ texture_info little_object::load_texture(const std::string &filename)
 
 	//Texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D,
-					GL_TEXTURE_WRAP_S, GL_REPEAT);
+					GL_TEXTURE_WRAP_S, wrapping_method);
 	glTexParameteri(GL_TEXTURE_2D,
-					GL_TEXTURE_WRAP_T, GL_REPEAT);
+					GL_TEXTURE_WRAP_T, wrapping_method);
 	// Set texture filtering parameters
 	glTexParameteri(GL_TEXTURE_2D,
 					GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -285,7 +292,23 @@ texture_info little_object::load_texture(const std::string &filename)
 	return TEX;
 }
 
-little_object::little_object()
+void little_object::mouse_click(GLint button, GLint action)
+{
+	if(action != GLFW_PRESS)
+		return;
+	if(button == GLFW_MOUSE_BUTTON_LEFT){
+		current_mix_ratio = std::min(1.0,
+									 current_mix_ratio + 0.05);
+	}
+	else if(button == GLFW_MOUSE_BUTTON_RIGHT)
+	{
+		current_mix_ratio = std::max<GLfloat>(0,
+											  current_mix_ratio - 0.05);
+	}
+}
+
+little_object::little_object() :
+	current_mix_ratio{0.2}
 {
 	LOG1("little_object::little_object(): Construction.");
 
@@ -367,11 +390,17 @@ void little_object::prepare_for_render()
 	//This uniform is for the texture unit 0
 	glUniform1i(glGetUniformLocation(obj_shader,
 					"loaded_texture"),0);
+
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D,
 				  textures["face"]);
 	glUniform1i(glGetUniformLocation(obj_shader,
 					"loaded_texture_2"),1);
+
+	//Setup the mix ratio
+	glUniform1f(glGetUniformLocation(obj_shader,
+									 "mix_ratio"),current_mix_ratio);
+
 	glBindVertexArray(VAO);
 }
 
