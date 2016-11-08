@@ -100,6 +100,16 @@ void opengl_ui::get_current_ctx_viewport()
 			   win_h);
 }
 
+void opengl_ui::init_fps_info()
+{
+	fps_info = std::make_shared<text_renderer::renderable_text>();
+	fps_info->set_position(glm::fvec2(10,10));
+	fps_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
+	fps_info->set_scale(1.0f);
+	fps_info->set_text("0 fps");
+	fps_info->set_window_size(win_h,win_w);
+}
+
 opengl_ui::opengl_ui(int win_width,
 					 int win_heigth) :
 	win_h{ win_heigth },
@@ -140,6 +150,8 @@ opengl_ui::opengl_ui(int win_width,
 	}
 
 	object = std::make_shared<little_object>();
+
+	init_fps_info();
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -163,15 +175,36 @@ void opengl_ui::enter_main_loop()
 	check_for_errors();
 	//now we have our object configured and ready to be rendered
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	auto ref_time = std::chrono::system_clock::now();
+	int  current_fps = 0;
+
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
+		++current_fps;
 		glfwPollEvents();
+
+		//Let's rotate the image
+		object->image_rotation(0.1f);
+
+		auto current_time = std::chrono::system_clock::now();
+		if(std::chrono::duration_cast<
+				std::chrono::milliseconds>(
+					current_time - ref_time).count() > 1000){
+			ref_time = current_time;
+			fps_info->set_text(std::to_string(current_fps) + "fps");
+			current_fps = 0;
+		}
+
 
 		//Do not draw anythin if is not needed
 		if(false == render_update_needed)
 		{
-			continue;
+			//Disabled in order to have the fps printed :(
+			//continue;
 		}
 
 		glClearColor(0.5,0.5,0.5,1.0);
@@ -180,6 +213,8 @@ void opengl_ui::enter_main_loop()
 		object->prepare_for_render();
 		object->render();
 		object->clean_after_render();
+
+		fps_info->render_text();
 
 		glfwSwapBuffers(window_ctx);
 
@@ -300,26 +335,10 @@ void little_object::update_vertex_data()
 
 void little_object::image_rotation(GLfloat amount)
 {
-	GLfloat new_x,new_y;
-	for(int i{0};i<4;++i){
-		new_x = vertices[i].x * std::cos(amount) -
-				vertices[i].y * std::sin(amount);
-
-		new_y = vertices[i].x * std::sin(amount) +
-				vertices[i].y * std::cos(amount);
-
-		vertices[i].x = new_x;
-		vertices[i].y = new_y;
-	}
-
-	update_vertex_data();
-
-	glBindBuffer(GL_ARRAY_BUFFER,VBO);
-	glBufferData(GL_ARRAY_BUFFER,
-				 sizeof(vertex_data),
-				 vertex_data,
-				 GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER,0);
+	object_position = glm::rotate(
+				object_position,
+				amount,
+				glm::vec3(0.0,0.0,1.0));
 }
 
 void little_object::mouse_click(GLint button, GLint action)
@@ -329,13 +348,11 @@ void little_object::mouse_click(GLint button, GLint action)
 	if(button == GLFW_MOUSE_BUTTON_LEFT){
 		current_mix_ratio = std::min(1.0,
 									 current_mix_ratio + 0.05);
-		image_rotation(0.1);
 	}
 	else if(button == GLFW_MOUSE_BUTTON_RIGHT)
 	{
 		current_mix_ratio = std::max<GLfloat>(0,
 											  current_mix_ratio - 0.05);
-		image_rotation(-0.1);
 	}
 }
 
@@ -433,6 +450,11 @@ void little_object::prepare_for_render()
 	glUniform1f(glGetUniformLocation(obj_shader,
 									 "mix_ratio"),current_mix_ratio);
 
+	//Load the transformation matrix
+	glUniformMatrix4fv(glGetUniformLocation(obj_shader,
+								"transform_matrix"),
+								1, GL_FALSE,
+								glm::value_ptr(object_position));
 	glBindVertexArray(VAO);
 }
 

@@ -49,14 +49,13 @@ class little_object
 	vertex_info vertices[4];
 	GLuint    vertex_idxs[6];
 	GLfloat   vertex_data[8*4];
+	glm::mat4 object_position; //This is just a transformation matrix
 	shaders::my_small_shaders obj_shader;
 
 	void init_vertices();
 	texture_info load_texture(const std::string& filename,
 							  GLint wrapping_method = GL_REPEAT);
 	void update_vertex_data();
-
-	void image_rotation(GLfloat amount);
 public:
 	little_object();
 	~little_object();
@@ -64,6 +63,7 @@ public:
 	void render();
 	void clean_after_render();
 	void mouse_click(GLint button,GLint action);
+	void image_rotation(GLfloat amount);
 };
 
 using little_object_ptr = std::shared_ptr<little_object>;
@@ -84,10 +84,12 @@ class opengl_ui
 	bool          render_update_needed;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
+	text_renderer::rendr_text fps_info;
 	int win_h,
 	win_w;
 	void setup_callbacks();
 	void get_current_ctx_viewport();
+	void init_fps_info();
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
