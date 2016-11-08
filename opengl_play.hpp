@@ -54,6 +54,9 @@ class little_object
 	void init_vertices();
 	texture_info load_texture(const std::string& filename,
 							  GLint wrapping_method = GL_REPEAT);
+	void update_vertex_data();
+
+	void image_rotation(GLfloat amount);
 public:
 	little_object();
 	~little_object();

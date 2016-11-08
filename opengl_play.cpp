@@ -228,17 +228,7 @@ void little_object::init_vertices()
 	vertices[2] = {-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
 	vertices[3] = {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
 
-	for(int i{0};i<4;++i)
-	{
-		vertex_data[8*i    ] = vertices[i].x;
-		vertex_data[8*i + 1] = vertices[i].y;
-		vertex_data[8*i + 2] = vertices[i].z;
-		vertex_data[8*i + 3] = vertices[i].r;
-		vertex_data[8*i + 4] = vertices[i].g;
-		vertex_data[8*i + 5] = vertices[i].b;
-		vertex_data[8*i + 6] = vertices[i].t_x;
-		vertex_data[8*i + 7] = vertices[i].t_y;
-	}
+	update_vertex_data();
 
 	int i{0};
 	for(auto idx:{0, 1, 3, 1, 2, 3})
@@ -292,6 +282,46 @@ texture_info little_object::load_texture(const std::string &filename, GLint wrap
 	return TEX;
 }
 
+void little_object::update_vertex_data()
+{
+	for(int i{0};i<4;++i)
+	{
+		vertex_data[8*i    ] = vertices[i].x;
+		vertex_data[8*i + 1] = vertices[i].y;
+		vertex_data[8*i + 2] = vertices[i].z;
+		vertex_data[8*i + 3] = vertices[i].r;
+		vertex_data[8*i + 4] = vertices[i].g;
+		vertex_data[8*i + 5] = vertices[i].b;
+		vertex_data[8*i + 6] = vertices[i].t_x;
+		vertex_data[8*i + 7] = vertices[i].t_y;
+	}
+
+}
+
+void little_object::image_rotation(GLfloat amount)
+{
+	GLfloat new_x,new_y;
+	for(int i{0};i<4;++i){
+		new_x = vertices[i].x * std::cos(amount) -
+				vertices[i].y * std::sin(amount);
+
+		new_y = vertices[i].x * std::sin(amount) +
+				vertices[i].y * std::cos(amount);
+
+		vertices[i].x = new_x;
+		vertices[i].y = new_y;
+	}
+
+	update_vertex_data();
+
+	glBindBuffer(GL_ARRAY_BUFFER,VBO);
+	glBufferData(GL_ARRAY_BUFFER,
+				 sizeof(vertex_data),
+				 vertex_data,
+				 GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
 void little_object::mouse_click(GLint button, GLint action)
 {
 	if(action != GLFW_PRESS)
@@ -299,11 +329,13 @@ void little_object::mouse_click(GLint button, GLint action)
 	if(button == GLFW_MOUSE_BUTTON_LEFT){
 		current_mix_ratio = std::min(1.0,
 									 current_mix_ratio + 0.05);
+		image_rotation(0.1);
 	}
 	else if(button == GLFW_MOUSE_BUTTON_RIGHT)
 	{
 		current_mix_ratio = std::max<GLfloat>(0,
 											  current_mix_ratio - 0.05);
+		image_rotation(-0.1);
 	}
 }
 
