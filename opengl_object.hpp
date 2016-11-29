@@ -11,7 +11,6 @@ typedef unsigned char byte_t;
 struct vertex_info
 {
 	GLfloat x,y,z;
-	GLfloat r,g,b;
 	GLfloat t_x,t_y;//Texture coordinates
 };
 
@@ -32,15 +31,21 @@ enum class mov_direction
 	down
 };
 
+enum class rotation_axis
+{
+	x,
+	y,
+	z
+};
+
 class little_object
 {
-	GLuint VAO,VBO,EBO;
+	GLuint VAO,VBO;
 	GLfloat current_mix_ratio;
 	std::map<std::string,texture_info> textures;
 	GLint  tex_width,tex_height;
-	vertex_info vertices[4];
-	GLuint    vertex_idxs[6];
-	GLfloat   vertex_data[8*4];
+	vertex_info vertices[36];
+	GLfloat   vertex_data[36*5];
 	glm::mat4 object_position; //This is just a transformation matrix
 	shaders::my_small_shaders obj_shader;
 
@@ -55,7 +60,7 @@ public:
 	void render();
 	void clean_after_render();
 	void mouse_click(GLint button,GLint action);
-	void image_rotation(GLfloat amount);
+	void image_rotation(rotation_axis axis, GLfloat amount);
 	void move(mov_direction dir, GLfloat amount);
 	void scale(GLfloat amount);
 	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);

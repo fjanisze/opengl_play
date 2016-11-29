@@ -19,16 +19,57 @@ int check_for_errors()
 
 void little_object::init_vertices()
 {
-	vertices[0] = { 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
-	vertices[1] = { 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
-	vertices[2] = {-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-	vertices[3] = {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f };
+	GLfloat raw_vertices[] = {
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	};
+
+	for(int i{0}; i < 36; ++i) {
+		for(int j{0}; j<5 ; ++j) {
+			*((GLfloat*)( &vertices[i] ) + j) = raw_vertices[i*5 + j];
+		}
+	}
 
 	update_vertex_data();
-
-	int i{0};
-	for(auto idx:{0, 1, 3, 1, 2, 3})
-		vertex_idxs[i++] = idx;
 }
 
 texture_info little_object::load_texture(const std::string &filename, GLint wrapping_method)
@@ -80,26 +121,29 @@ texture_info little_object::load_texture(const std::string &filename, GLint wrap
 
 void little_object::update_vertex_data()
 {
-	for(int i{0};i<4;++i)
+	for(int i{0};i<36;++i)
 	{
-		vertex_data[8*i    ] = vertices[i].x;
-		vertex_data[8*i + 1] = vertices[i].y;
-		vertex_data[8*i + 2] = vertices[i].z;
-		vertex_data[8*i + 3] = vertices[i].r;
-		vertex_data[8*i + 4] = vertices[i].g;
-		vertex_data[8*i + 5] = vertices[i].b;
-		vertex_data[8*i + 6] = vertices[i].t_x;
-		vertex_data[8*i + 7] = vertices[i].t_y;
+		vertex_data[5*i    ] = vertices[i].x;
+		vertex_data[5*i + 1] = vertices[i].y;
+		vertex_data[5*i + 2] = vertices[i].z;
+		vertex_data[5*i + 3] = vertices[i].t_x;
+		vertex_data[5*i + 4] = vertices[i].t_y;
 	}
 
 }
 
-void little_object::image_rotation(GLfloat amount)
+void little_object::image_rotation(rotation_axis axis,
+								   GLfloat amount)
 {
+	static glm::vec3 rot_axis_defs[3]{
+		glm::vec3(1.0,0.0,0.0),
+		glm::vec3(0.0,1.0,0.0),
+		glm::vec3(0.0,0.0,1.0),
+	};
 	object_position = glm::rotate(
 				object_position,
 				amount,
-				glm::vec3(0.0,0.0,1.0));
+				rot_axis_defs[static_cast<int>(axis)]);
 }
 
 void little_object::move(mov_direction dir, GLfloat amount)
@@ -180,7 +224,6 @@ little_object::little_object() :
 
 	glGenVertexArrays(1,&VAO);
 	glGenBuffers(1,&VBO);
-	glGenBuffers(1,&EBO);
 
 	//Save this condiguration in VAO.
 	glBindVertexArray(VAO);
@@ -191,26 +234,14 @@ little_object::little_object() :
 				 vertex_data,
 				 GL_STATIC_DRAW);
 
-	//Setup the Element Buffer Object
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-				 sizeof(vertex_idxs),
-				 vertex_idxs,
-				 GL_STATIC_DRAW);
-
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,
-						  8 * sizeof(GLfloat),
+						  5 * sizeof(GLfloat),
 						  (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,
-						  8 * sizeof(GLfloat),
-						  (GLvoid*)(3*sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
-
 	glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,
-						  8 * sizeof(GLfloat),
-						  (GLvoid*)(6*sizeof(GLfloat)));
+						  5 * sizeof(GLfloat),
+						  (GLvoid*)(3*sizeof(GLfloat)));
 	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
@@ -228,7 +259,6 @@ little_object::~little_object()
 {
 	glDeleteVertexArrays(1,&VAO);
 	glDeleteBuffers(1,&VBO);
-	glDeleteBuffers(1,&EBO);
 }
 
 void little_object::prepare_for_render()
@@ -265,7 +295,7 @@ void little_object::prepare_for_render()
 void little_object::render()
 {
 	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+	glDrawArrays(GL_TRIANGLES,0,36);
 	//Unbind the VAO
 	glBindVertexArray(0);
 }

@@ -84,33 +84,42 @@ void opengl_ui::ui_keyboard_press(GLint button,
 								  GLint scode,
 								  GLint action)
 {
-	static std::unordered_map<GLint,mov_direction> mapping = {
+	static std::unordered_map<GLint,mov_direction> moving_mapping = {
 		{GLFW_KEY_UP,mov_direction::top},
 		{GLFW_KEY_DOWN,mov_direction::down},
 		{GLFW_KEY_LEFT,mov_direction::left},
 		{GLFW_KEY_RIGHT,mov_direction::right}
 	};
+	static std::unordered_map<GLint, std::pair<rotation_axis,GLfloat>> rot_mapping{
+		{GLFW_KEY_D,{rotation_axis::z,-0.1}},
+		{GLFW_KEY_A,{rotation_axis::z,0.1}},
+		{GLFW_KEY_W,{rotation_axis::x,-0.1}},
+		{GLFW_KEY_S,{rotation_axis::x,0.1}},
+		{GLFW_KEY_Q,{rotation_axis::y,-0.1}},
+		{GLFW_KEY_E,{rotation_axis::y,0.1}},
+	};
 	if(action == GLFW_PRESS || action == GLFW_REPEAT) {
-		auto it = mapping.find(button);
-		if( it != mapping.end() ) {
+		auto it = moving_mapping.find(button);
+		if( it != moving_mapping.end() ) {
 			object->move(it->second,0.1);
-			render_update_needed = true;
-		} else {
-			if( button == GLFW_KEY_A ) {
-				object->image_rotation(0.1);
-				render_update_needed = true;
-			} else if( button == GLFW_KEY_D ) {
-				object->image_rotation(-0.1);
-				render_update_needed = true;
-			}
-			if( button == GLFW_KEY_W ) {
-				object->scale(0.9);
-				render_update_needed = true;
-			} else if( button == GLFW_KEY_E ) {
-				object->scale(1.1);
-				render_update_needed = true;
-			}
+			return;
 		}
+		auto it2 = rot_mapping.find(button);
+		if( it2 != rot_mapping.end() ) {
+			object->image_rotation(it2->second.first,it2->second.second);
+			return;
+		}
+		switch( button ) {
+		case GLFW_KEY_F:
+			object->scale(0.9);
+			break;
+		case GLFW_KEY_V:
+			object->scale(1.1);
+			break;
+		default:
+			break;
+		}
+		render_update_needed = true;
 	}
 }
 
@@ -216,6 +225,8 @@ void opengl_ui::enter_main_loop()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	glEnable(GL_DEPTH_TEST);
+
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
 
@@ -231,9 +242,6 @@ void opengl_ui::enter_main_loop()
 	{
 		++current_fps;
 		glfwPollEvents();
-
-		//Let's rotate the image
-		//object->image_rotation(0.1f);
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
@@ -253,7 +261,7 @@ void opengl_ui::enter_main_loop()
 		}
 
 		glClearColor(0.5,0.5,0.5,1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		object->prepare_for_render();
 		object->set_transformations(model,view,projection);
