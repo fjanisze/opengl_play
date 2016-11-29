@@ -237,6 +237,19 @@ void opengl_ui::enter_main_loop()
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 100.0f);
 
+	glm::vec3 cube_position[] = {
+		glm::vec3( -3.0f,  4.0f,  -10.0f),
+		glm::vec3( 2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3( 2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3( 1.3f, -2.0f, -2.5f),
+		glm::vec3( 1.5f,  2.0f, -2.5f),
+		glm::vec3( 1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
+
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -265,7 +278,20 @@ void opengl_ui::enter_main_loop()
 
 		object->prepare_for_render();
 		object->set_transformations(model,view,projection);
-		object->render();
+
+		//Let's add some more random cubes
+		for( int i{0} ; i<10 ; ++i ) {
+			//Render the current cube
+			object->render();
+			//New position:
+			glm::mat4 model_location;
+			model_location = glm::translate(model,
+											cube_position[i]);
+			object->set_transformations(model_location,
+										   view,
+										   projection);
+		}
+
 		object->clean_after_render();
 
 		fps_info->render_text();
