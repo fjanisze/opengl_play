@@ -103,9 +103,17 @@ void opengl_ui::ui_keyboard_press(GLint button,
 				object->image_rotation(-0.1);
 				render_update_needed = true;
 			}
+			if( button == GLFW_KEY_W ) {
+				object->scale(0.9);
+				render_update_needed = true;
+			} else if( button == GLFW_KEY_E ) {
+				object->scale(1.1);
+				render_update_needed = true;
+			}
 		}
 	}
 }
+
 
 void opengl_ui::setup_callbacks()
 {

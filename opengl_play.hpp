@@ -3,6 +3,7 @@
 #include "shaders.hpp"
 #include "text_rendering.hpp"
 #include <opengl_object.hpp>
+#include <functional>
 
 namespace opengl_play
 {

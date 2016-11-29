@@ -126,6 +126,13 @@ void little_object::move(mov_direction dir, GLfloat amount)
 						  translation_vector.z));
 }
 
+void little_object::scale(GLfloat amount)
+{
+	object_position = glm::scale(
+				object_position,
+				glm::vec3(amount,amount,amount));
+}
+
 void little_object::mouse_click(GLint button, GLint action)
 {
 	if(action != GLFW_PRESS)

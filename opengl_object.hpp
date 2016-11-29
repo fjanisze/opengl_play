@@ -57,6 +57,7 @@ public:
 	void mouse_click(GLint button,GLint action);
 	void image_rotation(GLfloat amount);
 	void move(mov_direction dir, GLfloat amount);
+	void scale(GLfloat amount);
 };
 
 using little_object_ptr = std::shared_ptr<little_object>;
