@@ -1,72 +1,11 @@
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-// GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <cstdint>
-#include <stdexcept>
-#include <string>
-#include <cmath>
-#include <thread>
-#include <chrono>
-#include <map>
+#include <headers.hpp>
 #include "logger/logger.hpp"
 #include "shaders.hpp"
 #include "text_rendering.hpp"
-#include <SOIL/SOIL.h>
+#include <opengl_object.hpp>
 
 namespace opengl_play
 {
-
-int check_for_errors();
-
-typedef unsigned char byte_t;
-
-struct vertex_info
-{
-	GLfloat x,y,z;
-	GLfloat r,g,b;
-	GLfloat t_x,t_y;//Texture coordinates
-};
-
-struct texture_info
-{
-	GLuint texture;
-	GLint  width, height;
-	operator GLuint(){
-		return texture;
-	}
-};
-
-class little_object
-{
-	GLuint VAO,VBO,EBO;
-	GLfloat current_mix_ratio;
-	std::map<std::string,texture_info> textures;
-	GLint  tex_width,tex_height;
-	vertex_info vertices[4];
-	GLuint    vertex_idxs[6];
-	GLfloat   vertex_data[8*4];
-	glm::mat4 object_position; //This is just a transformation matrix
-	shaders::my_small_shaders obj_shader;
-
-	void init_vertices();
-	texture_info load_texture(const std::string& filename,
-							  GLint wrapping_method = GL_REPEAT);
-	void update_vertex_data();
-public:
-	little_object();
-	~little_object();
-	void prepare_for_render();
-	void render();
-	void clean_after_render();
-	void mouse_click(GLint button,GLint action);
-	void image_rotation(GLfloat amount);
-};
-
-using little_object_ptr = std::shared_ptr<little_object>;
 
 void mouse_click_callback(GLFWwindow* ctx,
 						  int button,
@@ -99,6 +38,7 @@ public:
 	void        update_viewport(int new_win_h,
 								int new_win_w);
 	void		ui_mouse_click(GLint button,GLint action);
+	void		ui_keyboard_press(GLint button,GLint scode,GLint action);
 	virtual ~opengl_ui();
 };
 

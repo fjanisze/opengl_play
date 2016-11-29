@@ -95,6 +95,8 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/SOIL/")
 # Remaining stuff
 #########################################################
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/")
+
 file(GLOB SRC_LIST
     "*.hpp"
     "*.cpp"
