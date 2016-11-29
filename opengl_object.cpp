@@ -133,6 +133,19 @@ void little_object::scale(GLfloat amount)
 				glm::vec3(amount,amount,amount));
 }
 
+void little_object::set_transformations(glm::mat4 model,
+										glm::mat4 view,
+										glm::mat4 projection)
+{
+	GLint model_loc = glGetUniformLocation(obj_shader,"model");
+	GLint view_loc = glGetUniformLocation(obj_shader,"view");
+	GLint projection_loc = glGetUniformLocation(obj_shader,"projection");
+
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+}
+
 void little_object::mouse_click(GLint button, GLint action)
 {
 	if(action != GLFW_PRESS)
@@ -247,18 +260,19 @@ void little_object::prepare_for_render()
 								"transform_matrix"),
 								1, GL_FALSE,
 								glm::value_ptr(object_position));
-	glBindVertexArray(VAO);
 }
 
 void little_object::render()
 {
+	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+	//Unbind the VAO
+	glBindVertexArray(0);
 }
 
 void little_object::clean_after_render()
 {
-	//Unbind the VAO
-	glBindVertexArray(0);
+
 }
 
 }

@@ -219,6 +219,13 @@ void opengl_ui::enter_main_loop()
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
 
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
+	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 100.0f);
+
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -249,6 +256,7 @@ void opengl_ui::enter_main_loop()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		object->prepare_for_render();
+		object->set_transformations(model,view,projection);
 		object->render();
 		object->clean_after_render();
 

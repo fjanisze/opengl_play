@@ -58,6 +58,7 @@ public:
 	void image_rotation(GLfloat amount);
 	void move(mov_direction dir, GLfloat amount);
 	void scale(GLfloat amount);
+	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
 };
 
 using little_object_ptr = std::shared_ptr<little_object>;

@@ -7,10 +7,13 @@ out vec3 out_color;
 out vec2 texture_coords;
 
 uniform mat4 transform_matrix;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main()
 {
-    gl_Position = transform_matrix * vec4(position, 1.0);
+    gl_Position = projection * view * model * transform_matrix * vec4(position, 1.0);
     out_color = color;
     texture_coords = vec2(tex_coord.x,tex_coord.y);
 }
