@@ -1,5 +1,6 @@
 #include <headers.hpp>
 #include <shaders.hpp>
+#include <set>
 
 namespace opengl_play
 {
@@ -38,6 +39,14 @@ enum class rotation_axis
 	z
 };
 
+struct object_data
+{
+	glm::vec3 position;
+	glm::mat4 model,
+			view,
+			projection;
+};
+
 class little_object
 {
 	GLuint VAO,VBO;
@@ -53,6 +62,13 @@ class little_object
 	texture_info load_texture(const std::string& filename,
 							  GLint wrapping_method = GL_REPEAT);
 	void update_vertex_data();
+	std::map<int,object_data> objects;
+	int next_object_id;
+	decltype(objects)::iterator sel_obj_it;
+	int selected_object;
+	bool any_object_selected();
+	void apply_transformations(decltype(objects)::value_type& elem);
+	void apply_position(decltype(objects)::value_type& elem);
 public:
 	little_object();
 	~little_object();
@@ -64,6 +80,10 @@ public:
 	void move(mov_direction dir, GLfloat amount);
 	void scale(GLfloat amount);
 	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
+	int add_object(const glm::vec3& coordinates);
+	bool select_object(int id);
+	bool release_current_object();
+	std::set<int> get_all_objects();
 };
 
 using little_object_ptr = std::shared_ptr<little_object>;

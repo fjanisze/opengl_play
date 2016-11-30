@@ -106,7 +106,8 @@ void opengl_ui::ui_keyboard_press(GLint button,
 		}
 		auto it2 = rot_mapping.find(button);
 		if( it2 != rot_mapping.end() ) {
-			object->image_rotation(it2->second.first,it2->second.second);
+			object->image_rotation(it2->second.first,
+								   it2->second.second);
 			return;
 		}
 		switch( button ) {
@@ -234,8 +235,8 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 view;
 	glm::mat4 projection;
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 100.0f);
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
+	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 200.0f);
 
 	glm::vec3 cube_position[] = {
 		glm::vec3( -3.0f,  4.0f,  -10.0f),
@@ -247,8 +248,22 @@ void opengl_ui::enter_main_loop()
 		glm::vec3( 1.3f, -2.0f, -2.5f),
 		glm::vec3( 1.5f,  2.0f, -2.5f),
 		glm::vec3( 1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
+		glm::vec3(-1.3f,  1.0f, -1.5f),
+		glm::vec3( 0.0f,  0.0f, 0.0f)
 	};
+
+	int moving_object_id;
+	for(auto& elem : cube_position) {
+		int elem_id = object->add_object(elem);
+		if(!object->select_object(elem_id)) {
+			ERR("Unable to select object with ID: ", elem_id);
+		}
+		object->set_transformations(model,view,projection);
+		//Will be the last one
+		moving_object_id = elem_id;
+	}
+	object->select_object(moving_object_id);
+	auto all_ids = object->get_all_objects();
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -277,21 +292,15 @@ void opengl_ui::enter_main_loop()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		object->prepare_for_render();
-		object->set_transformations(model,view,projection);
-
-		//Let's add some more random cubes
-		for( int i{0} ; i<10 ; ++i ) {
-			//Render the current cube
-			object->render();
-			//New position:
-			glm::mat4 model_location;
-			model_location = glm::translate(model,
-											cube_position[i]);
-			object->set_transformations(model_location,
-										   view,
-										   projection);
+		//Let's rotate all the objects but the moving one
+		for(auto id:all_ids) {
+			if( id == moving_object_id )
+				continue;
+			object->select_object(id);
+			object->image_rotation(rotation_axis::z,0.1);
 		}
-
+		object->select_object(moving_object_id);
+		object->render();
 		object->clean_after_render();
 
 		fps_info->render_text();

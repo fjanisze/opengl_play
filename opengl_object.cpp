@@ -132,62 +132,137 @@ void little_object::update_vertex_data()
 
 }
 
+bool little_object::any_object_selected()
+{
+	return sel_obj_it != objects.end();
+}
+
+std::set<int> little_object::get_all_objects()
+{
+	std::set<int> ids;
+	for(auto& elem:objects) {
+		ids.insert(elem.first);
+	}
+	return ids;
+}
+
+void little_object::apply_transformations(decltype(objects)::value_type& elem)
+{
+	GLint model_loc = glGetUniformLocation(obj_shader,"model");
+	GLint view_loc = glGetUniformLocation(obj_shader,"view");
+	GLint projection_loc = glGetUniformLocation(obj_shader,"projection");
+
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(elem.second.model));
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(elem.second.view));
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(elem.second.projection));
+}
+
+void little_object::apply_position(decltype(objects)::value_type& elem)
+{
+	glm::mat4 model;
+	model = glm::translate(
+					model,
+					elem.second.position);
+	glUniformMatrix4fv(glGetUniformLocation(obj_shader,
+								"object_position"),
+								1, GL_FALSE,
+								glm::value_ptr(model));
+}
+
 void little_object::image_rotation(rotation_axis axis,
 								   GLfloat amount)
 {
-	static glm::vec3 rot_axis_defs[3]{
-		glm::vec3(1.0,0.0,0.0),
-		glm::vec3(0.0,1.0,0.0),
-		glm::vec3(0.0,0.0,1.0),
-	};
-	object_position = glm::rotate(
-				object_position,
-				amount,
-				rot_axis_defs[static_cast<int>(axis)]);
+	if( any_object_selected() ) {
+		static glm::vec3 rot_axis_defs[3]{
+			glm::vec3(1.0,0.0,0.0),
+			glm::vec3(0.0,1.0,0.0),
+			glm::vec3(0.0,0.0,1.0),
+		};
+		sel_obj_it->second.model = glm::rotate(
+					sel_obj_it->second.model,
+					amount,
+					rot_axis_defs[static_cast<int>(axis)]);
+	} else {
+		WARN1("image_rotation: Select a valid object first!");
+	}
 }
 
 void little_object::move(mov_direction dir, GLfloat amount)
 {
-	glm::vec4 translation_vector;
+	if( any_object_selected() ) {
+		glm::vec4 translation_vector;
 
-	switch(dir) {
-	case mov_direction::down:
-		amount *= -1;
-	case mov_direction::top:
-		translation_vector.y = amount;
-		break;
-	case mov_direction::left:
-		amount *= -1;
-	case mov_direction::right:
-		translation_vector.x = amount;
-		break;
+		switch(dir) {
+		case mov_direction::down:
+			amount *= -1;
+		case mov_direction::top:
+			translation_vector.y = amount;
+			break;
+		case mov_direction::left:
+			amount *= -1;
+		case mov_direction::right:
+			translation_vector.x = amount;
+			break;
+		}
+
+		sel_obj_it->second.model = glm::translate(
+						sel_obj_it->second.model,
+						glm::vec3(translation_vector.x,
+								  translation_vector.y,
+								  translation_vector.z));
+	} else {
+		WARN1("move: Select a valid object first!");
 	}
-
-	object_position = glm::translate(
-				object_position,
-				glm::vec3(translation_vector.x,
-						  translation_vector.y,
-						  translation_vector.z));
 }
 
 void little_object::scale(GLfloat amount)
 {
-	object_position = glm::scale(
-				object_position,
-				glm::vec3(amount,amount,amount));
+	if( any_object_selected() ) {
+		sel_obj_it->second.model = glm::scale(
+					sel_obj_it->second.model,
+					glm::vec3(amount,amount,amount));
+	} else {
+		WARN1("scale: Select a valid object first!");
+	}
 }
 
 void little_object::set_transformations(glm::mat4 model,
 										glm::mat4 view,
 										glm::mat4 projection)
 {
-	GLint model_loc = glGetUniformLocation(obj_shader,"model");
-	GLint view_loc = glGetUniformLocation(obj_shader,"view");
-	GLint projection_loc = glGetUniformLocation(obj_shader,"projection");
+	if( any_object_selected() ) {
+		sel_obj_it->second.model = model;
+		sel_obj_it->second.view = view;
+		sel_obj_it->second.projection = projection;
+	} else {
+		WARN1("set_transformations: Select a valid object first!");
+	}
+}
 
-	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+int little_object::add_object(const glm::vec3 &coordinates)
+{
+	int id = next_object_id++;
+	object_data data;
+	data.position = coordinates;
+	objects.insert({id, data});
+	return id;
+}
+
+bool little_object::select_object(int id)
+{
+	auto it = objects.find(id);
+	if( it != objects.end() ) {
+		selected_object = id;
+		sel_obj_it = it;
+		return true;
+	}
+	return false;
+}
+
+bool little_object::release_current_object()
+{
+	selected_object = 0;
+	sel_obj_it = objects.end();
 }
 
 void little_object::mouse_click(GLint button, GLint action)
@@ -206,7 +281,9 @@ void little_object::mouse_click(GLint button, GLint action)
 }
 
 little_object::little_object() :
-	current_mix_ratio{0.2}
+	current_mix_ratio{0.2},
+	selected_object{0},
+	next_object_id{1}
 {
 	LOG1("little_object::little_object(): Construction.");
 
@@ -285,17 +362,16 @@ void little_object::prepare_for_render()
 	glUniform1f(glGetUniformLocation(obj_shader,
 									 "mix_ratio"),current_mix_ratio);
 
-	//Load the transformation matrix
-	glUniformMatrix4fv(glGetUniformLocation(obj_shader,
-								"transform_matrix"),
-								1, GL_FALSE,
-								glm::value_ptr(object_position));
 }
 
 void little_object::render()
 {
 	glBindVertexArray(VAO);
-	glDrawArrays(GL_TRIANGLES,0,36);
+	for(auto& object : objects) {
+		apply_position(object);
+		apply_transformations(object);
+		glDrawArrays(GL_TRIANGLES,0,36);
+	}
 	//Unbind the VAO
 	glBindVertexArray(0);
 }
