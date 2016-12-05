@@ -24,14 +24,6 @@ struct texture_info
 	}
 };
 
-enum class mov_direction
-{
-	left,
-	right,
-	top,
-	down
-};
-
 enum class rotation_axis
 {
 	x,
@@ -55,7 +47,7 @@ class little_object
 	GLint  tex_width,tex_height;
 	vertex_info vertices[36];
 	GLfloat   vertex_data[36*5];
-	glm::mat4 object_position; //This is just a transformation matrix
+	glm::mat4 camera_view;
 	shaders::my_small_shaders obj_shader;
 
 	void init_vertices();
@@ -78,11 +70,13 @@ public:
 	void mouse_click(GLint button,GLint action);
 	void image_rotation(rotation_axis axis, GLfloat amount);
 	void move(mov_direction dir, GLfloat amount);
+	glm::vec3 get_object_position();
 	void scale(GLfloat amount);
 	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
 	int add_object(const glm::vec3& coordinates);
 	bool select_object(int id);
 	bool release_current_object();
+	void modify_view(glm::mat4 new_view);
 	std::set<int> get_all_objects();
 };
 

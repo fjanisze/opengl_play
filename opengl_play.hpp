@@ -3,7 +3,7 @@
 #include "shaders.hpp"
 #include "text_rendering.hpp"
 #include <opengl_object.hpp>
-#include <functional>
+#include "my_camera.hpp"
 
 namespace opengl_play
 {
@@ -39,6 +39,8 @@ class opengl_ui
 	void get_current_ctx_viewport();
 	void init_fps_info();
 	void evaluate_key_status();
+	camera_obj		camera;
+
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();

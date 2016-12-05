@@ -107,26 +107,44 @@ void opengl_ui::evaluate_key_status()
 		{GLFW_KEY_Q,{rotation_axis::y,-0.1}},
 		{GLFW_KEY_E,{rotation_axis::y,0.1}},
 	};
+	static std::unordered_map<GLint,mov_direction> cam_moving_mapping = {
+		{GLFW_KEY_W,mov_direction::top},
+		{GLFW_KEY_S,mov_direction::down},
+		{GLFW_KEY_A,mov_direction::left},
+		{GLFW_KEY_D,mov_direction::right}
+	};
 	for(int button{ 0 } ; button < stat_key_array_size ; ++button){
 		if( key_status[ button ] == key_status_t::pressed ) {
-			auto it = moving_mapping.find(button);
-			if( it != moving_mapping.end() ) {
-				object->move(it->second,0.1);
-			}
-			auto it2 = rot_mapping.find(button);
-			if( it2 != rot_mapping.end() ) {
-				object->image_rotation(it2->second.first,
-									   it2->second.second);
-			}
-			switch( button ) {
-			case GLFW_KEY_F:
-				object->scale(0.9);
-				break;
-			case GLFW_KEY_V:
-				object->scale(1.1);
-				break;
-			default:
-				break;
+			if( key_status[ GLFW_KEY_LEFT_SHIFT ] == key_status_t::pressed ) {
+				//Camera moving
+				auto it = cam_moving_mapping.find(button);
+				if( it != cam_moving_mapping.end() ) {
+					camera->move_camera( it->second, 0.1 );
+					object->modify_view(camera->get_view());
+				}
+			} else {
+				//Object moving
+				auto it = moving_mapping.find(button);
+				if( it != moving_mapping.end() ) {
+					object->move(it->second,0.1);
+					camera->set_target(object->get_object_position());
+					object->modify_view(camera->get_view());
+				}
+				auto it2 = rot_mapping.find(button);
+				if( it2 != rot_mapping.end() ) {
+					object->image_rotation(it2->second.first,
+										   it2->second.second);
+				}
+				switch( button ) {
+				case GLFW_KEY_F:
+					object->scale(0.9);
+					break;
+				case GLFW_KEY_V:
+					object->scale(1.1);
+					break;
+				default:
+					break;
+				}
 			}
 			render_update_needed = true;
 		}
@@ -210,6 +228,8 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_fps_info();
 
+	camera = my_camera::create_camera({0.0,0.0,-4.0},{0.0,-3.0,0.0});
+
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
 }
@@ -247,7 +267,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 view;
 	glm::mat4 projection;
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
+	//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
 	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 200.0f);
 
 	glm::vec3 cube_position[] = {
@@ -276,6 +296,8 @@ void opengl_ui::enter_main_loop()
 	}
 	object->select_object(moving_object_id);
 	auto all_ids = object->get_all_objects();
+	camera->update_cam_view();
+	object->modify_view(camera->get_view());
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))

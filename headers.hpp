@@ -17,5 +17,17 @@
 #include <map>
 #include <SOIL/SOIL.h>
 
+namespace opengl_play
+{
+
+enum class mov_direction
+{
+	left,
+	right,
+	top,
+	down
+};
+
+}
 
 #endif

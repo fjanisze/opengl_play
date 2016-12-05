@@ -137,6 +137,20 @@ bool little_object::any_object_selected()
 	return sel_obj_it != objects.end();
 }
 
+glm::vec3 little_object::get_object_position()
+{
+	if( any_object_selected() ) {
+		return sel_obj_it->second.position;
+	}
+}
+
+void little_object::modify_view(glm::mat4 new_view)
+{
+	for( auto& object:objects ) {
+		object.second.view = new_view;
+	}
+}
+
 std::set<int> little_object::get_all_objects()
 {
 	std::set<int> ids;
