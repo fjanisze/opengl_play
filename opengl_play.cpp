@@ -84,6 +84,15 @@ void opengl_ui::ui_keyboard_press(GLint button,
 								  GLint scode,
 								  GLint action)
 {
+	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
+		key_status[ button ] = key_status_t::pressed;
+	} else if( action == GLFW_RELEASE ) {
+		key_status[ button ] = key_status_t::not_pressed;
+	}
+}
+
+void opengl_ui::evaluate_key_status()
+{
 	static std::unordered_map<GLint,mov_direction> moving_mapping = {
 		{GLFW_KEY_UP,mov_direction::top},
 		{GLFW_KEY_DOWN,mov_direction::down},
@@ -98,29 +107,29 @@ void opengl_ui::ui_keyboard_press(GLint button,
 		{GLFW_KEY_Q,{rotation_axis::y,-0.1}},
 		{GLFW_KEY_E,{rotation_axis::y,0.1}},
 	};
-	if(action == GLFW_PRESS || action == GLFW_REPEAT) {
-		auto it = moving_mapping.find(button);
-		if( it != moving_mapping.end() ) {
-			object->move(it->second,0.1);
-			return;
+	for(int button{ 0 } ; button < stat_key_array_size ; ++button){
+		if( key_status[ button ] == key_status_t::pressed ) {
+			auto it = moving_mapping.find(button);
+			if( it != moving_mapping.end() ) {
+				object->move(it->second,0.1);
+			}
+			auto it2 = rot_mapping.find(button);
+			if( it2 != rot_mapping.end() ) {
+				object->image_rotation(it2->second.first,
+									   it2->second.second);
+			}
+			switch( button ) {
+			case GLFW_KEY_F:
+				object->scale(0.9);
+				break;
+			case GLFW_KEY_V:
+				object->scale(1.1);
+				break;
+			default:
+				break;
+			}
+			render_update_needed = true;
 		}
-		auto it2 = rot_mapping.find(button);
-		if( it2 != rot_mapping.end() ) {
-			object->image_rotation(it2->second.first,
-								   it2->second.second);
-			return;
-		}
-		switch( button ) {
-		case GLFW_KEY_F:
-			object->scale(0.9);
-			break;
-		case GLFW_KEY_V:
-			object->scale(1.1);
-			break;
-		default:
-			break;
-		}
-		render_update_needed = true;
 	}
 }
 
@@ -200,6 +209,9 @@ opengl_ui::opengl_ui(int win_width,
 	object = std::make_shared<little_object>();
 
 	init_fps_info();
+
+	for(auto& elem:key_status)
+		elem = key_status_t::not_pressed;
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -270,6 +282,7 @@ void opengl_ui::enter_main_loop()
 	{
 		++current_fps;
 		glfwPollEvents();
+		evaluate_key_status();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<

@@ -19,8 +19,16 @@ void window_resize_callback(GLFWwindow* ctx,
 							int width,
 							int height);
 
+static const int stat_key_array_size{ 1024 };
+enum class key_status_t
+{
+	pressed,
+	not_pressed
+};
+
 class opengl_ui
 {
+	key_status_t  key_status[stat_key_array_size];
 	bool          render_update_needed;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
@@ -30,6 +38,7 @@ class opengl_ui
 	void setup_callbacks();
 	void get_current_ctx_viewport();
 	void init_fps_info();
+	void evaluate_key_status();
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
