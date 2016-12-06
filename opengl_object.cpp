@@ -140,7 +140,9 @@ bool little_object::any_object_selected()
 glm::vec3 little_object::get_object_position()
 {
 	if( any_object_selected() ) {
-		return sel_obj_it->second.position;
+		glm::vec4 pos = {1.0,1.0,1.0,1.0};
+		pos  = sel_obj_it->second.model * pos;
+		return glm::vec3{pos.x,pos.y,pos.z};
 	}
 }
 
@@ -212,9 +214,9 @@ void little_object::move(mov_direction dir, GLfloat amount)
 		case mov_direction::top:
 			translation_vector.y = amount;
 			break;
-		case mov_direction::left:
-			amount *= -1;
 		case mov_direction::right:
+			amount *= -1;
+		case mov_direction::left:
 			translation_vector.x = amount;
 			break;
 		}

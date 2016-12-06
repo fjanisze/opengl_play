@@ -228,7 +228,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_fps_info();
 
-	camera = my_camera::create_camera({0.0,0.0,-4.0},{0.0,-3.0,0.0});
+	camera = my_camera::create_camera({0.0,0.0,-10.0},{0.0,-3.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -266,7 +266,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 projection;
-	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
 	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 200.0f);
 
@@ -296,8 +296,9 @@ void opengl_ui::enter_main_loop()
 	}
 	object->select_object(moving_object_id);
 	auto all_ids = object->get_all_objects();
-	camera->update_cam_view();
+	camera->set_target(object->get_object_position());
 	object->modify_view(camera->get_view());
+	camera->update_cam_view();
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))

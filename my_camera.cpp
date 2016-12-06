@@ -61,7 +61,6 @@ void my_camera::set_position(glm::vec3 pos)
 
 void my_camera::set_target(glm::vec3 pos)
 {
-	LOG1(pos.x,",",pos.y,",",pos.y);
 	cam_target = pos;
 	update_cam_view();
 }
