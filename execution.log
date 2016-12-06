@@ -1,5 +1,0 @@
-0 2016-12-05 08:45:25.183225181  DBG: Creating window, 1024/768
-1 2016-12-05 08:45:25.645162960  DBG: Creating the shader compiler
-2 2016-12-05 08:45:25.645186755  DBG: little_object::little_object(): Construction.
-3 2016-12-05 08:45:25.645232541  ERR: Unable to open the file ../shader_1.vert
-4 2016-12-05 08:45:25.645243843  DBG: Compiling shader: 35633
