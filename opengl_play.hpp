@@ -4,6 +4,7 @@
 #include "text_rendering.hpp"
 #include <opengl_object.hpp>
 #include "my_camera.hpp"
+#include "my_lines.hpp"
 
 namespace opengl_play
 {
@@ -40,6 +41,8 @@ class opengl_ui
 	void init_fps_info();
 	void evaluate_key_status();
 	camera_obj		camera;
+
+	my_lines_ptr position_lines;
 
 public:
 	opengl_ui(int win_width, int win_heigth);

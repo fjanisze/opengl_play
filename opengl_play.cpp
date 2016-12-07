@@ -119,16 +119,13 @@ void opengl_ui::evaluate_key_status()
 				//Camera moving
 				auto it = cam_moving_mapping.find(button);
 				if( it != cam_moving_mapping.end() ) {
-					camera->move_camera( it->second, 0.1 );
-					object->modify_view(camera->get_view());
+					camera->move_camera( it->second, 0.3 );
 				}
 			} else {
 				//Object moving
 				auto it = moving_mapping.find(button);
 				if( it != moving_mapping.end() ) {
 					object->move(it->second,0.1);
-					camera->set_target(object->get_object_position());
-					object->modify_view(camera->get_view());
 				}
 				auto it2 = rot_mapping.find(button);
 				if( it2 != rot_mapping.end() ) {
@@ -145,7 +142,10 @@ void opengl_ui::evaluate_key_status()
 				default:
 					break;
 				}
+				camera->set_target(object->get_object_position());
 			}
+			object->modify_view(camera->get_view());
+			position_lines->modify_view(camera->get_view());
 			render_update_needed = true;
 		}
 	}
@@ -225,6 +225,7 @@ opengl_ui::opengl_ui(int win_width,
 	}
 
 	object = std::make_shared<little_object>();
+	position_lines = std::make_shared<my_static_lines>();
 
 	init_fps_info();
 
@@ -294,11 +295,26 @@ void opengl_ui::enter_main_loop()
 		//Will be the last one
 		moving_object_id = elem_id;
 	}
+
+	position_lines->modify_model(model);
+	position_lines->modify_projection(projection);
+
 	object->select_object(moving_object_id);
 	auto all_ids = object->get_all_objects();
 	camera->set_target(object->get_object_position());
 	object->modify_view(camera->get_view());
+	position_lines->modify_view(camera->get_view());
+
+
 	camera->update_cam_view();
+
+	//Add the lines
+	position_lines->add_line({0.0,0.0,0.0},
+							{10.0,0.0,0.0});
+	position_lines->add_line({0.0,0.0,0.0},
+							{0.0,10.0,0.0});
+	position_lines->add_line({0.0,0.0,0.0},
+							{0.0,0.0,10.0});
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -338,6 +354,10 @@ void opengl_ui::enter_main_loop()
 		object->select_object(moving_object_id);
 		object->render();
 		object->clean_after_render();
+
+		position_lines->prepare_for_render();
+		position_lines->render();
+		position_lines->clean_after_render();
 
 		fps_info->render_text();
 

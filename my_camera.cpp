@@ -37,10 +37,10 @@ void my_camera::move_camera(mov_direction direction, GLfloat speed)
 		cam_position -= cam_x_axis * speed;
 		break;
 	case mov_direction::top:
-		cam_position -= cam_dir * speed;
+		cam_position += cam_y_axis * speed;
 		break;
 	case mov_direction::down:
-		cam_position += cam_dir * speed;
+		cam_position -= cam_y_axis * speed;
 		break;
 	default:
 		break;
