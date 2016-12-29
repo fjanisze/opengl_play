@@ -13,6 +13,7 @@ my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 	cam_target( target ),
 	cam_position( position )
 {
+
 }
 
 void my_camera::update_cam_view()
@@ -64,9 +65,5 @@ void my_camera::set_target(glm::vec3 pos)
 	update_cam_view();
 }
 
-glm::vec3 my_camera::get_target()
-{
-	return cam_target;
-}
 
 }
