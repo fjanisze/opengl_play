@@ -30,6 +30,8 @@ enum class key_status_t
 class opengl_ui
 {
 	key_status_t  key_status[stat_key_array_size];
+	double        last_mouse_x,
+				  last_mouse_y;
 	bool          render_update_needed;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
@@ -52,7 +54,8 @@ public:
 	void        image_update_needed();
 	void        update_viewport(int new_win_h,
 								int new_win_w);
-	void		ui_mouse_click(GLint button,GLint action);
+	void	  	ui_mouse_click(GLint button,GLint action);
+	void        ui_mouse_move(double x,double y);
 	void		ui_keyboard_press(GLint button,GLint scode,GLint action);
 	virtual ~opengl_ui();
 };

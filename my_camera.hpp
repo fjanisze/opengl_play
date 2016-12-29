@@ -25,6 +25,7 @@ public:
 	glm::mat4 get_view();
 	void set_position(glm::vec3 pos);
 	void set_target(glm::vec3 pos);
+	glm::vec3 get_target();
 	static camera_obj create_camera(glm::vec3 pos,glm::vec3 target);
 };
 

@@ -7,10 +7,6 @@ namespace
 {
 //Saved context for the GLFW callbacks
 opengl_ui* ui_instance;
-//Global for the mouse callback
-int left_button_state = GLFW_RELEASE;
-//This coordinate is needed to calculate the delta movement
-glm::dvec2 last_know_mouse_position = {0,0};
 }
 
 GLfloat mycos(double val){
@@ -31,18 +27,6 @@ void mouse_click_callback(GLFWwindow *ctx,
 						  int action,
 						  int)
 {
-	if(button == GLFW_MOUSE_BUTTON_LEFT)
-	{
-		if(action == GLFW_PRESS)
-		{
-			left_button_state = action;
-			glfwGetCursorPos(ui_instance->get_win_ctx(),
-							 &last_know_mouse_position.x,
-							 &last_know_mouse_position.y);
-		}
-		else
-			left_button_state = GLFW_RELEASE;
-	}
 	ui_instance->ui_mouse_click(button,action);
 	ui_instance->image_update_needed();
 }
@@ -51,11 +35,7 @@ void cursor_pos_callback(GLFWwindow *ctx,
 						 double x,
 						 double y)
 {
-	if(left_button_state == GLFW_PRESS)
-	{
-		last_know_mouse_position.x = x;
-		last_know_mouse_position.y = y;
-	}
+	ui_instance->ui_mouse_move(x,y);
 }
 
 void window_resize_callback(GLFWwindow *ctx,
@@ -78,6 +58,26 @@ void keyboard_press_callback(GLFWwindow* ctx,
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
 	object->mouse_click(button,action);
+}
+
+void opengl_ui::ui_mouse_move(double x, double y)
+{
+	static bool first_call = true;
+	if(first_call){
+		last_mouse_x = x;
+		last_mouse_y = y;
+		first_call = false;
+	}
+	double delta_x = (last_mouse_x - x)*.1,
+			delta_y = (last_mouse_y - y)*.1;
+	glm::vec3 target = camera->get_target();
+	target.x += delta_x;
+	target.y += delta_y;
+	camera->set_target(target);
+	last_mouse_x = x;
+	last_mouse_y = y;
+	object->modify_view(camera->get_view());
+	position_lines->modify_view(camera->get_view());
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -254,12 +254,12 @@ void opengl_ui::prepare_for_main_loop()
 void opengl_ui::enter_main_loop()
 {
 	check_for_errors();
-	//now we have our object configured and ready to be rendered
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	glEnable(GL_DEPTH_TEST);
+
+	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
