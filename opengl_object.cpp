@@ -16,7 +16,6 @@ int check_for_errors()
 	return error_count;
 }
 
-
 void little_object::init_vertices()
 {
 	GLfloat raw_vertices[] = {
@@ -296,6 +295,7 @@ void little_object::texture_mix(bool increase_ratio)
 }
 
 little_object::little_object() :
+	lights::object_lighting(&obj_shader),
 	current_mix_ratio{0.2},
 	selected_object{0},
 	next_object_id{1}
@@ -385,20 +385,10 @@ void little_object::render()
 	for(auto& object : objects) {
 		apply_position(object);
 		apply_transformations(object);
-		//Apply the object color
-		GLint obj_color_uniform = glGetUniformLocation(obj_shader,
-												   "object_color");
-		glUniform3f(obj_color_uniform,
-					object.second.color.r,
-					object.second.color.b,
-					object.second.color.g);
-		//Hardcoded white ligtht color
-		GLint light_color_uniform = glGetUniformLocation(obj_shader,
-												   "light_color");
-		glUniform3f(light_color_uniform,
-					1.0,
-					1.0,
-					1.0);
+
+		apply_object_color(object.second.color);
+		calculate_lighting();
+
 		glDrawArrays(GL_TRIANGLES,0,36);
 	}
 	//Unbind the VAO

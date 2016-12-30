@@ -46,7 +46,8 @@ class opengl_ui
 	camera_obj		camera;
 
 	my_lines_ptr position_lines;
-	lights::simple_light_ptr light_1;
+	lights::simple_light_ptr light_1,
+							 light_2;
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();

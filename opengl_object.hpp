@@ -1,5 +1,6 @@
 #include <headers.hpp>
 #include <shaders.hpp>
+#include <lights.hpp>
 #include <set>
 
 namespace opengl_play
@@ -40,7 +41,7 @@ struct object_data
 	glm::vec3 color;
 };
 
-class little_object
+class little_object : lights::object_lighting
 {
 	GLuint VAO,VBO;
 	GLfloat current_mix_ratio;

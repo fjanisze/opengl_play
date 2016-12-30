@@ -273,7 +273,11 @@ void opengl_ui::enter_main_loop()
 
 	//Adding a light
 	light_1 = lights::simple_light::create_light(glm::vec3(1.0,1.0,1.0),
-												 glm::vec3(1.0,1.0,1.0));
+												 glm::vec3(0.0,1.0,0.0),
+												 0.6);
+	light_2 = lights::simple_light::create_light(glm::vec3(-1.0,1.0,1.0),
+												 glm::vec3(1.0,0.0,0.0),
+												 0.1);
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -306,6 +310,17 @@ void opengl_ui::enter_main_loop()
 		light_1->prepare_for_render();
 		light_1->render();
 		light_1->clear_after_render();
+
+		light_2->set_transformation(model,camera->get_view(),projection);
+		light_2->prepare_for_render();
+		light_2->render();
+		light_2->clear_after_render();
+
+		//Update the lights strenght
+		auto val = light_1->get_strenght();
+		light_1->set_strenght(std::fmod(val + .01, 1.0));
+		val = light_2->get_strenght();
+		light_2->set_strenght(std::fmod(val + 0.001, 1.0));
 
 		fps_info->render_text();
 
