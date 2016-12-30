@@ -23,8 +23,6 @@ void my_camera::update_cam_view()
 	cam_dir = glm::normalize( cam_pos - cam_front );
 	//Calculate the perperndicular vector
 	cam_right = glm::normalize( glm::cross( cam_up, cam_dir ));
-	//Now the real y axis
-	cam_up = glm::normalize( glm::cross( cam_dir, cam_right ));
 	cam_view = glm::lookAt( cam_pos, cam_pos + cam_front, cam_up );
 }
 
@@ -90,6 +88,11 @@ GLdouble my_camera::get_camera_yaw()
 GLdouble my_camera::get_camera_pitch()
 {
 	return pitch;
+}
+
+glm::vec3 my_camera::get_camera_pos()
+{
+	return cam_pos;
 }
 
 }

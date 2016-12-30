@@ -77,13 +77,6 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 
 	last_mouse_x = x;
 	last_mouse_y = y;
-
-	auto yaw = camera->get_camera_yaw(),
-		pitch = camera->get_camera_pitch();
-
-	std::stringstream ss;
-	ss << "yaw:"<<yaw<<", pitch:"<<pitch;
-	camera_info->set_text(ss.str());
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -185,14 +178,14 @@ void opengl_ui::init_text()
 	fps_info = std::make_shared<text_renderer::renderable_text>();
 	fps_info->set_position(glm::fvec2(10,10));
 	fps_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-	fps_info->set_scale(1.0f);
+	fps_info->set_scale(0.4f);
 	fps_info->set_text("0 fps");
 	fps_info->set_window_size(win_h,win_w);
 
 	camera_info = std::make_shared<text_renderer::renderable_text>();
-	camera_info->set_position(glm::fvec2(win_h - 100,10));
+	camera_info->set_position(glm::fvec2(win_h - 200,10));
 	camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-	camera_info->set_scale(0.5f);
+	camera_info->set_scale(0.4f);
 	camera_info->set_text(" -- ");
 	camera_info->set_window_size(win_h,win_w);
 }
@@ -374,6 +367,15 @@ void opengl_ui::enter_main_loop()
 		position_lines->clean_after_render();
 
 		fps_info->render_text();
+
+		auto yaw = camera->get_camera_yaw(),
+			pitch = camera->get_camera_pitch();
+		auto cam_pos = camera->get_camera_pos();
+
+		std::stringstream ss;
+		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<" / x:"<<cam_pos.x<<",y:"<<cam_pos.y<<",z:"<<cam_pos.z;
+		camera_info->set_text(ss.str());
+
 		camera_info->render_text();
 
 		glfwSwapBuffers(window_ctx);
