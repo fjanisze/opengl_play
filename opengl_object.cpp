@@ -185,7 +185,7 @@ void little_object::apply_position(decltype(objects)::value_type& elem)
 								glm::value_ptr(model));
 }
 
-void little_object::image_rotation(rotation_axis axis,
+void little_object::object_rotation(rotation_axis axis,
 								   GLfloat amount)
 {
 	if( any_object_selected() ) {

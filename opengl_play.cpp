@@ -260,6 +260,9 @@ void opengl_ui::enter_main_loop()
 	position_lines->add_line({0.0,0.0,0.0},
 							{0.0,0.0,10.0},{0.0,1.0,0.0});
 
+	//Adding a light
+	light_1 = lights::simple_light::create_light(glm::vec3(1.0,1.0,1.0),
+												 glm::vec3(1.0,1.0,1.0));
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -282,6 +285,11 @@ void opengl_ui::enter_main_loop()
 		position_lines->prepare_for_render();
 		position_lines->render();
 		position_lines->clean_after_render();
+
+		light_1->set_transformation(model,camera->get_view(),projection);
+		light_1->prepare_for_render();
+		light_1->render();
+		light_1->clear_after_render();
 
 		fps_info->render_text();
 
