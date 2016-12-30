@@ -55,7 +55,14 @@ void keyboard_press_callback(GLFWwindow* ctx,
 
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
-	object->mouse_click(button,action);
+	if(action != GLFW_PRESS)
+		return;
+	if(button == GLFW_MOUSE_BUTTON_LEFT) {
+		object->texture_mix(true);
+	}
+	else if(button == GLFW_MOUSE_BUTTON_RIGHT) {
+		object->texture_mix(false);
+	}
 }
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
@@ -245,6 +252,10 @@ void opengl_ui::enter_main_loop()
 		glm::vec3( 0.0f,  0.0f, 0.0f)
 	};
 
+	int obj_id = object->add_object(glm::vec3(0.0,0.0,0.0),
+									glm::vec3(1.0,0.5,0.31));
+	object->select_object(obj_id);
+
 	position_lines->modify_model(model);
 	position_lines->modify_projection(projection);
 
@@ -285,6 +296,11 @@ void opengl_ui::enter_main_loop()
 		position_lines->prepare_for_render();
 		position_lines->render();
 		position_lines->clean_after_render();
+
+		object->set_transformations(model,camera->get_view(),projection);
+		object->prepare_for_render();
+		object->render();
+		object->clean_after_render();
 
 		light_1->set_transformation(model,camera->get_view(),projection);
 		light_1->prepare_for_render();

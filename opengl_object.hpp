@@ -37,6 +37,7 @@ struct object_data
 	glm::mat4 model,
 			view,
 			projection;
+	glm::vec3 color;
 };
 
 class little_object
@@ -66,13 +67,13 @@ public:
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
-	void mouse_click(GLint button,GLint action);
+	void texture_mix(bool increase_ratio);
 	void object_rotation(rotation_axis axis, GLfloat amount);
 	void move(mov_direction dir, GLfloat amount);
 	glm::vec3 get_object_position();
 	void scale(GLfloat amount);
 	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
-	int add_object(const glm::vec3& coordinates);
+	int add_object(const glm::vec3& coordinates,const glm::vec3& color);
 	bool select_object(int id);
 	bool release_current_object();
 	void modify_view(glm::mat4 new_view);

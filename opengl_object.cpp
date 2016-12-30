@@ -255,11 +255,13 @@ void little_object::set_transformations(glm::mat4 model,
 	}
 }
 
-int little_object::add_object(const glm::vec3 &coordinates)
+int little_object::add_object(const glm::vec3 &coordinates,
+							  const glm::vec3& color)
 {
 	int id = next_object_id++;
 	object_data data;
 	data.position = coordinates;
+	data.color = color;
 	objects.insert({id, data});
 	return id;
 }
@@ -281,16 +283,13 @@ bool little_object::release_current_object()
 	sel_obj_it = objects.end();
 }
 
-void little_object::mouse_click(GLint button, GLint action)
+void little_object::texture_mix(bool increase_ratio)
 {
-	if(action != GLFW_PRESS)
-		return;
-	if(button == GLFW_MOUSE_BUTTON_LEFT){
+	if(increase_ratio) {
 		current_mix_ratio = std::min(1.0,
 									 current_mix_ratio + 0.05);
 	}
-	else if(button == GLFW_MOUSE_BUTTON_RIGHT)
-	{
+	else {
 		current_mix_ratio = std::max<GLfloat>(0,
 											  current_mix_ratio - 0.05);
 	}
@@ -386,6 +385,20 @@ void little_object::render()
 	for(auto& object : objects) {
 		apply_position(object);
 		apply_transformations(object);
+		//Apply the object color
+		GLint obj_color_uniform = glGetUniformLocation(obj_shader,
+												   "object_color");
+		glUniform3f(obj_color_uniform,
+					object.second.color.r,
+					object.second.color.b,
+					object.second.color.g);
+		//Hardcoded white ligtht color
+		GLint light_color_uniform = glGetUniformLocation(obj_shader,
+												   "light_color");
+		glUniform3f(light_color_uniform,
+					1.0,
+					1.0,
+					1.0);
 		glDrawArrays(GL_TRIANGLES,0,36);
 	}
 	//Unbind the VAO
