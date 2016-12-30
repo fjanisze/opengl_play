@@ -28,7 +28,6 @@ void mouse_click_callback(GLFWwindow *ctx,
 						  int)
 {
 	ui_instance->ui_mouse_click(button,action);
-	ui_instance->image_update_needed();
 }
 
 void cursor_pos_callback(GLFWwindow *ctx,
@@ -43,7 +42,6 @@ void window_resize_callback(GLFWwindow *ctx,
 							int height)
 {
 	ui_instance->update_viewport(height,width);
-	ui_instance->image_update_needed();
 }
 
 void keyboard_press_callback(GLFWwindow* ctx,
@@ -77,13 +75,6 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 
 	last_mouse_x = x;
 	last_mouse_y = y;
-
-	auto yaw = camera->get_camera_yaw(),
-		pitch = camera->get_camera_pitch();
-
-	std::stringstream ss;
-	ss << "yaw:"<<yaw<<", pitch:"<<pitch;
-	camera_info->set_text(ss.str());
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -99,20 +90,6 @@ void opengl_ui::ui_keyboard_press(GLint button,
 
 void opengl_ui::evaluate_key_status()
 {
-	static std::unordered_map<GLint,mov_direction> moving_mapping = {
-		{GLFW_KEY_UP,mov_direction::top},
-		{GLFW_KEY_DOWN,mov_direction::down},
-		{GLFW_KEY_LEFT,mov_direction::left},
-		{GLFW_KEY_RIGHT,mov_direction::right}
-	};
-	static std::unordered_map<GLint, std::pair<rotation_axis,GLfloat>> rot_mapping{
-		{GLFW_KEY_D,{rotation_axis::z,-0.1}},
-		{GLFW_KEY_A,{rotation_axis::z,0.1}},
-		{GLFW_KEY_W,{rotation_axis::x,-0.1}},
-		{GLFW_KEY_S,{rotation_axis::x,0.1}},
-		{GLFW_KEY_Q,{rotation_axis::y,-0.1}},
-		{GLFW_KEY_E,{rotation_axis::y,0.1}},
-	};
 	static std::unordered_map<GLint,mov_direction> cam_moving_mapping = {
 		{GLFW_KEY_W,mov_direction::top},
 		{GLFW_KEY_S,mov_direction::down},
@@ -121,37 +98,12 @@ void opengl_ui::evaluate_key_status()
 	};
 	for(int button{ 0 } ; button < stat_key_array_size ; ++button){
 		if( key_status[ button ] == key_status_t::pressed ) {
-			if( key_status[ GLFW_KEY_LEFT_SHIFT ] == key_status_t::pressed ) {
-				//Camera moving
-				auto it = cam_moving_mapping.find(button);
-				if( it != cam_moving_mapping.end() ) {
-					camera->move_camera( it->second, 0.1 );
-				}
-			} else {
-				//Object moving
-				auto it = moving_mapping.find(button);
-				if( it != moving_mapping.end() ) {
-					object->move(it->second,0.1);
-				}
-				auto it2 = rot_mapping.find(button);
-				if( it2 != rot_mapping.end() ) {
-					object->image_rotation(it2->second.first,
-										   it2->second.second);
-				}
-				switch( button ) {
-				case GLFW_KEY_F:
-					object->scale(0.9);
-					break;
-				case GLFW_KEY_V:
-					object->scale(1.1);
-					break;
-				default:
-					break;
-				}
+			//Camera moving
+			auto it = cam_moving_mapping.find(button);
+			if( it != cam_moving_mapping.end() ) {
+				camera->move_camera( it->second, 0.1 );
 			}
-			object->modify_view(camera->get_view());
 			position_lines->modify_view(camera->get_view());
-			render_update_needed = true;
 		}
 	}
 }
@@ -183,16 +135,16 @@ void opengl_ui::get_current_ctx_viewport()
 void opengl_ui::init_text()
 {
 	fps_info = std::make_shared<text_renderer::renderable_text>();
-	fps_info->set_position(glm::fvec2(10,10));
+	fps_info->set_position(glm::fvec2(10,7));
 	fps_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-	fps_info->set_scale(1.0f);
+	fps_info->set_scale(0.3f);
 	fps_info->set_text("0 fps");
 	fps_info->set_window_size(win_h,win_w);
 
 	camera_info = std::make_shared<text_renderer::renderable_text>();
-	camera_info->set_position(glm::fvec2(win_h - 100,10));
+	camera_info->set_position(glm::fvec2(win_h - 200,7));
 	camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-	camera_info->set_scale(0.5f);
+	camera_info->set_scale(0.3f);
 	camera_info->set_text(" -- ");
 	camera_info->set_window_size(win_h,win_w);
 }
@@ -217,7 +169,7 @@ opengl_ui::opengl_ui(int win_width,
 	//Create the window
 	window_ctx = glfwCreateWindow(win_width,
 								  win_heigth,
-								  "texture play",
+								  "light play",
 								  nullptr,
 								  nullptr);
 	if(window_ctx == nullptr){
@@ -241,7 +193,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({-10.0,-10.0,-10.0},{0.0,-3.0,0.0});
+	camera = my_camera::create_camera({2.0,2.0,10.0},{1.0,1.0,1.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -253,10 +205,6 @@ void opengl_ui::prepare_for_main_loop()
 	check_for_errors();
 	//Save the instance pointer
 	ui_instance = this;
-
-	//Set to true if there's something to update
-	//is true now since we need an initial update
-	render_update_needed = true;
 	//Init the callbacks
 	setup_callbacks();
 
@@ -279,11 +227,9 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 projection;
-	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
-						0.1f, 200.0f);
+						0.1f, 100.0f);
 
 	glm::vec3 cube_position[] = {
 		glm::vec3( -3.0f,  4.0f,  -10.0f),
@@ -299,36 +245,20 @@ void opengl_ui::enter_main_loop()
 		glm::vec3( 0.0f,  0.0f, 0.0f)
 	};
 
-	int moving_object_id;
-	for(auto& elem : cube_position) {
-		int elem_id = object->add_object(elem);
-		if(!object->select_object(elem_id)) {
-			ERR("Unable to select object with ID: ", elem_id);
-		}
-		object->set_transformations(model,view,projection);
-		//Will be the last one
-		moving_object_id = elem_id;
-	}
-
 	position_lines->modify_model(model);
 	position_lines->modify_projection(projection);
 
-	object->select_object(moving_object_id);
-	auto all_ids = object->get_all_objects();
-	camera->set_target(object->get_object_position());
-	object->modify_view(camera->get_view());
 	position_lines->modify_view(camera->get_view());
-
 
 	camera->update_cam_view();
 
 	//Add the lines
 	position_lines->add_line({0.0,0.0,0.0},
-							{10.0,0.0,0.0});
+							{10.0,0.0,0.0},{1.0,0.0,0.0});
 	position_lines->add_line({0.0,0.0,0.0},
-							{0.0,10.0,0.0});
+							{0.0,10.0,0.0},{0.0,0.0,1.0});
 	position_lines->add_line({0.0,0.0,0.0},
-							{0.0,0.0,10.0});
+							{0.0,0.0,10.0},{0.0,1.0,0.0});
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -346,51 +276,32 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
-
-		//Do not draw anything if is not needed
-		if(false == render_update_needed)
-		{
-			//Disabled in order to have the fps printed :(
-			//continue;
-		}
-
 		glClearColor(0.5,0.5,0.5,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		object->prepare_for_render();
-		//Let's rotate all the objects but the moving one
-		for(auto id:all_ids) {
-			if( id == moving_object_id )
-				continue;
-			object->select_object(id);
-			object->image_rotation(rotation_axis::z,0.1);
-		}
-		object->select_object(moving_object_id);
-		object->render();
-		object->clean_after_render();
 
 		position_lines->prepare_for_render();
 		position_lines->render();
 		position_lines->clean_after_render();
 
 		fps_info->render_text();
+
+		auto yaw = camera->get_camera_yaw(),
+			pitch = camera->get_camera_pitch();
+		auto pos = camera->get_camera_pos();
+
+		std::stringstream ss;
+		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
+		camera_info->set_text(ss.str());
+
 		camera_info->render_text();
 
 		glfwSwapBuffers(window_ctx);
-
-		//Till the next update
-		render_update_needed = false;
 	}
 }
 
 GLFWwindow *opengl_ui::get_win_ctx()
 {
 	return window_ctx;
-}
-
-void opengl_ui::image_update_needed()
-{
-	render_update_needed = true;
 }
 
 void opengl_ui::update_viewport(int new_win_h,

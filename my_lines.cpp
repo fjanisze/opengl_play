@@ -27,11 +27,14 @@ my_static_lines::~my_static_lines()
 	glDeleteBuffers(1,&VBO);
 }
 
-int my_static_lines::add_line(glm::vec3 from, glm::vec3 to)
+int my_static_lines::add_line(glm::vec3 from, glm::vec3 to,
+					glm::vec3 color)
 {
 	single_line new_line = {
 		{from.x,from.y,from.z},
-		{to.x,to.y,to.z}
+		{color.r,color.b,color.g},
+		{to.x,to.y,to.z},
+		{color.r,color.b,color.g}
 	};
 	lines.push_back(new_line);
 	update_buffers();
@@ -48,9 +51,13 @@ void my_static_lines::update_buffers()
 				 GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,
-						  3 * sizeof(GLfloat),
+						  6 * sizeof(GLfloat),
 						  (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+						  6 * sizeof(GLfloat),
+						  (GLvoid*)(3* sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);

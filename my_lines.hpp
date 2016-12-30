@@ -12,7 +12,9 @@ using my_lines_ptr = std::shared_ptr<my_static_lines>;
 struct single_line
 {
 	GLfloat from[3],
-			to[3];
+			f_color[3],
+			to[3],
+			t_color[3];
 };
 
 class my_static_lines
@@ -27,7 +29,7 @@ class my_static_lines
 public:
 	my_static_lines();
 	~my_static_lines();
-	int add_line(glm::vec3 from, glm::vec3 to);
+	int add_line(glm::vec3 from, glm::vec3 to,glm::vec3 color);
 	void modify_view(glm::mat4 new_view);
 	void modify_projection(glm::mat4 new_projection);
 	void modify_model(glm::mat4 new_model);
