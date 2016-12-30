@@ -7,10 +7,6 @@ namespace
 {
 //Saved context for the GLFW callbacks
 opengl_ui* ui_instance;
-//Global for the mouse callback
-int left_button_state = GLFW_RELEASE;
-//This coordinate is needed to calculate the delta movement
-glm::dvec2 last_know_mouse_position = {0,0};
 }
 
 GLfloat mycos(double val){
@@ -31,18 +27,6 @@ void mouse_click_callback(GLFWwindow *ctx,
 						  int action,
 						  int)
 {
-	if(button == GLFW_MOUSE_BUTTON_LEFT)
-	{
-		if(action == GLFW_PRESS)
-		{
-			left_button_state = action;
-			glfwGetCursorPos(ui_instance->get_win_ctx(),
-							 &last_know_mouse_position.x,
-							 &last_know_mouse_position.y);
-		}
-		else
-			left_button_state = GLFW_RELEASE;
-	}
 	ui_instance->ui_mouse_click(button,action);
 	ui_instance->image_update_needed();
 }
@@ -51,11 +35,7 @@ void cursor_pos_callback(GLFWwindow *ctx,
 						 double x,
 						 double y)
 {
-	if(left_button_state == GLFW_PRESS)
-	{
-		last_know_mouse_position.x = x;
-		last_know_mouse_position.y = y;
-	}
+	ui_instance->ui_mouse_move(x,y);
 }
 
 void window_resize_callback(GLFWwindow *ctx,
@@ -78,6 +58,32 @@ void keyboard_press_callback(GLFWwindow* ctx,
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
 	object->mouse_click(button,action);
+}
+
+void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
+{
+	static bool first_move = true;
+	if(first_move) {
+		last_mouse_x = x;
+		last_mouse_y = y;
+		first_move = false;
+	}
+	GLdouble x_delta = (x - last_mouse_x) * 0.1,
+			y_delta = (last_mouse_y - y) * 0.1;
+
+	camera->rotate_camera(y_delta,x_delta);
+	object->modify_view(camera->get_view());
+	position_lines->modify_view(camera->get_view());
+
+	last_mouse_x = x;
+	last_mouse_y = y;
+
+	auto yaw = camera->get_camera_yaw(),
+		pitch = camera->get_camera_pitch();
+
+	std::stringstream ss;
+	ss << "yaw:"<<yaw<<", pitch:"<<pitch;
+	camera_info->set_text(ss.str());
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -119,7 +125,7 @@ void opengl_ui::evaluate_key_status()
 				//Camera moving
 				auto it = cam_moving_mapping.find(button);
 				if( it != cam_moving_mapping.end() ) {
-					camera->move_camera( it->second, 0.3 );
+					camera->move_camera( it->second, 0.1 );
 				}
 			} else {
 				//Object moving
@@ -142,7 +148,6 @@ void opengl_ui::evaluate_key_status()
 				default:
 					break;
 				}
-				camera->set_target(object->get_object_position());
 			}
 			object->modify_view(camera->get_view());
 			position_lines->modify_view(camera->get_view());
@@ -175,7 +180,7 @@ void opengl_ui::get_current_ctx_viewport()
 			   win_h);
 }
 
-void opengl_ui::init_fps_info()
+void opengl_ui::init_text()
 {
 	fps_info = std::make_shared<text_renderer::renderable_text>();
 	fps_info->set_position(glm::fvec2(10,10));
@@ -183,6 +188,13 @@ void opengl_ui::init_fps_info()
 	fps_info->set_scale(1.0f);
 	fps_info->set_text("0 fps");
 	fps_info->set_window_size(win_h,win_w);
+
+	camera_info = std::make_shared<text_renderer::renderable_text>();
+	camera_info->set_position(glm::fvec2(win_h - 100,10));
+	camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
+	camera_info->set_scale(0.5f);
+	camera_info->set_text(" -- ");
+	camera_info->set_window_size(win_h,win_w);
 }
 
 opengl_ui::opengl_ui(int win_width,
@@ -227,9 +239,9 @@ opengl_ui::opengl_ui(int win_width,
 	object = std::make_shared<little_object>();
 	position_lines = std::make_shared<my_static_lines>();
 
-	init_fps_info();
+	init_text();
 
-	camera = my_camera::create_camera({0.0,0.0,-10.0},{0.0,-3.0,0.0});
+	camera = my_camera::create_camera({-10.0,-10.0,-10.0},{0.0,-3.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -258,8 +270,8 @@ void opengl_ui::enter_main_loop()
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	glEnable(GL_DEPTH_TEST);
+	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
@@ -269,7 +281,9 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 projection;
 	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
-	projection = glm::perspective(glm::radians(45.0f), (GLfloat)win_w / (GLfloat)win_h, 0.1f, 200.0f);
+	projection = glm::perspective(glm::radians(45.0f),
+						(GLfloat)win_w / (GLfloat)win_h,
+						0.1f, 200.0f);
 
 	glm::vec3 cube_position[] = {
 		glm::vec3( -3.0f,  4.0f,  -10.0f),
@@ -360,6 +374,7 @@ void opengl_ui::enter_main_loop()
 		position_lines->clean_after_render();
 
 		fps_info->render_text();
+		camera_info->render_text();
 
 		glfwSwapBuffers(window_ctx);
 

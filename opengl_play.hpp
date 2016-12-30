@@ -30,15 +30,18 @@ enum class key_status_t
 class opengl_ui
 {
 	key_status_t  key_status[stat_key_array_size];
+	GLfloat last_mouse_x,
+			last_mouse_y;
 	bool          render_update_needed;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
-	text_renderer::rendr_text fps_info;
+	text_renderer::rendr_text fps_info,
+						camera_info;
 	int win_h,
 	win_w;
 	void setup_callbacks();
 	void get_current_ctx_viewport();
-	void init_fps_info();
+	void init_text();
 	void evaluate_key_status();
 	camera_obj		camera;
 
@@ -53,6 +56,7 @@ public:
 	void        update_viewport(int new_win_h,
 								int new_win_w);
 	void		ui_mouse_click(GLint button,GLint action);
+	void        ui_mouse_move(GLdouble x,GLdouble y);
 	void		ui_keyboard_press(GLint button,GLint scode,GLint action);
 	virtual ~opengl_ui();
 };
