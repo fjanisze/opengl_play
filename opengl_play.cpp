@@ -9,19 +9,6 @@ namespace
 opengl_ui* ui_instance;
 }
 
-GLfloat mycos(double val){
-	return (GLfloat)cos(val) * 0.5;
-}
-
-
-GLfloat mysin(double val){
-	return (GLfloat)sin(val) * 0.5;
-}
-
-GLfloat torad(double val){
-	return val * M_PI/180;
-}
-
 void mouse_click_callback(GLFWwindow *ctx,
 						  int button,
 						  int action,
@@ -256,11 +243,6 @@ void opengl_ui::enter_main_loop()
 									glm::vec3(1.0,0.5,0.31));
 	object->select_object(obj_id);
 
-	position_lines->modify_model(model);
-	position_lines->modify_projection(projection);
-
-	position_lines->modify_view(camera->get_view());
-
 	camera->update_cam_view();
 
 	//Add the lines
@@ -297,24 +279,9 @@ void opengl_ui::enter_main_loop()
 		glClearColor(0.5,0.5,0.5,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		position_lines->prepare_for_render();
-		position_lines->render();
-		position_lines->clean_after_render();
-
-		object->set_transformations(model,camera->get_view(),projection);
-		object->prepare_for_render();
-		object->render();
-		object->clean_after_render();
-
-		light_1->set_transformation(model,camera->get_view(),projection);
-		light_1->prepare_for_render();
-		light_1->render();
-		light_1->clear_after_render();
-
-		light_2->set_transformation(model,camera->get_view(),projection);
-		light_2->prepare_for_render();
-		light_2->render();
-		light_2->clear_after_render();
+		renderable::renderable_object::render_renderables(model,
+											camera->get_view(),
+											projection);
 
 		//Update the lights strenght
 		auto val = light_1->get_strenght();

@@ -1,5 +1,6 @@
 #include <headers.hpp>
 #include "logger/logger.hpp"
+#include <renderable_object.hpp>
 #include <shaders.hpp>
 
 namespace opengl_play
@@ -17,7 +18,7 @@ struct single_line
 			t_color[3];
 };
 
-class my_static_lines
+class my_static_lines : renderable::renderable_object
 {
 	shaders::my_small_shaders shaders;
 	std::vector<single_line> lines;
@@ -30,9 +31,8 @@ public:
 	my_static_lines();
 	~my_static_lines();
 	int add_line(glm::vec3 from, glm::vec3 to,glm::vec3 color);
+	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
 	void modify_view(glm::mat4 new_view);
-	void modify_projection(glm::mat4 new_projection);
-	void modify_model(glm::mat4 new_model);
 	void prepare_for_render();
 	void render();
 	void clean_after_render();

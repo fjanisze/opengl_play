@@ -90,6 +90,8 @@ simple_light::simple_light(glm::vec3 position,
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
+
+	add_renderable(this);
 }
 
 simple_light::~simple_light()
@@ -98,7 +100,7 @@ simple_light::~simple_light()
 	glDeleteBuffers(1,&VBO);
 }
 
-void simple_light::set_transformation(glm::mat4 m,glm::mat4 v,glm::mat4 p)
+void simple_light::set_transformations(glm::mat4 m,glm::mat4 v,glm::mat4 p)
 {
 	model = m;
 	view = v;
@@ -164,7 +166,7 @@ void simple_light::render()
 	glBindVertexArray(0);
 }
 
-void simple_light::clear_after_render()
+void simple_light::clean_after_render()
 {
 
 }

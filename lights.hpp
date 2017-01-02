@@ -1,5 +1,6 @@
 #include <headers.hpp>
 #include <shaders.hpp>
+#include <renderable_object.hpp>
 
 #ifndef LIGHTS_HPP
 #define LIGHTS_HPP
@@ -58,7 +59,7 @@ class simple_light;
 
 using simple_light_ptr = std::shared_ptr<simple_light>;
 
-class simple_light
+class simple_light : renderable::renderable_object
 {
 	GLuint VAO,VBO;
 	shaders::my_small_shaders light_shader;
@@ -73,13 +74,13 @@ public:
 				 glm::vec3 color,
 				 GLfloat   strenght);
 	~simple_light();
-	void set_transformation(glm::mat4 m, glm::mat4 v, glm::mat4 p);
+	void set_transformations(glm::mat4 m, glm::mat4 v, glm::mat4 p);
 	GLfloat get_strenght();
 	void    set_strenght(GLfloat strenght);
 	std::pair<glm::vec3,GLfloat> get_light_color();
 	void prepare_for_render();
 	void render();
-	void clear_after_render();
+	void clean_after_render();
 	template<typename...Args>
 	static simple_light_ptr create_light(Args&&...args)
 	{

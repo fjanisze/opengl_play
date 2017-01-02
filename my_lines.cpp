@@ -19,6 +19,7 @@ my_static_lines::my_static_lines()
 	glGenVertexArrays(1,&VAO);
 	glGenBuffers(1,&VBO);
 
+	add_renderable(this);
 }
 
 my_static_lines::~my_static_lines()
@@ -38,6 +39,15 @@ int my_static_lines::add_line(glm::vec3 from, glm::vec3 to,
 	};
 	lines.push_back(new_line);
 	update_buffers();
+}
+
+void my_static_lines::set_transformations(glm::mat4 m,
+								glm::mat4 v,
+								glm::mat4 p)
+{
+	model = m;
+	view = v;
+	projection = p;
 }
 
 void my_static_lines::update_buffers()
@@ -66,16 +76,6 @@ void my_static_lines::update_buffers()
 void my_static_lines::modify_view(glm::mat4 new_view)
 {
 	view = new_view;
-}
-
-void my_static_lines::modify_projection(glm::mat4 new_projection)
-{
-	projection = new_projection;
-}
-
-void my_static_lines::modify_model(glm::mat4 new_model)
-{
-	model = new_model;
 }
 
 void my_static_lines::prepare_for_render()
