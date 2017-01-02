@@ -10,19 +10,20 @@ camera_obj my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
 }
 
 my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
-	cam_front( glm::normalize(target) ),
-	cam_pos( glm::normalize(position) )
+	cam_front( target ),
+	cam_pos( position )
 {
 	cam_up = glm::vec3( 0.0, 1.0, 0.0 );//Point upward
 	pitch = 0;
 	yaw = 0;
+	rotate_camera(0,-90);
 }
 
 void my_camera::update_cam_view()
 {
-	cam_dir = glm::normalize( cam_pos - cam_front );
+//	cam_dir = glm::normalize( cam_pos - cam_front );
 	//Calculate the perperndicular vector
-	cam_right = glm::normalize( glm::cross( cam_up, cam_dir ));
+//	cam_right = glm::normalize( glm::cross( cam_up, cam_dir ));
 	cam_view = glm::lookAt( cam_pos, cam_pos + cam_front, cam_up );
 }
 

@@ -32,7 +32,6 @@ class opengl_ui
 	key_status_t  key_status[stat_key_array_size];
 	GLfloat last_mouse_x,
 			last_mouse_y;
-	bool          render_update_needed;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
 	text_renderer::rendr_text fps_info,
@@ -52,7 +51,6 @@ public:
 	void        prepare_for_main_loop();
 	void        enter_main_loop();
 	GLFWwindow *get_win_ctx();
-	void        image_update_needed();
 	void        update_viewport(int new_win_h,
 								int new_win_w);
 	void		ui_mouse_click(GLint button,GLint action);

@@ -9,26 +9,12 @@ namespace
 opengl_ui* ui_instance;
 }
 
-GLfloat mycos(double val){
-	return (GLfloat)cos(val) * 0.5;
-}
-
-
-GLfloat mysin(double val){
-	return (GLfloat)sin(val) * 0.5;
-}
-
-GLfloat torad(double val){
-	return val * M_PI/180;
-}
-
 void mouse_click_callback(GLFWwindow *ctx,
 						  int button,
 						  int action,
 						  int)
 {
 	ui_instance->ui_mouse_click(button,action);
-	ui_instance->image_update_needed();
 }
 
 void cursor_pos_callback(GLFWwindow *ctx,
@@ -43,7 +29,6 @@ void window_resize_callback(GLFWwindow *ctx,
 							int height)
 {
 	ui_instance->update_viewport(height,width);
-	ui_instance->image_update_needed();
 }
 
 void keyboard_press_callback(GLFWwindow* ctx,
@@ -84,6 +69,8 @@ void opengl_ui::ui_keyboard_press(GLint button,
 								  GLint action)
 {
 	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
+		if( button == GLFW_KEY_ESCAPE )
+			glfwSetWindowShouldClose(window_ctx,1);
 		key_status[ button ] = key_status_t::pressed;
 	} else if( action == GLFW_RELEASE ) {
 		key_status[ button ] = key_status_t::not_pressed;
@@ -144,7 +131,6 @@ void opengl_ui::evaluate_key_status()
 			}
 			object->modify_view(camera->get_view());
 			position_lines->modify_view(camera->get_view());
-			render_update_needed = true;
 		}
 	}
 }
@@ -234,7 +220,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({-10.0,-10.0,-10.0},{0.0,-3.0,0.0});
+	camera = my_camera::create_camera({2.0,2.0,10.0},{0.0,0.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -247,9 +233,6 @@ void opengl_ui::prepare_for_main_loop()
 	//Save the instance pointer
 	ui_instance = this;
 
-	//Set to true if there's something to update
-	//is true now since we need an initial update
-	render_update_needed = true;
 	//Init the callbacks
 	setup_callbacks();
 
@@ -272,8 +255,6 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 projection;
-	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//view = glm::translate(view, glm::vec3(0.0f, 0.0f, -4.0f));
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
 						0.1f, 200.0f);
@@ -308,12 +289,7 @@ void opengl_ui::enter_main_loop()
 
 	object->select_object(moving_object_id);
 	auto all_ids = object->get_all_objects();
-	camera->set_target(object->get_object_position());
-	object->modify_view(camera->get_view());
 	position_lines->modify_view(camera->get_view());
-
-
-	camera->update_cam_view();
 
 	//Add the lines
 	position_lines->add_line({0.0,0.0,0.0},
@@ -339,16 +315,12 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
-
-		//Do not draw anything if is not needed
-		if(false == render_update_needed)
-		{
-			//Disabled in order to have the fps printed :(
-			//continue;
-		}
-
 		glClearColor(0.5,0.5,0.5,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		camera->update_cam_view();
+		object->modify_view(camera->get_view());
+		position_lines->modify_view(camera->get_view());
 
 		object->prepare_for_render();
 		//Let's rotate all the objects but the moving one
@@ -379,10 +351,8 @@ void opengl_ui::enter_main_loop()
 		camera_info->render_text();
 
 		glfwSwapBuffers(window_ctx);
-
-		//Till the next update
-		render_update_needed = false;
 	}
+	LOG3("Terminating application.");
 }
 
 GLFWwindow *opengl_ui::get_win_ctx()
@@ -390,10 +360,6 @@ GLFWwindow *opengl_ui::get_win_ctx()
 	return window_ctx;
 }
 
-void opengl_ui::image_update_needed()
-{
-	render_update_needed = true;
-}
 
 void opengl_ui::update_viewport(int new_win_h,
 								int new_win_w)
