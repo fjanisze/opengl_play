@@ -7,7 +7,7 @@ std::vector<simple_light_ptr> simple_light::all_lights;
 
 object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 	frag_shader{ shader },
-	ambient_light_strenght{ .5 },
+	ambient_light_strenght{ .4 },
 	ambient_light_color{ glm::vec3(1.0,1.0,1.0) }
 {
 	LOG1("New object_lighting");
@@ -15,26 +15,52 @@ object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 
 void object_lighting::update_ambient_colors()
 {
-	//Hardcoded white ligtht color
 	GLint light_color_uniform = glGetUniformLocation(*frag_shader,
 											   "ambient_light_color");
 	glUniform3f(light_color_uniform,
 				ambient_light_color.r,
 				ambient_light_color.g,
 				ambient_light_color.b);
+	GLint light_strenght = glGetUniformLocation(*frag_shader,
+											   "ambient_light_strenght");
+	glUniform1f(light_strenght,
+				ambient_light_strenght);
 }
 
 void object_lighting::calculate_lighting()
 {
+	static int supported_lights = 2;
 	auto all_lights = simple_light::get_lights();
 	ambient_light_color = glm::vec3(0.0,0.0,0.0);
+	int light_cnt = 0;
+	GLfloat light_pos[3 * supported_lights],
+			light_color[3 * supported_lights];
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_color();
 		glm::vec3 cur_light = (light_data.first * light_data.second);
 		ambient_light_color.r = std::max(ambient_light_color.r,cur_light.r);
 		ambient_light_color.g = std::max(ambient_light_color.g,cur_light.g);
 		ambient_light_color.b = std::max(ambient_light_color.b,cur_light.b);
+		if(light_cnt < supported_lights ) {
+			auto pos = light->get_light_position();
+			light_pos[3 * light_cnt + 0] = pos.x;
+			light_pos[3 * light_cnt + 1] = pos.y;
+			light_pos[3 * light_cnt + 2] = pos.z;
+
+			light_color[3 * light_cnt + 0] = cur_light.r;
+			light_color[3 * light_cnt + 1] = cur_light.g;
+			light_color[3 * light_cnt + 2] = cur_light.b;
+			++light_cnt;
+		}
 	}
+	//Load the light position and colors
+	GLint lp = glGetUniformLocation(*frag_shader,
+							   "light_pos");
+	GLint lc = glGetUniformLocation(*frag_shader,
+							   "light_color");
+	glUniform3fv(lp,light_cnt,light_pos);
+	glUniform3fv(lc,light_cnt,light_color);
+	//Load the ambient light
 	update_ambient_colors();
 }
 
@@ -120,6 +146,11 @@ void simple_light::set_strenght(GLfloat strenght)
 std::pair<glm::vec3, GLfloat> simple_light::get_light_color()
 {
 	return std::make_pair(light_color,color_strenght);
+}
+
+glm::vec3 simple_light::get_light_position()
+{
+	return light_position;
 }
 
 void simple_light::prepare_for_render()

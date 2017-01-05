@@ -263,7 +263,7 @@ void opengl_ui::enter_main_loop()
 												 0.6);
 	light_2 = lights::simple_light::create_light(glm::vec3(-1.0,1.0,1.0),
 												 glm::vec3(1.0,0.0,0.0),
-												 0.1);
+												 0.2);
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{

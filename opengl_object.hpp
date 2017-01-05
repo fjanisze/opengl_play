@@ -15,6 +15,7 @@ struct vertex_info
 {
 	GLfloat x,y,z;
 	GLfloat t_x,t_y;//Texture coordinates
+	GLfloat n_x,n_y,n_z;//Normal vector for diffuse lighting calculation
 };
 
 struct texture_info
@@ -50,7 +51,7 @@ class little_object : lights::object_lighting ,
 	std::map<std::string,texture_info> textures;
 	GLint  tex_width,tex_height;
 	vertex_info vertices[36];
-	GLfloat   vertex_data[36*5];
+	GLfloat   vertex_data[36*8];
 	shaders::my_small_shaders obj_shader;
 
 	void init_vertices();
