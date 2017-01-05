@@ -109,7 +109,7 @@ texture_info little_object::load_texture(const std::string &filename, GLint wrap
 				 GL_RGB,
 				 GL_UNSIGNED_BYTE,
 				 image);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	//glGenerateMipmap(GL_TEXTURE_2D);
 
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -352,6 +352,9 @@ little_object::~little_object()
 {
 	glDeleteVertexArrays(1,&VAO);
 	glDeleteBuffers(1,&VBO);
+	for( auto& tex:textures ) {
+		glDeleteTextures(1,&tex.second.texture);
+	}
 }
 
 void little_object::prepare_for_render()

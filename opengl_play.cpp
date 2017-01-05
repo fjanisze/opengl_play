@@ -76,7 +76,11 @@ void opengl_ui::ui_keyboard_press(GLint button,
 								  GLint action)
 {
 	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
-		key_status[ button ] = key_status_t::pressed;
+		if( button == GLFW_KEY_ESCAPE ) {
+			glfwSetWindowShouldClose(window_ctx,1);
+		} else {
+			key_status[ button ] = key_status_t::pressed;
+		}
 	} else if( action == GLFW_RELEASE ) {
 		key_status[ button ] = key_status_t::not_pressed;
 	}
@@ -276,7 +280,7 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
-		glClearColor(0.5,0.5,0.5,1.0);
+		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderable::renderable_object::render_renderables(model,
