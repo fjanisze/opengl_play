@@ -227,21 +227,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
-						0.1f, 100.0f);
-
-	glm::vec3 cube_position[] = {
-		glm::vec3( -3.0f,  4.0f,  -10.0f),
-		glm::vec3( 2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3( 2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3( 1.3f, -2.0f, -2.5f),
-		glm::vec3( 1.5f,  2.0f, -2.5f),
-		glm::vec3( 1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f),
-		glm::vec3( 0.0f,  0.0f, 0.0f)
-	};
+						0.1f, 200.0f);
 
 	int obj_id = object->add_object(glm::vec3(0.0,0.0,0.0),
 									glm::vec3(1.0,0.5,0.31));
@@ -258,8 +244,8 @@ void opengl_ui::enter_main_loop()
 							{0.0,0.0,10.0},{0.0,1.0,0.0});
 
 	//Adding a light
-	glm::vec3 light_1_pos = glm::vec3(1.0,1.0,1.0),
-			  light_2_pos = glm::vec3(-1.0,-1.0,1.0);
+	glm::vec3 light_1_pos = glm::vec3(1.0,1.0,0.0),
+			  light_2_pos = glm::vec3(0.0,-1.0,1.0);
 	light_1 = lights::simple_light::create_light(light_1_pos,
 												 glm::vec3(0.0,1.0,0.0),
 												 1.0);
@@ -297,7 +283,7 @@ void opengl_ui::enter_main_loop()
 
 		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
 		light_2_pos.z = std::sin(light_2_angle) * light_2_distance;
-		light_2_angle += 0.01;
+		light_2_angle += 0.02;
 		if(light_2_angle >= 360)
 			light_2_angle = 0;
 		light_2->set_light_position(light_2_pos);

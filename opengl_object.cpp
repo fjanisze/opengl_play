@@ -129,7 +129,7 @@ void little_object::update_vertex_data()
 		vertex_data[8*i + 4] = vertices[i].t_y;
 		vertex_data[8*i + 5] = vertices[i].n_x;
 		vertex_data[8*i + 6] = vertices[i].n_y;
-		vertex_data[8*i + 7] = vertices[i].n_y;
+		vertex_data[8*i + 7] = vertices[i].n_z;
 	}
 
 }
@@ -299,7 +299,7 @@ void little_object::texture_mix(bool increase_ratio)
 
 little_object::little_object() :
 	lights::object_lighting(&obj_shader),
-	current_mix_ratio{0.2},
+	current_mix_ratio{1.0},
 	selected_object{0},
 	next_object_id{1}
 {
@@ -347,10 +347,10 @@ little_object::little_object() :
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
 
-	textures.insert(std::make_pair("container",
-								   load_texture("../textures/container.jpg")));
-	textures.insert(std::make_pair("face",
+	textures.insert(std::make_pair("happy",
 								   load_texture("../textures/awesomeface.png")));
+	textures.insert(std::make_pair("face",
+								   load_texture("../textures/filip.png")));
 
 	check_for_errors();
 	add_renderable(this);
@@ -374,7 +374,7 @@ void little_object::prepare_for_render()
 	//Activate the two texture.
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,
-				  textures["container"]);
+				  textures["happy"]);
 	//This uniform is for the texture unit 0
 	glUniform1i(glGetUniformLocation(obj_shader,
 									 "loaded_texture"),0);

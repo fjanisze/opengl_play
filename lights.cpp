@@ -7,7 +7,7 @@ std::vector<simple_light_ptr> simple_light::all_lights;
 
 object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 	frag_shader{ shader },
-	ambient_light_strenght{ .4 },
+	ambient_light_strenght{ .2 },
 	ambient_light_color{ glm::vec3(1.0,1.0,1.0) }
 {
 	LOG1("New object_lighting");
