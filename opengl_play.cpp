@@ -258,12 +258,20 @@ void opengl_ui::enter_main_loop()
 							{0.0,0.0,10.0},{0.0,1.0,0.0});
 
 	//Adding a light
-	light_1 = lights::simple_light::create_light(glm::vec3(1.0,1.0,1.0),
+	glm::vec3 light_1_pos = glm::vec3(1.0,1.0,1.0),
+			  light_2_pos = glm::vec3(-1.0,-1.0,1.0);
+	light_1 = lights::simple_light::create_light(light_1_pos,
 												 glm::vec3(0.0,1.0,0.0),
-												 0.6);
-	light_2 = lights::simple_light::create_light(glm::vec3(-1.0,1.0,1.0),
+												 1.0);
+	light_2 = lights::simple_light::create_light(light_2_pos,
 												 glm::vec3(1.0,0.0,0.0),
-												 0.2);
+												 1.0);
+
+	GLfloat light_1_angle = 0.0,
+			light_2_angle = 180.0,
+			light_1_distance = glm::length(light_1->get_light_position()),
+			light_2_distance = glm::length(light_2->get_light_position());
+
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -280,18 +288,26 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
+		light_1_pos.x = std::cos(light_1_angle) * light_1_distance;
+		light_1_pos.y = std::sin(light_1_angle) * light_1_distance;
+		light_1_angle += 0.05;
+		if(light_1_angle >= 360)
+			light_1_angle = 0;
+		light_1->set_light_position(light_1_pos);
+
+		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
+		light_2_pos.z = std::sin(light_2_angle) * light_2_distance;
+		light_2_angle += 0.01;
+		if(light_2_angle >= 360)
+			light_2_angle = 0;
+		light_2->set_light_position(light_2_pos);
+
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderable::renderable_object::render_renderables(model,
 											camera->get_view(),
 											projection);
-
-		//Update the lights strenght
-		auto val = light_1->get_strenght();
-		light_1->set_strenght(std::fmod(val + .01, 1.0));
-		val = light_2->get_strenght();
-		light_2->set_strenght(std::fmod(val + 0.001, 1.0));
 
 		fps_info->render_text();
 
@@ -302,7 +318,6 @@ void opengl_ui::enter_main_loop()
 		std::stringstream ss;
 		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 		camera_info->set_text(ss.str());
-
 		camera_info->render_text();
 
 		glfwSwapBuffers(window_ctx);

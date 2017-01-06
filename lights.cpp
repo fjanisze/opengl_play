@@ -153,6 +153,11 @@ glm::vec3 simple_light::get_light_position()
 	return light_position;
 }
 
+void simple_light::set_light_position(const glm::vec3 &new_pos)
+{
+	light_position = new_pos;
+}
+
 void simple_light::prepare_for_render()
 {
 	light_shader.use_shaders();

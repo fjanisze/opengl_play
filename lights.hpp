@@ -79,6 +79,7 @@ public:
 	void    set_strenght(GLfloat strenght);
 	std::pair<glm::vec3,GLfloat> get_light_color();
 	glm::vec3 get_light_position();
+	void      set_light_position(const glm::vec3& new_pos);
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
