@@ -285,21 +285,8 @@ bool little_object::release_current_object()
 	sel_obj_it = objects.end();
 }
 
-void little_object::texture_mix(bool increase_ratio)
-{
-	if(increase_ratio) {
-		current_mix_ratio = std::min(1.0,
-									 current_mix_ratio + 0.05);
-	}
-	else {
-		current_mix_ratio = std::max<GLfloat>(0,
-											  current_mix_ratio - 0.05);
-	}
-}
-
 little_object::little_object() :
 	lights::object_lighting(&obj_shader),
-	current_mix_ratio{1.0},
 	selected_object{0},
 	next_object_id{1}
 {
@@ -347,9 +334,9 @@ little_object::little_object() :
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
 
-	textures.insert(std::make_pair("happy",
-								   load_texture("../textures/awesomeface.png")));
-	textures.insert(std::make_pair("face",
+	textures.insert(std::make_pair("specular",
+								   load_texture("../textures/container2_specular.png")));
+	textures.insert(std::make_pair("container",
 								   load_texture("../textures/container2.png")));
 
 	check_for_errors();
@@ -368,26 +355,22 @@ little_object::~little_object()
 void little_object::prepare_for_render()
 {
 	//Load the shader and bind the VAO
-	glBindTexture(GL_TEXTURE_2D, textures["face"]);
+	glBindTexture(GL_TEXTURE_2D, textures["container"]);
 	obj_shader.use_shaders();
 
 	//Activate the two texture.
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,
-				  textures["happy"]);
+				  textures["container"]);
 	//This uniform is for the texture unit 0
 	glUniform1i(glGetUniformLocation(obj_shader,
 									 "loaded_texture"),0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D,
-				  textures["face"]);
+				  textures["specular"]);
 	glUniform1i(glGetUniformLocation(obj_shader,
-									 "loaded_texture_2"),1);
-
-	//Setup the mix ratio
-	glUniform1f(glGetUniformLocation(obj_shader,
-									 "mix_ratio"),current_mix_ratio);
+									 "loaded_texture_specular_map"),1);
 
 }
 

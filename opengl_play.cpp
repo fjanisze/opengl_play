@@ -42,14 +42,6 @@ void keyboard_press_callback(GLFWwindow* ctx,
 
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
-	if(action != GLFW_PRESS)
-		return;
-	if(button == GLFW_MOUSE_BUTTON_LEFT) {
-		object->texture_mix(true);
-	}
-	else if(button == GLFW_MOUSE_BUTTON_RIGHT) {
-		object->texture_mix(false);
-	}
 }
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)

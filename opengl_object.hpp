@@ -47,7 +47,6 @@ class little_object : lights::object_lighting ,
 		renderable::renderable_object
 {
 	GLuint VAO,VBO;
-	GLfloat current_mix_ratio;
 	std::map<std::string,texture_info> textures;
 	GLint  tex_width,tex_height;
 	vertex_info vertices[36];
@@ -71,7 +70,6 @@ public:
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
-	void texture_mix(bool increase_ratio);
 	void object_rotation(rotation_axis axis, GLfloat amount);
 	void move(mov_direction dir, GLfloat amount);
 	glm::vec3 get_object_position();
