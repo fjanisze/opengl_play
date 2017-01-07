@@ -56,8 +56,6 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 			y_delta = (last_mouse_y - y) * 0.1;
 
 	camera->rotate_camera(y_delta,x_delta);
-	object->modify_view(camera->get_view());
-	position_lines->modify_view(camera->get_view());
 
 	last_mouse_x = x;
 	last_mouse_y = y;
@@ -93,7 +91,6 @@ void opengl_ui::evaluate_key_status()
 			if( it != cam_moving_mapping.end() ) {
 				camera->move_camera( it->second, 0.1 );
 			}
-			position_lines->modify_view(camera->get_view());
 		}
 	}
 }
@@ -221,9 +218,17 @@ void opengl_ui::enter_main_loop()
 						(GLfloat)win_w / (GLfloat)win_h,
 						0.1f, 200.0f);
 
-	int obj_id = object->add_object(glm::vec3(0.0,0.0,0.0),
-									glm::vec3(1.0,1.0,1.0));
-	object->select_object(obj_id);
+	object->add_object(glm::vec3(2.0,2.0,2.0),
+					   glm::vec3(1.0,1.0,1.0));
+
+	object->add_object(glm::vec3(5.0,12.0,5.0),
+					   glm::vec3(1.0,1.0,1.0));
+
+	object->add_object(glm::vec3(-4.0,6.0,-3.0),
+					   glm::vec3(1.0,1.0,1.0));
+
+	object->add_object(glm::vec3(0.0,0.0,0.0),
+						glm::vec3(1.0,1.0,1.0));
 
 	camera->set_position(glm::vec3(1.0,4.0,0.0));
 	camera->rotate_camera(-80,-80);
@@ -239,18 +244,19 @@ void opengl_ui::enter_main_loop()
 
 	//Adding a light
 	glm::vec3 light_1_pos = glm::vec3(0.0,1.0,0.0),
-			  light_2_pos = glm::vec3(0.0,-1.0,1.0);
+			  light_2_pos = glm::vec3(2.0,4.0,2.0);
 	light_1 = lights::simple_light::create_light(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
-												 1.0);
+												 2.0);
 	light_2 = lights::simple_light::create_light(light_2_pos,
-												 glm::vec3(1.0,0.0,0.0),
-												 1.0);
+												 glm::vec3(1.0,1.0,0.8),
+												 5.0);
 
 	GLfloat light_1_angle = 0.0,
-			light_2_angle = 180.0,
-			light_1_distance = glm::length(light_1->get_light_position()),
-			light_2_distance = glm::length(light_2->get_light_position());
+			light_1_distance = glm::length(light_1->get_light_position());
+
+	GLfloat light_2_angle = 0.0,
+			light_2_distance = glm::length(light_2->get_light_position()) * 2;
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -276,11 +282,11 @@ void opengl_ui::enter_main_loop()
 		light_1->set_light_position(light_1_pos);
 
 		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
-		light_2_pos.z = std::sin(light_2_angle) * light_2_distance;
-		light_2_angle += 0.02;
+		light_2_pos.y = std::sin(light_2_angle) * light_2_distance;
+		light_2_angle += 0.05;
 		if(light_2_angle >= 360)
 			light_2_angle = 0;
-		//light_2->set_light_position(light_2_pos);
+		light_2->set_light_position(light_2_pos);
 
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

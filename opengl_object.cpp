@@ -248,12 +248,10 @@ void little_object::set_transformations(glm::mat4 model,
 										glm::mat4 view,
 										glm::mat4 projection)
 {
-	if( any_object_selected() ) {
-		sel_obj_it->second.model = model;
-		sel_obj_it->second.view = view;
-		sel_obj_it->second.projection = projection;
-	} else {
-		WARN1("set_transformations: Select a valid object first!");
+	for(auto& object:objects) {
+		object.second.model = model;
+		object.second.view = view;
+		object.second.projection = projection;
 	}
 }
 

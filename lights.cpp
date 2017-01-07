@@ -34,32 +34,35 @@ void object_lighting::calculate_lighting()
 	ambient_light_color = glm::vec3(0.0,0.0,0.0);
 	int light_cnt = 0;
 	GLfloat light_pos[3 * supported_lights],
-			light_color[3 * supported_lights];
+			light_color[3 * supported_lights],
+			light_strength[2];
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_color();
-		glm::vec3 cur_light = (light_data.first * light_data.second);
+		glm::vec3 cur_light = light_data.first;
 		ambient_light_color.r = std::max(ambient_light_color.r,cur_light.r);
 		ambient_light_color.g = std::max(ambient_light_color.g,cur_light.g);
 		ambient_light_color.b = std::max(ambient_light_color.b,cur_light.b);
-		if(light_cnt < supported_lights ) {
-			auto pos = light->get_light_position();
-			light_pos[3 * light_cnt + 0] = pos.x;
-			light_pos[3 * light_cnt + 1] = pos.y;
-			light_pos[3 * light_cnt + 2] = pos.z;
+		auto pos = light->get_light_position();
+		light_pos[3 * light_cnt + 0] = pos.x;
+		light_pos[3 * light_cnt + 1] = pos.y;
+		light_pos[3 * light_cnt + 2] = pos.z;
 
-			light_color[3 * light_cnt + 0] = cur_light.r;
-			light_color[3 * light_cnt + 1] = cur_light.g;
-			light_color[3 * light_cnt + 2] = cur_light.b;
-			++light_cnt;
-		}
+		light_color[3 * light_cnt + 0] = cur_light.r;
+		light_color[3 * light_cnt + 1] = cur_light.g;
+		light_color[3 * light_cnt + 2] = cur_light.b;
+
+		light_strength[light_cnt] = light_data.second;
+		++light_cnt;
 	}
-	//Load the light position and colors
 	GLint lp = glGetUniformLocation(*frag_shader,
 							   "light_pos");
 	GLint lc = glGetUniformLocation(*frag_shader,
 							   "light_color");
+	GLint ls = glGetUniformLocation(*frag_shader,
+							   "light_strength");
 	glUniform3fv(lp,light_cnt,light_pos);
 	glUniform3fv(lc,light_cnt,light_color);
+	glUniform1fv(ls,light_cnt,light_strength);
 	//Load the ambient light
 	update_ambient_colors();
 }
