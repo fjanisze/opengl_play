@@ -350,7 +350,7 @@ little_object::little_object() :
 	textures.insert(std::make_pair("happy",
 								   load_texture("../textures/awesomeface.png")));
 	textures.insert(std::make_pair("face",
-								   load_texture("../textures/filip.png")));
+								   load_texture("../textures/container2.png")));
 
 	check_for_errors();
 	add_renderable(this);

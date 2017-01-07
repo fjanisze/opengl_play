@@ -230,9 +230,11 @@ void opengl_ui::enter_main_loop()
 						0.1f, 200.0f);
 
 	int obj_id = object->add_object(glm::vec3(0.0,0.0,0.0),
-									glm::vec3(1.0,0.5,0.31));
+									glm::vec3(1.0,1.0,1.0));
 	object->select_object(obj_id);
 
+	camera->set_position(glm::vec3(1.0,4.0,0.0));
+	camera->rotate_camera(-80,-80);
 	camera->update_cam_view();
 
 	//Add the lines
@@ -244,10 +246,10 @@ void opengl_ui::enter_main_loop()
 							{0.0,0.0,10.0},{0.0,1.0,0.0});
 
 	//Adding a light
-	glm::vec3 light_1_pos = glm::vec3(1.0,1.0,0.0),
+	glm::vec3 light_1_pos = glm::vec3(0.0,1.0,0.0),
 			  light_2_pos = glm::vec3(0.0,-1.0,1.0);
 	light_1 = lights::simple_light::create_light(light_1_pos,
-												 glm::vec3(0.0,1.0,0.0),
+												 glm::vec3(1.0,1.0,1.0),
 												 1.0);
 	light_2 = lights::simple_light::create_light(light_2_pos,
 												 glm::vec3(1.0,0.0,0.0),
@@ -276,7 +278,7 @@ void opengl_ui::enter_main_loop()
 
 		light_1_pos.x = std::cos(light_1_angle) * light_1_distance;
 		light_1_pos.y = std::sin(light_1_angle) * light_1_distance;
-		light_1_angle += 0.05;
+		light_1_angle += 0.01;
 		if(light_1_angle >= 360)
 			light_1_angle = 0;
 		light_1->set_light_position(light_1_pos);
@@ -286,7 +288,7 @@ void opengl_ui::enter_main_loop()
 		light_2_angle += 0.02;
 		if(light_2_angle >= 360)
 			light_2_angle = 0;
-		light_2->set_light_position(light_2_pos);
+		//light_2->set_light_position(light_2_pos);
 
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

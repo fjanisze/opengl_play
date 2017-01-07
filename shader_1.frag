@@ -26,13 +26,13 @@ void main()
 	vec3 norm = normalize(normal);
 	float light_intensity = sqrt(length(light_pos[i] - frag_pos));
 	vec3 light_dir = normalize( light_pos[i] - frag_pos );
-	float diff = max( dot( norm, light_dir), 0.0) / light_intensity;
-	diffuse_res += diff * light_color[i];
+	float diff = max( dot( norm, light_dir ), 0.0);
+	diffuse_res += diff * light_color[i] / light_intensity;
 
 	vec3 view_dir = normalize( camera_pos - frag_pos );
 	vec3 reflect_dir = reflect(-light_dir, norm);
 	float spec = pow(max(dot(view_dir,reflect_dir),0.0),32);
-	spec_res += spec * light_color[i] * .5;
+	spec_res += spec * light_color[i] * .5 / light_intensity;
     }
     final_object_color = ( diffuse_res + spec_res + ambient ) * 2 * object_color;
     //Final color
