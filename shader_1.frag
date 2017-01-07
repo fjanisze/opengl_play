@@ -24,18 +24,20 @@ void main()
     vec3 spec_res = vec3(0.0);
     for( int i = 0 ; i < 2 ; ++i ) {
 	vec3 norm = normalize(normal);
-	float light_intensity = sqrt(length(light_pos[i] - frag_pos)/light_strength[i]);
+	float dist = length(light_pos[i] - frag_pos);
+	float attenuation = (1.0 + dist * 0.22 + dist*dist*0.2);
+	attenuation = light_strength[i] / attenuation;
 	vec3 light_dir = normalize( light_pos[i] - frag_pos );
 	float diff = max( dot( norm, light_dir ), 0.0);
 	vec3 diffuse = diff * light_color[i];
-	diffuse *= ( vec3(texture(loaded_texture,texture_coords)) / light_intensity );
+	diffuse *= ( vec3(texture(loaded_texture,texture_coords)) * attenuation );
 	diffuse_res += diffuse;
 
 	vec3 view_dir = normalize( camera_pos - frag_pos );
 	vec3 reflect_dir = reflect(-light_dir, norm);
 	float spec = pow(max(dot(view_dir,reflect_dir),0.0),32);
 	vec3 specular =  spec * light_color[i];
-	specular *= (vec3(texture(loaded_texture_specular_map,texture_coords)) * .5 / light_intensity);
+	specular *= (vec3(texture(loaded_texture_specular_map,texture_coords)) * .5 * attenuation);
 	spec_res += specular;
     }
     final_object_color = ( diffuse_res + spec_res + ambient ) * object_color;
