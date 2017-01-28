@@ -42,6 +42,20 @@ void keyboard_press_callback(GLFWwindow* ctx,
 
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
+	if( button == GLFW_MOUSE_BUTTON_LEFT &&
+		action == GLFW_PRESS ) {
+		//Create a new light
+		glm::vec3 light_pos = camera->get_camera_pos();
+		LOG1("Creating a new light at pos: ",
+			 light_pos.x,"/",light_pos.y,"/",light_pos.z);
+		auto light = lights::point_light::create_light(
+					light_pos,
+					glm::vec3(1.0,1.0,1.0),
+					6.0);
+		if( nullptr == light ) {
+			WARN1("Unable to create a new light!");
+		}
+	}
 }
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
@@ -245,10 +259,10 @@ void opengl_ui::enter_main_loop()
 	//Adding a light
 	glm::vec3 light_1_pos = glm::vec3(0.0,1.0,0.0),
 			  light_2_pos = glm::vec3(2.0,4.0,2.0);
-	light_1 = lights::simple_light::create_light(light_1_pos,
+	light_1 = lights::point_light::create_light(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
 												 2.0);
-	light_2 = lights::simple_light::create_light(light_2_pos,
+	light_2 = lights::point_light::create_light(light_2_pos,
 												 glm::vec3(1.0,1.0,0.8),
 												 5.0);
 

@@ -13,6 +13,7 @@ class renderable_object
 public:
 	static void render_renderables(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
 	void add_renderable(renderable_object * object);
+	bool remove_renderable(renderable_object* object);
 
 	virtual void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection) = 0;
 	virtual void prepare_for_render() = 0;

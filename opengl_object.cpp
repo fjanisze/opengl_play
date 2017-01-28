@@ -370,6 +370,7 @@ void little_object::prepare_for_render()
 	glUniform1i(glGetUniformLocation(obj_shader,
 									 "loaded_texture_specular_map"),1);
 
+	calculate_lighting();
 }
 
 void little_object::render()
@@ -380,7 +381,6 @@ void little_object::render()
 		apply_transformations(object);
 
 		apply_object_color(object.second.color);
-		calculate_lighting();
 
 		glDrawArrays(GL_TRIANGLES,0,36);
 	}

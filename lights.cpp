@@ -3,7 +3,7 @@
 namespace lights
 {
 
-std::vector<simple_light_ptr> simple_light::all_lights;
+std::vector<point_light_ptr> object_lighting::all_lights;
 
 object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 	frag_shader{ shader },
@@ -27,15 +27,23 @@ void object_lighting::update_ambient_colors()
 				ambient_light_strenght);
 }
 
+/*
+ * Calculate the ambient light color and intensity,
+ * load to the proper uniforms the position,color and strenght
+ * of all the lights in the scene.
+ *
+ * Those information will be used during the render
+ * procedure (by the fragment shader) for all
+ * the little_object. (see little_object::render)
+ */
 void object_lighting::calculate_lighting()
 {
-	static int supported_lights = 2;
-	auto all_lights = simple_light::get_lights();
+	static int max_supported_lights = 10;
 	ambient_light_color = glm::vec3(0.0,0.0,0.0);
 	int light_cnt = 0;
-	GLfloat light_pos[3 * supported_lights],
-			light_color[3 * supported_lights],
-			light_strength[2];
+	GLfloat light_pos[3 * max_supported_lights],
+			light_color[3 * max_supported_lights],
+			light_strength[max_supported_lights];
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_color();
 		glm::vec3 cur_light = light_data.first;
@@ -54,6 +62,8 @@ void object_lighting::calculate_lighting()
 		light_strength[light_cnt] = light_data.second;
 		++light_cnt;
 	}
+	GLint nl = glGetUniformLocation(*frag_shader,
+							   "number_of_lights");
 	GLint lp = glGetUniformLocation(*frag_shader,
 							   "light_pos");
 	GLint lc = glGetUniformLocation(*frag_shader,
@@ -63,6 +73,7 @@ void object_lighting::calculate_lighting()
 	glUniform3fv(lp,light_cnt,light_pos);
 	glUniform3fv(lc,light_cnt,light_color);
 	glUniform1fv(ls,light_cnt,light_strength);
+	glUniform1i(nl,light_cnt);
 	//Load the ambient light
 	update_ambient_colors();
 }
@@ -78,14 +89,14 @@ void object_lighting::apply_object_color(const glm::vec3 &color)
 				color.g);
 }
 
-simple_light::simple_light(glm::vec3 position,
+point_light::point_light(glm::vec3 position,
 						   glm::vec3 color,
 						   GLfloat strenght) :
 	light_position{ position },
 	light_color{ color },
 	color_strenght{ strenght }
 {
-	LOG1("Creating new simple_light!");
+	LOG1("Creating new point_light!");
 
 	cube_vrtx = std::make_unique<GLfloat[]>(36 * 3);
 	std::copy(model_vertices::cube_vertices,
@@ -123,45 +134,46 @@ simple_light::simple_light(glm::vec3 position,
 	add_renderable(this);
 }
 
-simple_light::~simple_light()
+point_light::~point_light()
 {
+	remove_renderable(this);
 	glDeleteVertexArrays(1,&VAO);
 	glDeleteBuffers(1,&VBO);
 }
 
-void simple_light::set_transformations(glm::mat4 m,glm::mat4 v,glm::mat4 p)
+void point_light::set_transformations(glm::mat4 m,glm::mat4 v,glm::mat4 p)
 {
 	model = m;
 	view = v;
 	projection = p;
 }
 
-GLfloat simple_light::get_strenght()
+GLfloat point_light::get_strenght()
 {
 	return color_strenght;
 }
 
-void simple_light::set_strenght(GLfloat strenght)
+void point_light::set_strenght(GLfloat strenght)
 {
 	color_strenght = strenght;
 }
 
-std::pair<glm::vec3, GLfloat> simple_light::get_light_color()
+std::pair<glm::vec3, GLfloat> point_light::get_light_color()
 {
 	return std::make_pair(light_color,color_strenght);
 }
 
-glm::vec3 simple_light::get_light_position()
+glm::vec3 point_light::get_light_position()
 {
 	return light_position;
 }
 
-void simple_light::set_light_position(const glm::vec3 &new_pos)
+void point_light::set_light_position(const glm::vec3 &new_pos)
 {
 	light_position = new_pos;
 }
 
-void simple_light::prepare_for_render()
+void point_light::prepare_for_render()
 {
 	light_shader.use_shaders();
 
@@ -198,14 +210,14 @@ void simple_light::prepare_for_render()
 	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void simple_light::render()
+void point_light::render()
 {
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES,0,36);
 	glBindVertexArray(0);
 }
 
-void simple_light::clean_after_render()
+void point_light::clean_after_render()
 {
 
 }

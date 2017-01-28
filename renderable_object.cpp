@@ -1,4 +1,5 @@
 #include <renderable_object.hpp>
+#include <algorithm>
 
 namespace renderable
 {
@@ -20,6 +21,16 @@ void renderable_object::render_renderables(glm::mat4 model,
 void renderable_object::add_renderable(renderable_object * object)
 {
 	renderables.emplace_back(object);
+}
+
+bool renderable_object::remove_renderable(renderable_object *object)
+{
+	auto it = std::find(renderables.begin(),
+				renderables.end(),object);
+	if( it == renderables.end() )
+		return false;
+	renderables.erase(it);
+	return true;
 }
 
 }

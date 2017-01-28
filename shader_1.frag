@@ -10,9 +10,10 @@ uniform sampler2D loaded_texture;
 uniform sampler2D loaded_texture_specular_map;
 uniform vec3      object_color;
 uniform vec3      ambient_light_color;
-uniform vec3      light_pos[2]; //Let's support only two lights
-uniform vec3      light_color[2];
-uniform float     light_strength[2];
+uniform int       number_of_lights; // Should be <=10
+uniform vec3      light_pos[ 10 ];
+uniform vec3      light_color[ 10 ];
+uniform float     light_strength[ 10 ];
 uniform float     ambient_light_strenght = 1.0;
 
 void main()
@@ -22,7 +23,7 @@ void main()
     //Calculate lights
     vec3 diffuse_res = vec3(0.0);
     vec3 spec_res = vec3(0.0);
-    for( int i = 0 ; i < 2 ; ++i ) {
+    for( int i = 0 ; i < number_of_lights ; ++i ) {
 	vec3 norm = normalize(normal);
 	float dist = length(light_pos[i] - frag_pos);
 	float attenuation = (1.0 + dist * 0.22 + dist*dist*0.2);
