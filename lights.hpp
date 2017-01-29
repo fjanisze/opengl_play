@@ -55,14 +55,16 @@ const GLfloat cube_vertices[] = {
 };
 }
 
-class point_light;
-class object_lighting;
+class generic_light;
 
-using point_light_ptr = std::shared_ptr<point_light>;
+template<typename T>
+using light_ptr = std::shared_ptr<T>;
+
+using generic_light_ptr = light_ptr<generic_light>;
 
 class object_lighting
 {
-	static std::vector<point_light_ptr> all_lights;
+	static std::vector<generic_light_ptr> all_lights;
 	shaders::my_small_shaders * frag_shader;
 	void      update_ambient_colors();
 	GLfloat   ambient_light_strenght;
@@ -74,7 +76,8 @@ public:
 	static bool can_add_simple_light() {
 		return all_lights.size() < 10;
 	}
-	static bool add_simple_light(point_light_ptr new_light) {
+	template<typename LightT>
+	static bool add_simple_light(generic_light_ptr new_light) {
 		if( all_lights.size() < 10 ) {
 			all_lights.emplace_back(new_light);
 			return true;
@@ -84,10 +87,22 @@ public:
 	virtual ~object_lighting() {}
 };
 
-template<typename T>
-using light_obj_ptr = std::shared_ptr<T>;
-
 template<typename LightT>
+struct light_factory
+{
+	template<typename...Args>
+	static light_ptr<LightT> create(Args&&...args) {
+		if( false == object_lighting::can_add_simple_light() ) {
+			return nullptr;
+		}
+		auto light = std::make_shared<LightT>(std::forward<Args>(args)...);
+		if( false == object_lighting::add_simple_light<LightT>(light) ) {
+			return nullptr;
+		}
+		return light;
+	}
+};
+
 class generic_light
 {
 protected:
@@ -110,21 +125,9 @@ public:
 	std::pair<glm::vec3,GLfloat> get_light_color();
 	glm::vec3 get_light_position();
 	void set_light_position(const glm::vec3& new_pos);
-	template<typename...Args>
-	static light_obj_ptr<LightT> create_light(Args&&...args)
-	{
-		if( false == object_lighting::can_add_simple_light() )
-			return nullptr;
-		auto new_light = std::make_shared<LightT>(std::forward<Args>(args)...);
-		if( false == object_lighting::add_simple_light(new_light) ) {
-			ERR("How this is possible?!");
-			return nullptr;
-		}
-		return new_light;
-	}
 };
 
-class point_light : public generic_light<point_light>,
+class point_light : public generic_light,
 		public renderable::renderable_object
 {
 public:
@@ -137,50 +140,24 @@ public:
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
-	template<typename...Args>
-	static point_light_ptr create_light(Args&&...args)
-	{
-		if( false == object_lighting::can_add_simple_light() )
-			return nullptr;
-		auto new_light = std::make_shared<point_light>(std::forward<Args>(args)...);
-		if( false == object_lighting::add_simple_light(new_light) ) {
-			ERR("How this is possible?!");
-			return nullptr;
-		}
-		return new_light;
-	}
 };
-/*
-class directional_light;
-using directional_light_ptr = std::shared_ptr<directional_light>;
 
-class directional_light : public point_light
+class directional_light : public generic_light
 {
 	/*
 	 * Directional lights do not have a position,
 	 * they are somewhere far away and the rays are
 	 * coming from a certain 'direction' toward
 	 * out scene.
-	 *//*
+	 */
 	glm::vec3 light_direction;
 public:
 	directional_light(glm::vec3 direction,
 				 glm::vec3 color,
 				 GLfloat   strenght);
-	template<typename...Args>
-	static directional_light_ptr create_dir_light(Args&&...args)
-	{
-		if( false == object_lighting::can_add_simple_light() )
-			return nullptr;
-		auto new_light = std::make_shared<directional_light>(std::forward<Args>(args)...);
-		if( false == object_lighting::add_simple_light(new_light) ) {
-			ERR("How this is possible?!");
-			return nullptr;
-		}
-		return new_light;
-	}
 };
-*/
+
+
 }
 
 #endif

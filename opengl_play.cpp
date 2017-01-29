@@ -48,7 +48,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 		glm::vec3 light_pos = camera->get_camera_pos();
 		LOG1("Creating a new light at pos: ",
 			 light_pos.x,"/",light_pos.y,"/",light_pos.z);
-		auto light = lights::point_light::create_light(
+		auto light = lights::light_factory<lights::point_light>::create(
 					light_pos,
 					glm::vec3(1.0,1.0,1.0),
 					6.0);
@@ -259,13 +259,12 @@ void opengl_ui::enter_main_loop()
 	//Adding a light
 	glm::vec3 light_1_pos = glm::vec3(0.0,1.0,0.0),
 			  light_2_pos = glm::vec3(2.0,4.0,2.0);
-	light_1 = lights::point_light::create_light(light_1_pos,
+	light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
 												 2.0);
-	light_2 = lights::point_light::create_light(light_2_pos,
+	light_2 = lights::light_factory<lights::point_light>::create(light_2_pos,
 												 glm::vec3(1.0,1.0,0.8),
 												 5.0);
-
 	GLfloat light_1_angle = 0.0,
 			light_1_distance = glm::length(light_1->get_light_position());
 

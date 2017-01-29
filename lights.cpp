@@ -3,7 +3,7 @@
 namespace lights
 {
 
-std::vector<point_light_ptr> object_lighting::all_lights;
+std::vector<generic_light_ptr> object_lighting::all_lights;
 
 object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 	frag_shader{ shader },
@@ -93,8 +93,7 @@ void object_lighting::apply_object_color(const glm::vec3 &color)
 /// generic_light implementation
 /////////////////////////////////////
 
-template<typename LightT>
-void generic_light<LightT>::init_render_buffers() throw (std::runtime_error)
+void generic_light::init_render_buffers() throw (std::runtime_error)
 {
 	LOG1("init_render_buffers");
 
@@ -132,8 +131,7 @@ void generic_light<LightT>::init_render_buffers() throw (std::runtime_error)
 	glBindVertexArray(0);
 }
 
-template<typename LightT>
-generic_light<LightT>::generic_light(glm::vec3 position,
+generic_light::generic_light(glm::vec3 position,
 						   glm::vec3 color,
 						   GLfloat strenght) :
 	light_position{ position },
@@ -142,46 +140,36 @@ generic_light<LightT>::generic_light(glm::vec3 position,
 {
 }
 
-template<typename LightT>
-generic_light<LightT>::~generic_light()
+generic_light::~generic_light()
 {
 	glDeleteVertexArrays(1,&VAO);
 	glDeleteBuffers(1,&VBO);
 }
 
-template<typename LightT>
-GLfloat generic_light<LightT>::get_strenght()
+GLfloat generic_light::get_strenght()
 {
 	return color_strenght;
 }
 
-template<typename LightT>
-void generic_light<LightT>::set_strenght(GLfloat strenght)
+void generic_light::set_strenght(GLfloat strenght)
 {
 	color_strenght = strenght;
 }
 
-template<typename LightT>
-std::pair<glm::vec3, GLfloat> generic_light<LightT>::get_light_color()
+std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 {
 	return std::make_pair(light_color,color_strenght);
 }
 
-template<typename LightT>
-glm::vec3 generic_light<LightT>::get_light_position()
+glm::vec3 generic_light::get_light_position()
 {
 	return light_position;
 }
 
-template<typename LightT>
-void generic_light<LightT>::set_light_position(const glm::vec3 &new_pos)
+void generic_light::set_light_position(const glm::vec3 &new_pos)
 {
 	light_position = new_pos;
 }
-
-//Needed to store in the cpp file the
-//template definitions.
-template class generic_light<point_light>;
 
 //////////////////////////////////////
 /// point_light implementation
@@ -261,7 +249,11 @@ void point_light::clean_after_render()
 {
 
 }
-/*
+
+//////////////////////////////////////
+/// directional_light implementation
+/////////////////////////////////////
+
 directional_light::directional_light(glm::vec3 direction,
 									 glm::vec3 color,
 									 GLfloat strenght)
@@ -269,9 +261,6 @@ directional_light::directional_light(glm::vec3 direction,
 	light_direction = direction;
 	light_color = color;
 	color_strenght = strenght;
-
-	//Directional lights are not visible (second parm is false)
-	init_light("directional_light", false);
-}*/
+}
 
 }
