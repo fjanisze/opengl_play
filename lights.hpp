@@ -84,6 +84,10 @@ public:
 	virtual ~object_lighting() {}
 };
 
+template<typename T>
+using light_obj_ptr = std::shared_ptr<T>;
+
+template<typename LightT>
 class generic_light
 {
 protected:
@@ -106,21 +110,21 @@ public:
 	std::pair<glm::vec3,GLfloat> get_light_color();
 	glm::vec3 get_light_position();
 	void set_light_position(const glm::vec3& new_pos);
-/*	template<typename...Args>
-	static point_light_ptr create_light(Args&&...args)
+	template<typename...Args>
+	static light_obj_ptr<LightT> create_light(Args&&...args)
 	{
 		if( false == object_lighting::can_add_simple_light() )
 			return nullptr;
-		auto new_light = std::make_shared<point_light>(std::forward<Args>(args)...);
+		auto new_light = std::make_shared<LightT>(std::forward<Args>(args)...);
 		if( false == object_lighting::add_simple_light(new_light) ) {
 			ERR("How this is possible?!");
 			return nullptr;
 		}
 		return new_light;
-	}*/
+	}
 };
 
-class point_light : public generic_light,
+class point_light : public generic_light<point_light>,
 		public renderable::renderable_object
 {
 public:

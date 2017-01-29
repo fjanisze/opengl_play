@@ -89,7 +89,12 @@ void object_lighting::apply_object_color(const glm::vec3 &color)
 				color.g);
 }
 
-void generic_light::init_render_buffers() throw (std::runtime_error)
+//////////////////////////////////////
+/// generic_light implementation
+/////////////////////////////////////
+
+template<typename LightT>
+void generic_light<LightT>::init_render_buffers() throw (std::runtime_error)
 {
 	LOG1("init_render_buffers");
 
@@ -127,7 +132,8 @@ void generic_light::init_render_buffers() throw (std::runtime_error)
 	glBindVertexArray(0);
 }
 
-generic_light::generic_light(glm::vec3 position,
+template<typename LightT>
+generic_light<LightT>::generic_light(glm::vec3 position,
 						   glm::vec3 color,
 						   GLfloat strenght) :
 	light_position{ position },
@@ -135,6 +141,52 @@ generic_light::generic_light(glm::vec3 position,
 	color_strenght{ strenght }
 {
 }
+
+template<typename LightT>
+generic_light<LightT>::~generic_light()
+{
+	glDeleteVertexArrays(1,&VAO);
+	glDeleteBuffers(1,&VBO);
+}
+
+template<typename LightT>
+GLfloat generic_light<LightT>::get_strenght()
+{
+	return color_strenght;
+}
+
+template<typename LightT>
+void generic_light<LightT>::set_strenght(GLfloat strenght)
+{
+	color_strenght = strenght;
+}
+
+template<typename LightT>
+std::pair<glm::vec3, GLfloat> generic_light<LightT>::get_light_color()
+{
+	return std::make_pair(light_color,color_strenght);
+}
+
+template<typename LightT>
+glm::vec3 generic_light<LightT>::get_light_position()
+{
+	return light_position;
+}
+
+template<typename LightT>
+void generic_light<LightT>::set_light_position(const glm::vec3 &new_pos)
+{
+	light_position = new_pos;
+}
+
+//Needed to store in the cpp file the
+//template definitions.
+template class generic_light<point_light>;
+
+//////////////////////////////////////
+/// point_light implementation
+/////////////////////////////////////
+
 
 point_light::point_light(glm::vec3 position,
 						   glm::vec3 color,
@@ -152,42 +204,13 @@ point_light::~point_light()
 	remove_renderable(this);
 }
 
-generic_light::~generic_light()
-{
-	glDeleteVertexArrays(1,&VAO);
-	glDeleteBuffers(1,&VBO);
-}
-
-void point_light::set_transformations(glm::mat4 m,glm::mat4 v,glm::mat4 p)
+void point_light::set_transformations(glm::mat4 m,
+							glm::mat4 v,
+							glm::mat4 p)
 {
 	model = m;
 	view = v;
 	projection = p;
-}
-
-GLfloat generic_light::get_strenght()
-{
-	return color_strenght;
-}
-
-void generic_light::set_strenght(GLfloat strenght)
-{
-	color_strenght = strenght;
-}
-
-std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
-{
-	return std::make_pair(light_color,color_strenght);
-}
-
-glm::vec3 generic_light::get_light_position()
-{
-	return light_position;
-}
-
-void generic_light::set_light_position(const glm::vec3 &new_pos)
-{
-	light_position = new_pos;
 }
 
 void point_light::prepare_for_render()
