@@ -89,14 +89,9 @@ void object_lighting::apply_object_color(const glm::vec3 &color)
 				color.g);
 }
 
-point_light::point_light(glm::vec3 position,
-						   glm::vec3 color,
-						   GLfloat strenght) :
-	light_position{ position },
-	light_color{ color },
-	color_strenght{ strenght }
+void generic_light::init_render_buffers() throw (std::runtime_error)
 {
-	LOG1("Creating new point_light!");
+	LOG1("init_render_buffers");
 
 	cube_vrtx = std::make_unique<GLfloat[]>(36 * 3);
 	std::copy(model_vertices::cube_vertices,
@@ -110,7 +105,7 @@ point_light::point_light(glm::vec3 position,
 
 	if(!light_shader.create_shader_program()) {
 		ERR("Unable to create the shader program");
-		throw std::runtime_error("Failed to create simple_light");
+		throw std::runtime_error("Failed to create the light_shader.");
 	}
 
 	glGenVertexArrays(1,&VAO);
@@ -130,6 +125,24 @@ point_light::point_light(glm::vec3 position,
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
+}
+
+generic_light::generic_light(glm::vec3 position,
+						   glm::vec3 color,
+						   GLfloat strenght) :
+	light_position{ position },
+	light_color{ color },
+	color_strenght{ strenght }
+{
+}
+
+point_light::point_light(glm::vec3 position,
+						   glm::vec3 color,
+						   GLfloat strenght) :
+	generic_light(position,color,strenght)
+{
+	LOG1("Constructor: point_light");
+	init_render_buffers();
 
 	add_renderable(this);
 }
@@ -137,6 +150,10 @@ point_light::point_light(glm::vec3 position,
 point_light::~point_light()
 {
 	remove_renderable(this);
+}
+
+generic_light::~generic_light()
+{
 	glDeleteVertexArrays(1,&VAO);
 	glDeleteBuffers(1,&VBO);
 }
@@ -148,27 +165,27 @@ void point_light::set_transformations(glm::mat4 m,glm::mat4 v,glm::mat4 p)
 	projection = p;
 }
 
-GLfloat point_light::get_strenght()
+GLfloat generic_light::get_strenght()
 {
 	return color_strenght;
 }
 
-void point_light::set_strenght(GLfloat strenght)
+void generic_light::set_strenght(GLfloat strenght)
 {
 	color_strenght = strenght;
 }
 
-std::pair<glm::vec3, GLfloat> point_light::get_light_color()
+std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 {
 	return std::make_pair(light_color,color_strenght);
 }
 
-glm::vec3 point_light::get_light_position()
+glm::vec3 generic_light::get_light_position()
 {
 	return light_position;
 }
 
-void point_light::set_light_position(const glm::vec3 &new_pos)
+void generic_light::set_light_position(const glm::vec3 &new_pos)
 {
 	light_position = new_pos;
 }
@@ -221,5 +238,17 @@ void point_light::clean_after_render()
 {
 
 }
+/*
+directional_light::directional_light(glm::vec3 direction,
+									 glm::vec3 color,
+									 GLfloat strenght)
+{
+	light_direction = direction;
+	light_color = color;
+	color_strenght = strenght;
+
+	//Directional lights are not visible (second parm is false)
+	init_light("directional_light", false);
+}*/
 
 }
