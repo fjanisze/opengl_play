@@ -28,10 +28,10 @@ void my_camera::move_camera(mov_direction direction, GLfloat speed)
 {
 	switch(direction) {
 	case mov_direction::right:
-		cam_pos += glm::normalize( glm::cross(cam_front,cam_up) ) * speed;
+		cam_pos += cam_right * speed;//glm::normalize( glm::cross(cam_front,cam_up) ) * speed;
 		break;
 	case mov_direction::left:
-		cam_pos -= glm::normalize( glm::cross(cam_front,cam_up) ) * speed;
+		cam_pos -= cam_right * speed;//glm::normalize( glm::cross(cam_front,cam_up) ) * speed;
 		break;
 	case mov_direction::top:
 		cam_pos += cam_front * speed;
@@ -57,7 +57,10 @@ void my_camera::rotate_camera(GLdouble pitch_off, GLdouble yaw_off)
 	front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
 	front.y = sin(glm::radians(pitch));
 	front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+
 	cam_front = glm::normalize(front);
+	cam_right = glm::normalize(glm::cross(cam_front,glm::vec3(0.0,1.0,0.0)));
+	cam_up = glm::normalize(glm::cross(cam_right,cam_front));
 	update_cam_view();
 }
 

@@ -44,6 +44,7 @@ void object_lighting::calculate_lighting()
 	GLfloat light_pos[3 * max_supported_lights],
 			light_color[3 * max_supported_lights],
 			light_strength[max_supported_lights];
+	GLint   light_type[ max_supported_lights ];
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_color();
 		glm::vec3 cur_light = light_data.first;
@@ -60,6 +61,7 @@ void object_lighting::calculate_lighting()
 		light_color[3 * light_cnt + 2] = cur_light.b;
 
 		light_strength[light_cnt] = light_data.second;
+		light_type[light_cnt] = light->light_type();
 		++light_cnt;
 	}
 	GLint nl = glGetUniformLocation(*frag_shader,
@@ -70,9 +72,12 @@ void object_lighting::calculate_lighting()
 							   "light_color");
 	GLint ls = glGetUniformLocation(*frag_shader,
 							   "light_strength");
+	GLint lt = glGetUniformLocation(*frag_shader,
+							   "light_type");
 	glUniform3fv(lp,light_cnt,light_pos);
 	glUniform3fv(lc,light_cnt,light_color);
 	glUniform1fv(ls,light_cnt,light_strength);
+	glUniform1iv(lt,light_cnt,light_type);
 	glUniform1i(nl,light_cnt);
 	//Load the ambient light
 	update_ambient_colors();
@@ -258,7 +263,7 @@ directional_light::directional_light(glm::vec3 direction,
 									 glm::vec3 color,
 									 GLfloat strenght)
 {
-	light_direction = direction;
+	light_position = direction;
 	light_color = color;
 	color_strenght = strenght;
 }

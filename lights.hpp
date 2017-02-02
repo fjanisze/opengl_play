@@ -55,6 +55,17 @@ const GLfloat cube_vertices[] = {
 };
 }
 
+/*
+ * Type of available lights,
+ * this enum is used to map the light
+ * data with the proper light function
+ * in the shader
+ */
+enum type_of_light {
+	Spot_Light,
+	Directional_Light
+};
+
 class generic_light;
 
 template<typename T>
@@ -119,6 +130,7 @@ public:
 	generic_light(glm::vec3 position,
 				 glm::vec3 color,
 				 GLfloat   strenght);
+	virtual type_of_light light_type() = 0;
 	~generic_light();
 	GLfloat get_strenght();
 	void    set_strenght(GLfloat strenght);
@@ -135,6 +147,9 @@ public:
 	point_light(glm::vec3 position,
 				 glm::vec3 color,
 				 GLfloat   strenght);
+	type_of_light light_type() {
+		return type_of_light::Spot_Light;
+	}
 	~point_light();
 	void set_transformations(glm::mat4 m, glm::mat4 v, glm::mat4 p);
 	void prepare_for_render();
@@ -149,12 +164,18 @@ class directional_light : public generic_light
 	 * they are somewhere far away and the rays are
 	 * coming from a certain 'direction' toward
 	 * out scene.
+	 *
+	 * light_position has the meaning of direction
 	 */
-	glm::vec3 light_direction;
 public:
 	directional_light(glm::vec3 direction,
 				 glm::vec3 color,
 				 GLfloat   strenght);
+	type_of_light light_type(){
+		return type_of_light::Directional_Light;
+	}
+
+	directional_light() {}
 };
 
 

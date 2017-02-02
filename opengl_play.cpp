@@ -44,10 +44,10 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
 	if( button == GLFW_MOUSE_BUTTON_LEFT &&
 		action == GLFW_PRESS ) {
-		//Create a new light
+		//Create a new light (The positioning do not work properly)
 		glm::vec3 light_pos = camera->get_camera_pos();
 		LOG1("Creating a new light at pos: ",
-			 light_pos.x,"/",light_pos.y,"/",light_pos.z);
+			 light_pos.x/=2,"/",light_pos.y/=2,"/",light_pos.z/=2);
 		auto light = lights::light_factory<lights::point_light>::create(
 					light_pos,
 					glm::vec3(1.0,1.0,1.0),
@@ -230,7 +230,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
-						0.1f, 200.0f);
+						0.1f, 1000.0f);
 
 	object->add_object(glm::vec3(2.0,2.0,2.0),
 					   glm::vec3(1.0,1.0,1.0));
@@ -248,23 +248,38 @@ void opengl_ui::enter_main_loop()
 	camera->rotate_camera(-80,-80);
 	camera->update_cam_view();
 
-	//Add the lines
-	position_lines->add_line({0.0,0.0,0.0},
-							{10.0,0.0,0.0},{1.0,0.0,0.0});
-	position_lines->add_line({0.0,0.0,0.0},
-							{0.0,10.0,0.0},{0.0,0.0,1.0});
-	position_lines->add_line({0.0,0.0,0.0},
-							{0.0,0.0,10.0},{0.0,1.0,0.0});
+	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
+		{{50,0,0},{1.0,0.0,0.0}},
+		{{-50,0,0},{1.0,0.0,0.0}},
+		{{0,50,0},{0.0,0.0,1.0}},
+		{{0,-50,0},{0.0,0.0,1.0}},
+		{{0,0,50},{0.0,1.0,0.0}},
+		{{0,0,-50},{0.0,1.0,0.0}},
+		{{50,50,50},{0.0,1.0,1.0}},
+		{{-50,-50,-50},{0.0,1.0,1.0}}
+	};
+
+	for(auto& elem : line_endpoints) {
+		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
+	}
 
 	//Adding a light
-	glm::vec3 light_1_pos = glm::vec3(0.0,1.0,0.0),
-			  light_2_pos = glm::vec3(2.0,4.0,2.0);
+	glm::vec3 light_1_pos{0.0,1.0,0.0},
+			  light_2_pos{2.0,4.0,2.0},
+			front_light_pos{ camera->get_camera_pos() };
 	light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
 												 2.0);
 	light_2 = lights::light_factory<lights::point_light>::create(light_2_pos,
 												 glm::vec3(1.0,1.0,0.8),
 												 5.0);
+
+	//This light shall be in front of the camera
+	front_light = lights::light_factory<lights::point_light>::create(
+				front_light_pos,
+				glm::vec3(1.0,1.0,1.0),
+				5.0);
+
 	GLfloat light_1_angle = 0.0,
 			light_1_distance = glm::length(light_1->get_light_position());
 
@@ -300,6 +315,8 @@ void opengl_ui::enter_main_loop()
 		if(light_2_angle >= 360)
 			light_2_angle = 0;
 		light_2->set_light_position(light_2_pos);
+
+		front_light->set_light_position(camera->get_camera_pos());
 
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

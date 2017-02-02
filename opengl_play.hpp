@@ -47,7 +47,8 @@ class opengl_ui
 
 	my_lines_ptr position_lines;
 	lights::generic_light_ptr light_1,
-							  light_2;
+							  light_2,
+							front_light;
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
