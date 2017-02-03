@@ -229,10 +229,6 @@ void point_light::prepare_for_render()
 					light_position);
 	model = glm::scale(model,
 					   glm::vec3(0.5,0.5,0.5));
-	glUniformMatrix4fv(glGetUniformLocation(light_shader,
-								"object_position"),
-								1, GL_FALSE,
-								glm::value_ptr(model));
 
 	GLint model_loc = glGetUniformLocation(light_shader,"model");
 	GLint view_loc = glGetUniformLocation(light_shader,"view");

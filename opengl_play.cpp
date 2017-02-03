@@ -46,8 +46,9 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 		action == GLFW_PRESS ) {
 		//Create a new light (The positioning do not work properly)
 		glm::vec3 light_pos = camera->get_camera_pos();
+
 		LOG1("Creating a new light at pos: ",
-			 light_pos.x/=2,"/",light_pos.y/=2,"/",light_pos.z/=2);
+			 light_pos.x,"/",light_pos.y,"/",light_pos.z);
 		auto light = lights::light_factory<lights::point_light>::create(
 					light_pos,
 					glm::vec3(1.0,1.0,1.0),
@@ -103,7 +104,7 @@ void opengl_ui::evaluate_key_status()
 			//Camera moving
 			auto it = cam_moving_mapping.find(button);
 			if( it != cam_moving_mapping.end() ) {
-				camera->move_camera( it->second, 0.1 );
+				camera->move_camera( it->second, 0.3 );
 			}
 		}
 	}
@@ -226,7 +227,6 @@ void opengl_ui::enter_main_loop()
 	int  current_fps = 0;
 
 	glm::mat4 model;
-	glm::mat4 view;
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
@@ -281,10 +281,10 @@ void opengl_ui::enter_main_loop()
 		100);
 
 	//This light shall be in front of the camera
-	front_light = lights::light_factory<lights::point_light>::create(
+	/*front_light = lights::light_factory<lights::point_light>::create(
 				front_light_pos,
 				glm::vec3(1.0,1.0,1.0),
-				5.0);
+				5.0);*/
 
 	GLfloat light_1_angle = 0.0,
 			light_1_distance = glm::length(light_1->get_light_position());
@@ -322,7 +322,7 @@ void opengl_ui::enter_main_loop()
 			light_2_angle = 0;
 		light_2->set_light_position(light_2_pos);
 
-		front_light->set_light_position(camera->get_camera_pos());
+		//front_light->set_light_position(camera->get_camera_pos());
 
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

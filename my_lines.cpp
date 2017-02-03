@@ -39,6 +39,7 @@ int my_static_lines::add_line(glm::vec3 from, glm::vec3 to,
 	};
 	lines.push_back(new_line);
 	update_buffers();
+	return lines.size();
 }
 
 void my_static_lines::set_transformations(glm::mat4 m,

@@ -178,13 +178,9 @@ void little_object::apply_transformations(decltype(objects)::value_type& elem)
 void little_object::apply_position(decltype(objects)::value_type& elem)
 {
 	glm::mat4 model;
-	model = glm::translate(
-					model,
-					elem.second.position);
-	glUniformMatrix4fv(glGetUniformLocation(obj_shader,
-								"object_position"),
-								1, GL_FALSE,
-								glm::value_ptr(model));
+	elem.second.model = glm::translate(
+				model,
+				elem.second.position);
 }
 
 void little_object::object_rotation(rotation_axis axis,
