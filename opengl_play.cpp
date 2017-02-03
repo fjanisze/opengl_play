@@ -274,6 +274,12 @@ void opengl_ui::enter_main_loop()
 												 glm::vec3(1.0,1.0,0.8),
 												 5.0);
 
+	//Create a directional light
+	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
+		glm::vec3(100,100,100),
+		glm::vec3(1.0,1.0,1.0),
+		100);
+
 	//This light shall be in front of the camera
 	front_light = lights::light_factory<lights::point_light>::create(
 				front_light_pos,

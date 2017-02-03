@@ -39,6 +39,25 @@ void calculate_spot_light(inout vec3 diffuse_res,
     spec_res += specular;
 }
 
+void calculate_directional_light(inout vec3 diffuse_res,
+                                 inout vec3 spec_res,
+                                 int light_idx)
+{
+    vec3 norm = normalize(normal);
+    vec3 light_dir = normalize( light_pos[light_idx] );
+    float diff = max( dot( norm, light_dir ), 0.0);
+    vec3 diffuse = diff * light_color[light_idx];
+    diffuse *= vec3(texture(loaded_texture,texture_coords));
+    diffuse_res += diffuse;
+
+    vec3 view_dir = normalize( camera_pos - frag_pos );
+    vec3 reflect_dir = reflect(-light_dir, norm);
+    float spec = pow(max(dot(view_dir,reflect_dir),0.0),32);
+    vec3 specular =  spec * light_color[light_idx];
+    specular *= (vec3(texture(loaded_texture_specular_map,texture_coords)) * 0.5);
+    spec_res += specular;
+}
+
 void main()
 {
     vec3 ambient = ambient_light_strenght * ambient_light_color;
@@ -50,6 +69,8 @@ void main()
 	//Spot_Light
 	if( light_type[ i ] == 0 ) {
 	    calculate_spot_light(diffuse_res,spec_res,i);
+	} else if( light_type[ i ] == 1) {
+	    calculate_directional_light(diffuse_res,spec_res,i);
 	}
     }
     final_object_color = ( diffuse_res + spec_res + ambient ) * object_color;
