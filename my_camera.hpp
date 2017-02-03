@@ -30,6 +30,7 @@ public:
 	GLdouble get_camera_yaw();
 	GLdouble get_camera_pitch();
 	glm::vec3 get_camera_pos();
+	glm::vec3 get_camera_front();
 	static camera_obj create_camera(glm::vec3 pos,glm::vec3 target);
 };
 

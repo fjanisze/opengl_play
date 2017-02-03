@@ -281,10 +281,10 @@ void opengl_ui::enter_main_loop()
 		100);
 
 	//This light shall be in front of the camera
-	/*front_light = lights::light_factory<lights::point_light>::create(
+	front_light = lights::light_factory<lights::point_light>::create(
 				front_light_pos,
 				glm::vec3(1.0,1.0,1.0),
-				5.0);*/
+				3.0);
 
 	GLfloat light_1_angle = 0.0,
 			light_1_distance = glm::length(light_1->get_light_position());
@@ -292,6 +292,7 @@ void opengl_ui::enter_main_loop()
 	GLfloat light_2_angle = 0.0,
 			light_2_distance = glm::length(light_2->get_light_position()) * 2;
 
+	glm::vec3 cam_front = glm::normalize(camera->get_camera_front());
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -322,7 +323,11 @@ void opengl_ui::enter_main_loop()
 			light_2_angle = 0;
 		light_2->set_light_position(light_2_pos);
 
-		//front_light->set_light_position(camera->get_camera_pos());
+		glm::mat4 fl_pv = glm::inverse(camera->get_view());
+		fl_pv = glm::translate(fl_pv, cam_front);
+		glm::vec4 fl_pos = fl_pv * glm::vec4(0.5,1.0,-4.0,1.0);
+		front_light_pos = glm::vec3(fl_pos.x,fl_pos.y,fl_pos.z);
+		front_light->set_light_position(front_light_pos);
 
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

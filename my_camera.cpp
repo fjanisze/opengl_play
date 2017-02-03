@@ -96,4 +96,9 @@ glm::vec3 my_camera::get_camera_pos()
 	return cam_pos;
 }
 
+glm::vec3 my_camera::get_camera_front()
+{
+	return cam_front;
+}
+
 }
