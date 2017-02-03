@@ -27,7 +27,6 @@ void main()
     float attenuation;
     vec3 light_dir;
     vec3 norm = normalize(normal);
-    float attenuation;
     for( int light_idx = 0 ; light_idx < number_of_lights ; ++light_idx ) {
 	if( light_type[ light_idx ] == 0 ) //Spot light
 	{
