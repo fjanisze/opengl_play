@@ -1,6 +1,7 @@
 #include <headers.hpp>
 #include "logger/logger.hpp"
 #include <renderable_object.hpp>
+#include <movable_object.hpp>
 #include <shaders.hpp>
 
 namespace opengl_play
@@ -18,20 +19,20 @@ struct single_line
 			t_color[3];
 };
 
-class my_static_lines : renderable::renderable_object
+class my_static_lines :
+		public renderable::renderable_object
 {
 	shaders::my_small_shaders shaders;
 	std::vector<single_line> lines;
 	GLuint VAO,VBO;
 	glm::mat4 view,
-			projection,
-			model;
+			projection;
 	void update_buffers();
 public:
 	my_static_lines();
 	~my_static_lines();
 	int add_line(glm::vec3 from, glm::vec3 to,glm::vec3 color);
-	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
+	void set_transformations(glm::mat4 view, glm::mat4 projection);
 	void modify_view(glm::mat4 new_view);
 	void prepare_for_render();
 	void render();

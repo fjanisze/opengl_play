@@ -1,6 +1,7 @@
 #include <headers.hpp>
 #include <shaders.hpp>
 #include <renderable_object.hpp>
+#include <movable_object.hpp>
 
 #ifndef LIGHTS_HPP
 #define LIGHTS_HPP
@@ -114,16 +115,16 @@ struct light_factory
 	}
 };
 
-class generic_light
+class generic_light : public renderable::renderable_object,
+		public movable_object::movable_object
 {
 protected:
 	GLuint VAO,VBO;
 	shaders::my_small_shaders light_shader;
 	std::unique_ptr<GLfloat[]> cube_vrtx;
-	glm::vec3 light_position,
-			  light_color;
+	glm::vec3 light_color;
 	GLfloat   color_strenght;
-	glm::mat4 model,view,projection;
+	glm::mat4 view,projection;
 	virtual void init_render_buffers() throw (std::runtime_error);
 public:
 	generic_light() = default;
@@ -135,12 +136,9 @@ public:
 	GLfloat get_strenght();
 	void    set_strenght(GLfloat strenght);
 	std::pair<glm::vec3,GLfloat> get_light_color();
-	glm::vec3 get_light_position();
-	void set_light_position(const glm::vec3& new_pos);
 };
 
-class point_light : public generic_light,
-		public renderable::renderable_object
+class point_light : public generic_light
 {
 public:
 	point_light() = default;
@@ -151,10 +149,12 @@ public:
 		return type_of_light::Spot_Light;
 	}
 	~point_light();
-	void set_transformations(glm::mat4 m, glm::mat4 v, glm::mat4 p);
+	void set_transformations(glm::mat4 v, glm::mat4 p);
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
+
+	void rotate_object(GLfloat yaw);
 };
 
 class directional_light : public generic_light

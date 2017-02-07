@@ -240,12 +240,10 @@ void little_object::scale(GLfloat amount)
 	}
 }
 
-void little_object::set_transformations(glm::mat4 model,
-										glm::mat4 view,
+void little_object::set_transformations(glm::mat4 view,
 										glm::mat4 projection)
 {
 	for(auto& object:objects) {
-		object.second.model = model;
 		object.second.view = view;
 		object.second.projection = projection;
 	}

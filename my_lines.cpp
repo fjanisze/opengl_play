@@ -42,11 +42,9 @@ int my_static_lines::add_line(glm::vec3 from, glm::vec3 to,
 	return lines.size();
 }
 
-void my_static_lines::set_transformations(glm::mat4 m,
-								glm::mat4 v,
+void my_static_lines::set_transformations(glm::mat4 v,
 								glm::mat4 p)
 {
-	model = m;
 	view = v;
 	projection = p;
 }
@@ -86,17 +84,10 @@ void my_static_lines::prepare_for_render()
 	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
 	GLint projection_loc = glGetUniformLocation(shaders,"projection");
 	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
-	GLint model_loc = glGetUniformLocation(shaders,"model");
-	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 
 	glm::mat4 model;
-	model = glm::translate(
-					model,
-					glm::vec3(0.0,0.0,0.0));
-	glUniformMatrix4fv(glGetUniformLocation(shaders,
-								"object_position"),
-								1, GL_FALSE,
-								glm::value_ptr(model));
+	GLint model_loc = glGetUniformLocation(shaders,"model");
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 
 }
 

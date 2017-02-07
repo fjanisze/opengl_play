@@ -51,7 +51,7 @@ void object_lighting::calculate_lighting()
 		ambient_light_color.r = std::max(ambient_light_color.r,cur_light.r);
 		ambient_light_color.g = std::max(ambient_light_color.g,cur_light.g);
 		ambient_light_color.b = std::max(ambient_light_color.b,cur_light.b);
-		auto pos = light->get_light_position();
+		auto pos = light->get_position();
 		light_pos[3 * light_cnt + 0] = pos.x;
 		light_pos[3 * light_cnt + 1] = pos.y;
 		light_pos[3 * light_cnt + 2] = pos.z;
@@ -139,10 +139,11 @@ void generic_light::init_render_buffers() throw (std::runtime_error)
 generic_light::generic_light(glm::vec3 position,
 						   glm::vec3 color,
 						   GLfloat strenght) :
-	light_position{ position },
 	light_color{ color },
 	color_strenght{ strenght }
 {
+	set_position(position);
+	set_scale(0.5);
 }
 
 generic_light::~generic_light()
@@ -166,16 +167,6 @@ std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 	return std::make_pair(light_color,color_strenght);
 }
 
-glm::vec3 generic_light::get_light_position()
-{
-	return light_position;
-}
-
-void generic_light::set_light_position(const glm::vec3 &new_pos)
-{
-	light_position = new_pos;
-}
-
 //////////////////////////////////////
 /// point_light implementation
 /////////////////////////////////////
@@ -197,11 +188,9 @@ point_light::~point_light()
 	remove_renderable(this);
 }
 
-void point_light::set_transformations(glm::mat4 m,
-							glm::mat4 v,
+void point_light::set_transformations(glm::mat4 v,
 							glm::mat4 p)
 {
-	model = m;
 	view = v;
 	projection = p;
 }
@@ -222,13 +211,7 @@ void point_light::prepare_for_render()
 	glUniform1f(obj_col_strenght_uniform,
 				color_strenght);
 
-
-	glm::mat4 model;
-	model = glm::translate(
-					model,
-					light_position);
-	model = glm::scale(model,
-					   glm::vec3(0.5,0.5,0.5));
+	glm::mat4 model = get_model_matrix();
 
 	GLint model_loc = glGetUniformLocation(light_shader,"model");
 	GLint view_loc = glGetUniformLocation(light_shader,"view");
@@ -251,6 +234,11 @@ void point_light::clean_after_render()
 
 }
 
+void point_light::rotate_object(GLfloat yaw)
+{
+	current_yaw = yaw;
+}
+
 //////////////////////////////////////
 /// directional_light implementation
 /////////////////////////////////////
@@ -259,7 +247,7 @@ directional_light::directional_light(glm::vec3 direction,
 									 glm::vec3 color,
 									 GLfloat strenght)
 {
-	light_position = direction;
+	set_position(direction);
 	light_color = color;
 	color_strenght = strenght;
 }

@@ -226,7 +226,6 @@ void opengl_ui::enter_main_loop()
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
 
-	glm::mat4 model;
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
@@ -264,9 +263,8 @@ void opengl_ui::enter_main_loop()
 	}
 
 	//Adding a light
-	glm::vec3 light_1_pos{0.0,1.0,0.0},
-			  light_2_pos{2.0,4.0,2.0},
-			front_light_pos{ camera->get_camera_pos() };
+	glm::vec3 light_1_pos{0.0,1.5,0.0},
+			  light_2_pos{2.0,4.0,2.0};
 	light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
 												 2.0);
@@ -280,19 +278,12 @@ void opengl_ui::enter_main_loop()
 		glm::vec3(1.0,1.0,1.0),
 		100);
 
-	//This light shall be in front of the camera
-	front_light = lights::light_factory<lights::point_light>::create(
-				front_light_pos,
-				glm::vec3(1.0,1.0,1.0),
-				3.0);
-
 	GLfloat light_1_angle = 0.0,
-			light_1_distance = glm::length(light_1->get_light_position());
+			light_1_distance = glm::length(light_1->get_position());
 
 	GLfloat light_2_angle = 0.0,
-			light_2_distance = glm::length(light_2->get_light_position()) * 2;
+			light_2_distance = glm::length(light_2->get_position()) * 2;
 
-	glm::vec3 cam_front = glm::normalize(camera->get_camera_front());
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -314,26 +305,19 @@ void opengl_ui::enter_main_loop()
 		light_1_angle += 0.01;
 		if(light_1_angle >= 360)
 			light_1_angle = 0;
-		light_1->set_light_position(light_1_pos);
+		light_1->set_position(light_1_pos);
 
 		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
 		light_2_pos.y = std::sin(light_2_angle) * light_2_distance;
 		light_2_angle += 0.05;
 		if(light_2_angle >= 360)
 			light_2_angle = 0;
-		light_2->set_light_position(light_2_pos);
-
-		glm::mat4 fl_pv = glm::inverse(camera->get_view());
-		fl_pv = glm::translate(fl_pv, cam_front);
-		glm::vec4 fl_pos = fl_pv * glm::vec4(0.5,1.0,-4.0,1.0);
-		front_light_pos = glm::vec3(fl_pos.x,fl_pos.y,fl_pos.z);
-		front_light->set_light_position(front_light_pos);
+		light_2->set_position(light_2_pos);
 
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		renderable::renderable_object::render_renderables(model,
-											camera->get_view(),
+		renderable::renderable_object::render_renderables(camera->get_view(),
 											projection);
 
 		fps_info->render_text();

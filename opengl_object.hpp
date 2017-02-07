@@ -74,7 +74,7 @@ public:
 	void move(mov_direction dir, GLfloat amount);
 	glm::vec3 get_object_position();
 	void scale(GLfloat amount);
-	void set_transformations(glm::mat4 model,glm::mat4 view,glm::mat4 projection);
+	void set_transformations(glm::mat4 view,glm::mat4 projection);
 	int add_object(const glm::vec3& coordinates,const glm::vec3& color);
 	bool select_object(int id);
 	bool release_current_object();
