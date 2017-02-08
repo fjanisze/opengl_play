@@ -21,6 +21,7 @@ class my_camera
 	GLdouble pitch,yaw;
 	glm::mat4 cam_view;
 	movable_object::mov_obj_ptr target_to_follow;
+	void update_angles();
 public:
 	my_camera(glm::vec3 position,glm::vec3 target);
 	void update_cam_view();

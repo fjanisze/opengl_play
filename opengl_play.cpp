@@ -196,7 +196,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({2.0,2.0,10.0},{1.0,1.0,1.0});
+	camera = my_camera::create_camera({5.0,5.0,15.0},{0.0,0.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -243,10 +243,6 @@ void opengl_ui::enter_main_loop()
 
 	object->add_object(glm::vec3(0.0,0.0,0.0),
 						glm::vec3(1.0,1.0,1.0));
-
-	camera->set_position(glm::vec3(1.0,4.0,0.0));
-	camera->rotate_camera(-80,-80);
-	camera->update_cam_view();
 
 	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
 		{{50,0,0},{1.0,0.0,0.0}},
@@ -296,7 +292,7 @@ void opengl_ui::enter_main_loop()
 	};
 
 	movement_processor.register_movable_object(light_1,mapping);
-	camera->set_target(light_1);
+	//camera->set_target(light_1);
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -305,7 +301,7 @@ void opengl_ui::enter_main_loop()
 		glfwPollEvents();
 		evaluate_key_status();
 		movement_processor.process_movements();
-		camera->follow_target();
+		//camera->follow_target();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
