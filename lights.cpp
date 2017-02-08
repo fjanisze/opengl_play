@@ -167,6 +167,7 @@ std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 	return std::make_pair(light_color,color_strenght);
 }
 
+
 //////////////////////////////////////
 /// point_light implementation
 /////////////////////////////////////

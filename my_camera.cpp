@@ -11,7 +11,8 @@ camera_obj my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
 
 my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 	cam_front( target ),
-	cam_pos( position )
+	cam_pos( position ),
+	target_to_follow{ nullptr }
 {
 	cam_up = glm::vec3( 0.0, 1.0, 0.0 );//Point upward
 	pitch = 0;
@@ -28,10 +29,10 @@ void my_camera::move_camera(mov_direction direction, GLfloat speed)
 {
 	switch(direction) {
 	case mov_direction::right:
-		cam_pos += cam_right * speed;//glm::normalize( glm::cross(cam_front,cam_up) ) * speed;
+		cam_pos += cam_right * speed;
 		break;
 	case mov_direction::left:
-		cam_pos -= cam_right * speed;//glm::normalize( glm::cross(cam_front,cam_up) ) * speed;
+		cam_pos -= cam_right * speed;
 		break;
 	case mov_direction::top:
 		cam_pos += cam_front * speed;
@@ -75,10 +76,16 @@ void my_camera::set_position(glm::vec3 pos)
 	update_cam_view();
 }
 
-void my_camera::set_target(glm::vec3 pos)
+void my_camera::set_target(movable_object::mov_obj_ptr object)
 {
-	cam_front = pos;
-	update_cam_view();
+	target_to_follow = object;
+}
+
+void my_camera::follow_target()
+{
+	if( nullptr != target_to_follow ) {
+		//todo!
+	}
 }
 
 GLdouble my_camera::get_camera_yaw()

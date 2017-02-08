@@ -2,6 +2,7 @@
 #define MY_CAMERA_HPP
 
 #include "headers.hpp"
+#include <movable_object.hpp>
 
 namespace opengl_play
 {
@@ -19,6 +20,7 @@ class my_camera
 			cam_up;
 	GLdouble pitch,yaw;
 	glm::mat4 cam_view;
+	movable_object::mov_obj_ptr target_to_follow;
 public:
 	my_camera(glm::vec3 position,glm::vec3 target);
 	void update_cam_view();
@@ -26,7 +28,8 @@ public:
 	void rotate_camera(GLdouble pitch_off,GLdouble yaw_off);
 	glm::mat4 get_view();
 	void set_position(glm::vec3 pos);
-	void set_target(glm::vec3 pos);
+	void set_target(movable_object::mov_obj_ptr object);
+	void follow_target();
 	GLdouble get_camera_yaw();
 	GLdouble get_camera_pitch();
 	glm::vec3 get_camera_pos();

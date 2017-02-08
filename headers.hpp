@@ -16,6 +16,7 @@
 #include <chrono>
 #include <map>
 #include <SOIL/SOIL.h>
+#include <vector>
 
 namespace opengl_play
 {
@@ -25,7 +26,9 @@ enum class mov_direction
 	left,
 	right,
 	top,
-	down
+	down,
+	forward,
+	backward
 };
 
 }

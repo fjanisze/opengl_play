@@ -89,6 +89,7 @@ void opengl_ui::ui_keyboard_press(GLint button,
 	} else if( action == GLFW_RELEASE ) {
 		key_status[ button ] = key_status_t::not_pressed;
 	}
+	movement_processor.keyboard_input(button,scode,action);
 }
 
 void opengl_ui::evaluate_key_status()
@@ -267,7 +268,7 @@ void opengl_ui::enter_main_loop()
 			  light_2_pos{2.0,4.0,2.0};
 	light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
-												 2.0);
+												 6.0);
 	light_2 = lights::light_factory<lights::point_light>::create(light_2_pos,
 												 glm::vec3(1.0,1.0,0.8),
 												 5.0);
@@ -284,12 +285,27 @@ void opengl_ui::enter_main_loop()
 	GLfloat light_2_angle = 0.0,
 			light_2_distance = glm::length(light_2->get_position()) * 2;
 
+
+	movable_object::key_mapping_vec mapping = {
+		{GLFW_KEY_LEFT, { movable_object::mov_direction::rot_yaw, 2} },
+		{GLFW_KEY_RIGHT, { movable_object::mov_direction::rot_yaw, -2} },
+		{GLFW_KEY_PAGE_UP, { movable_object::mov_direction::rot_pitch, -2} },
+		{GLFW_KEY_PAGE_DOWN, { movable_object::mov_direction::rot_pitch, 2} },
+		{GLFW_KEY_UP, { movable_object::mov_direction::forward, 0.2} },
+		{GLFW_KEY_DOWN, { movable_object::mov_direction::backward, 0.2} }
+	};
+
+	movement_processor.register_movable_object(light_1,mapping);
+	camera->set_target(light_1);
+
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
 		++current_fps;
 		glfwPollEvents();
 		evaluate_key_status();
+		movement_processor.process_movements();
+		camera->follow_target();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
@@ -305,7 +321,7 @@ void opengl_ui::enter_main_loop()
 		light_1_angle += 0.01;
 		if(light_1_angle >= 360)
 			light_1_angle = 0;
-		light_1->set_position(light_1_pos);
+		//light_1->set_position(light_1_pos);
 
 		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
 		light_2_pos.y = std::sin(light_2_angle) * light_2_distance;

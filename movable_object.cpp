@@ -4,6 +4,10 @@
 namespace movable_object
 {
 
+//////////////////////////////////////
+/// movable_object implementation
+/////////////////////////////////////
+
 movable_object::movable_object() :
 	model{ glm::mat4() },
 	current_position{ glm::vec3() },
@@ -15,40 +19,12 @@ movable_object::movable_object() :
 
 }
 
-
-void movable_object::update_model()
-{
-	if( update_needed ) {
-		model = glm::mat4();
-
-		model = glm::rotate(model,
-					current_yaw,
-					glm::vec3(0.0,1.0,0.0));
-
-		model = glm::rotate(model,
-					current_pitch,
-					glm::vec3(1.0,0.0,0.0));
-
-		model = glm::rotate(model,
-					current_roll,
-					glm::vec3(0.0,0.0,1.0));
-
-		model = glm::translate(model,
-					current_position);
-
-		model = glm::scale(model,
-					glm::vec3(current_scale,
-							  current_scale,
-							  current_scale));
-
-		update_needed = false;
-	}
-}
-
 void movable_object::set_position(const glm::vec3 &position)
 {
+	glm::vec3 translation_vector = position - current_position;
+	model = glm::translate(model,
+				translation_vector);
 	current_position = position;
-	update_needed = true;
 }
 
 glm::vec3 movable_object::get_position()
@@ -58,32 +34,173 @@ glm::vec3 movable_object::get_position()
 
 void movable_object::set_yaw(GLfloat yaw)
 {
+	modify_angle(mov_angles::yaw, current_yaw - yaw);
 	current_yaw = yaw;
-	update_needed = true;
 }
 
 void movable_object::set_pitch(GLfloat pitch)
 {
+	modify_angle(mov_angles::pitch, current_pitch - pitch);
 	current_pitch = pitch;
-	update_needed = true;
 }
 
 void movable_object::set_roll(GLfloat roll)
 {
+	modify_angle(mov_angles::roll, current_roll - roll);
 	current_roll = roll;
-	update_needed = true;
 }
 
 void movable_object::set_scale(GLfloat scale)
 {
 	current_scale = scale;
-	update_needed = true;
+}
+
+void movable_object::modify_angle(mov_angles angle,
+						GLfloat amount)
+{
+	static glm::vec3 rotation_angles[3] = {
+		{0.0,0.0,1.0},
+		{1.0,0.0,0.0},
+		{0.0,1.0,0.0}
+	};
+	model = glm::rotate(model,
+						glm::radians(amount),
+						rotation_angles[static_cast<int>(angle)]);
+	switch( angle ) {
+	case mov_angles::pitch:
+		current_pitch += amount;
+		break;
+	case mov_angles::yaw:
+		current_yaw += amount;
+		break;
+	case mov_angles::roll:
+		current_roll += amount;
+		break;
+	default:
+		ERR("modify_angle: Unknow angle!");
+	}
+}
+
+bool movable_object::move(mov_direction direction,
+						GLfloat amount)
+{
+	if( amount < 0 ) {
+		ERR("movable_object::move: amount must be >= 0");
+		return false;
+	}
+	glm::vec3 translation_vector;
+	bool ret = true;
+
+	switch( direction ) {
+	case mov_direction::right:
+		amount *= -1;
+	case mov_direction::left:
+		translation_vector.x = amount;
+		break;
+	case mov_direction::down:
+		amount *= -1;
+	case mov_direction::top:
+		translation_vector.y = amount;
+		break;
+	case mov_direction::backward:
+		amount *= -1;
+	case mov_direction::forward:
+		translation_vector.z = amount;
+		break;
+	default:
+		WARN2("movable_object::move: Use modify_angle to change the angles!");
+		ret = false;
+		break;
+	}
+	if( true == ret ) {
+		model = glm::translate( model,
+								translation_vector );
+		current_position = glm::vec3(model[3].x,model[3].y,model[3].z);
+	}
+	return ret;
 }
 
 glm::mat4 movable_object::get_model_matrix()
 {
-	update_model();
 	return model;
+}
+
+//////////////////////////////////////
+/// object_movement_processor implementation
+/////////////////////////////////////
+
+object_movement_processor::object_movement_processor()
+{
+	LOG1("Creating object_movement_processor");
+	key_status.resize(1024);
+	std::fill(key_status.begin(),key_status.end(),key_status_t::not_pressed);
+}
+
+void object_movement_processor::keyboard_input(int key,
+								int scan_code,
+								int action)
+{
+	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
+		key_status[ key ] = key_status_t::pressed;
+	} else if( action == GLFW_RELEASE ) {
+		key_status[ key ] = key_status_t::not_pressed;
+	}
+}
+
+void object_movement_processor::process_movements()
+{
+	for( int key = 0 ; key < key_status.size() ; ++key ) {
+		if( key_status[ key ] == key_status_t::pressed ) {
+			/*
+			 * the key 'key' is pressed, check whether anybody
+			 * has registered a movable_object to perform
+			 * a movement if this key is pressed.
+			 */
+			auto it = kb_map_mapping.find( key );
+			if( it != kb_map_mapping.end() ) {
+				/*
+				 * For each registered object, perform the
+				 * proper movement
+				 */
+				for( auto& movable : it->second ) {
+					mov_obj_ptr obj = movable.first;
+					for( auto& dir : movable.second ) {
+						switch( dir.direction ) {
+						case mov_direction::left:
+						case mov_direction::right:
+						case mov_direction::top:
+						case mov_direction::down:
+						case mov_direction::forward:
+						case mov_direction::backward:
+							obj->move(dir.direction, dir.speed);
+							break;
+						case mov_direction::rot_yaw:
+							obj->modify_angle(mov_angles::yaw, dir.speed);
+							break;
+						case mov_direction::rot_pitch:
+							obj->modify_angle(mov_angles::pitch, dir.speed);
+							break;
+						case mov_direction::rot_roll:
+							obj->modify_angle(mov_angles::roll, dir.speed);
+							break;
+						default:
+							ERR("process_movement: Unrecognize movement direction");
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void object_movement_processor::register_movable_object(mov_obj_ptr obj,
+									key_mapping_vec key_mapping)
+{
+	for( auto& key : key_mapping )
+	{
+		kb_map_mapping[ key.first ][ obj ].push_back( key.second );
+	}
 }
 
 }

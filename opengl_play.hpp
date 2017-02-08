@@ -6,6 +6,7 @@
 #include "my_camera.hpp"
 #include "my_lines.hpp"
 #include "lights.hpp"
+#include <movable_object.hpp>
 
 namespace opengl_play
 {
@@ -49,6 +50,8 @@ class opengl_ui
 	lights::generic_light_ptr light_1,
 							  light_2,
 							front_light;
+
+	movable_object::object_movement_processor movement_processor;
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
