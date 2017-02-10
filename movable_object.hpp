@@ -3,8 +3,9 @@
 #include "headers.hpp"
 #include <list>
 #include <vector>
+#include <unordered_map>
 
-namespace movable_object
+namespace movable
 {
 
 class movable_object;
@@ -51,27 +52,73 @@ protected:
 			current_scale;
 public:
 	movable_object();
-	void set_position(const glm::vec3& position);
+	virtual void set_position(const glm::vec3& position);
 	glm::vec3 get_position();
-	void set_yaw(GLfloat yaw);
-	void set_pitch(GLfloat pitch);
-	void set_roll(GLfloat roll);
-	void set_scale(GLfloat scale);
+	virtual void set_yaw(GLfloat yaw);
+	virtual void set_pitch(GLfloat pitch);
+	virtual void set_roll(GLfloat roll);
+	virtual void set_scale(GLfloat scale);
+	virtual GLfloat get_yaw();
+	virtual GLfloat get_pitch();
+	virtual GLfloat get_roll();
 	//Roll/Pitch/Yaw the object for the given
 	//amount, it might be +-
-	void modify_angle(mov_angles angle,GLfloat amount);
+	virtual void modify_angle(mov_angles angle,GLfloat amount);
 	/*
 	 * move will attempt to move the movable_object
 	 * in certain direction, if any changes was made
 	 * to the position the function return true
 	 */
-	bool move(mov_direction direction, GLfloat amount);
-	glm::mat4 get_model_matrix();
+	virtual bool move(mov_direction direction, GLfloat amount);
+	virtual glm::mat4 get_model_matrix();
 };
 
 using key_code_t = int;
 using scan_code_t = int;
 using act_code_t = int;
+
+/*
+ * This class implements the logic
+ * which allow objects to follow each other
+ */
+class tracking_processor
+{
+public:
+	tracking_processor() = default;
+	/*
+	 * Setup a give object to follow a target object,
+	 * the argument distance_threshold provide
+	 * the maximum distance that is allowed between
+	 * the target and the follower, exceeding this
+	 * distance will trigger the tracking.
+	 */
+	bool new_tracking(mov_obj_ptr target,
+					mov_obj_ptr object,
+					GLfloat distance_threashold);
+	/*
+	 * Shall be called at every frame to update
+	 * the position of the objects which are
+	 * expected to move
+	 */
+	void process_tracking();
+	/*
+	 * Return the last recorded distance from
+	 * the target for the given object
+	 */
+	GLfloat get_dist_from_target(mov_obj_ptr object);
+private:
+	//Information needed to handle the object tracking
+	struct tracking_info {
+		mov_obj_ptr target,
+					object;
+		glm::vec3 last_target_position,
+				last_object_position;
+		GLfloat distance_threshold,
+				last_recorded_distance;
+		tracking_info() = default;
+	};
+	std::unordered_map<mov_obj_ptr,tracking_info> tracking_data;
+};
 
 /*
  * direction_details is used to
@@ -111,7 +158,7 @@ public:
 	 * might be moved by mouse inputs, for example
 	 * the pitch or yaw might be changed.
 	 */
-	void mouse_movement(GLdouble new_x,GLdouble new_y);
+	void mouse_input(GLdouble new_x,GLdouble new_y);
 	/*
 	 * Function which process the movements,
 	 * needs to be called once for every frame
@@ -125,7 +172,9 @@ public:
 	 */
 	void register_movable_object(mov_obj_ptr obj,
 						key_mapping_vec key_mapping);
+	void unregister_movable_object(mov_obj_ptr obj);
 
+	tracking_processor& tracking();
 private:
 	enum class key_status_t
 	{
@@ -133,10 +182,14 @@ private:
 		not_pressed
 	};
 
+	//Store the known value of the keys
 	std::vector<key_status_t> key_status;
+	//Registered mappings
 	using dir_vector = std::vector<direction_details>;
 	using obj_dir_map = std::map<mov_obj_ptr, dir_vector>;
 	std::map<key_code_t,obj_dir_map> kb_map_mapping;
+	//To enable object tracking
+	tracking_processor object_tracking;
 };
 
 }

@@ -45,7 +45,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 	if( button == GLFW_MOUSE_BUTTON_LEFT &&
 		action == GLFW_PRESS ) {
 		//Create a new light (The positioning do not work properly)
-		glm::vec3 light_pos = camera->get_camera_pos();
+		glm::vec3 light_pos = camera->get_position();
 
 		LOG1("Creating a new light at pos: ",
 			 light_pos.x,"/",light_pos.y,"/",light_pos.z);
@@ -70,7 +70,8 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 	GLdouble x_delta = (x - last_mouse_x) * 0.1,
 			y_delta = (last_mouse_y - y) * 0.1;
 
-	camera->rotate_camera(y_delta,x_delta);
+	camera->modify_angle(movable::mov_angles::yaw,x_delta);
+	camera->modify_angle(movable::mov_angles::pitch,y_delta);
 
 	last_mouse_x = x;
 	last_mouse_y = y;
@@ -80,6 +81,10 @@ void opengl_ui::ui_keyboard_press(GLint button,
 								  GLint scode,
 								  GLint action)
 {
+	if( button < 0 ) {
+		//Not recognized button
+		return;
+	}
 	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
 		if( button == GLFW_KEY_ESCAPE ) {
 			glfwSetWindowShouldClose(window_ctx,1);
@@ -94,21 +99,6 @@ void opengl_ui::ui_keyboard_press(GLint button,
 
 void opengl_ui::evaluate_key_status()
 {
-	static std::unordered_map<GLint,mov_direction> cam_moving_mapping = {
-		{GLFW_KEY_W,mov_direction::top},
-		{GLFW_KEY_S,mov_direction::down},
-		{GLFW_KEY_A,mov_direction::left},
-		{GLFW_KEY_D,mov_direction::right}
-	};
-	for(int button{ 0 } ; button < stat_key_array_size ; ++button){
-		if( key_status[ button ] == key_status_t::pressed ) {
-			//Camera moving
-			auto it = cam_moving_mapping.find(button);
-			if( it != cam_moving_mapping.end() ) {
-				camera->move_camera( it->second, 0.3 );
-			}
-		}
-	}
 }
 
 
@@ -145,7 +135,7 @@ void opengl_ui::init_text()
 	fps_info->set_window_size(win_h,win_w);
 
 	camera_info = std::make_shared<text_renderer::renderable_text>();
-	camera_info->set_position(glm::fvec2(win_h - 200,7));
+	camera_info->set_position(glm::fvec2(win_h - 300,7));
 	camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
 	camera_info->set_scale(0.3f);
 	camera_info->set_text(" -- ");
@@ -275,24 +265,31 @@ void opengl_ui::enter_main_loop()
 		glm::vec3(1.0,1.0,1.0),
 		100);
 
-	GLfloat light_1_angle = 0.0,
-			light_1_distance = glm::length(light_1->get_position());
-
 	GLfloat light_2_angle = 0.0,
 			light_2_distance = glm::length(light_2->get_position()) * 2;
 
 
-	movable_object::key_mapping_vec mapping = {
-		{GLFW_KEY_LEFT, { movable_object::mov_direction::rot_yaw, 2} },
-		{GLFW_KEY_RIGHT, { movable_object::mov_direction::rot_yaw, -2} },
-		{GLFW_KEY_PAGE_UP, { movable_object::mov_direction::rot_pitch, -2} },
-		{GLFW_KEY_PAGE_DOWN, { movable_object::mov_direction::rot_pitch, 2} },
-		{GLFW_KEY_UP, { movable_object::mov_direction::forward, 0.2} },
-		{GLFW_KEY_DOWN, { movable_object::mov_direction::backward, 0.2} }
+	movable::key_mapping_vec mapping = {
+		{GLFW_KEY_LEFT, { movable::mov_direction::rot_yaw, 2} },
+		{GLFW_KEY_RIGHT, { movable::mov_direction::rot_yaw, -2} },
+		{GLFW_KEY_PAGE_UP, { movable::mov_direction::rot_pitch, -2} },
+		{GLFW_KEY_PAGE_DOWN, { movable::mov_direction::rot_pitch, 2} },
+		{GLFW_KEY_UP, { movable::mov_direction::forward, 0.4} },
+		{GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.2} }
 	};
 
 	movement_processor.register_movable_object(light_1,mapping);
-	//camera->set_target(light_1);
+	movement_processor.tracking().new_tracking(light_1,camera,15.0);
+	camera->set_target(light_1);
+
+	//Register the camera as movable object
+	movable::key_mapping_vec camera_keys = {
+		{ GLFW_KEY_W, { movable::mov_direction::top, 0.3} },
+		{ GLFW_KEY_A, { movable::mov_direction::left, 0.3} },
+		{ GLFW_KEY_D, { movable::mov_direction::right, 0.3} },
+		{ GLFW_KEY_S, { movable::mov_direction::down, 0.3} },
+	};
+	movement_processor.register_movable_object(camera,camera_keys);
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -301,7 +298,7 @@ void opengl_ui::enter_main_loop()
 		glfwPollEvents();
 		evaluate_key_status();
 		movement_processor.process_movements();
-		//camera->follow_target();
+		camera->follow_target();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
@@ -311,13 +308,6 @@ void opengl_ui::enter_main_loop()
 			fps_info->set_text(std::to_string(current_fps) + "fps");
 			current_fps = 0;
 		}
-
-		light_1_pos.x = std::cos(light_1_angle) * light_1_distance;
-		light_1_pos.y = std::sin(light_1_angle) * light_1_distance;
-		light_1_angle += 0.01;
-		if(light_1_angle >= 360)
-			light_1_angle = 0;
-		//light_1->set_position(light_1_pos);
 
 		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
 		light_2_pos.y = std::sin(light_2_angle) * light_2_distance;
@@ -334,12 +324,14 @@ void opengl_ui::enter_main_loop()
 
 		fps_info->render_text();
 
-		auto yaw = camera->get_camera_yaw(),
-			pitch = camera->get_camera_pitch();
-		auto pos = camera->get_camera_pos();
+		auto yaw = camera->get_yaw(),
+			pitch = camera->get_pitch();
+		auto pos = camera->get_position();
 
 		std::stringstream ss;
 		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
+		//Distance from the camera target
+		ss << ", target distance: "<<movement_processor.tracking().get_dist_from_target(camera);
 		camera_info->set_text(ss.str());
 		camera_info->render_text();
 

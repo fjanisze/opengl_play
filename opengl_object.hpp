@@ -10,6 +10,7 @@ namespace opengl_play
 int check_for_errors();
 
 typedef unsigned char byte_t;
+using movable::mov_direction;
 
 struct vertex_info
 {

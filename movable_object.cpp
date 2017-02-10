@@ -1,7 +1,8 @@
 #include "movable_object.hpp"
 #include "logger/logger.hpp"
+#include <algorithm>
 
-namespace movable_object
+namespace movable
 {
 
 //////////////////////////////////////
@@ -53,6 +54,21 @@ void movable_object::set_roll(GLfloat roll)
 void movable_object::set_scale(GLfloat scale)
 {
 	current_scale = scale;
+}
+
+GLfloat movable_object::get_yaw()
+{
+	return current_yaw;
+}
+
+GLfloat movable_object::get_pitch()
+{
+	return current_pitch;
+}
+
+GLfloat movable_object::get_roll()
+{
+	return current_roll;
 }
 
 void movable_object::modify_angle(mov_angles angle,
@@ -136,10 +152,23 @@ object_movement_processor::object_movement_processor()
 	std::fill(key_status.begin(),key_status.end(),key_status_t::not_pressed);
 }
 
+void object_movement_processor::mouse_input(GLdouble new_x,
+								GLdouble new_y)
+{
+	ERR("object_movement_processor::mouse_input: NOT IMPLEMENTED!");
+}
+
 void object_movement_processor::keyboard_input(int key,
 								int scan_code,
 								int action)
 {
+	while( key >= key_status.size() ) {
+		//This should rather not happen
+		std::size_t cur_size = key_status.size();
+		ERR("key_status is too small: ",
+			cur_size,", increasing size!");
+		key_status.resize(cur_size * 2, key_status_t::not_pressed);
+	}
 	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
 		key_status[ key ] = key_status_t::pressed;
 	} else if( action == GLFW_RELEASE ) {
@@ -192,6 +221,9 @@ void object_movement_processor::process_movements()
 			}
 		}
 	}
+	//Are there movement to perform
+	//due to tracking setup?
+	object_tracking.process_tracking();
 }
 
 void object_movement_processor::register_movable_object(mov_obj_ptr obj,
@@ -201,6 +233,71 @@ void object_movement_processor::register_movable_object(mov_obj_ptr obj,
 	{
 		kb_map_mapping[ key.first ][ obj ].push_back( key.second );
 	}
+}
+
+void object_movement_processor::unregister_movable_object(mov_obj_ptr obj)
+{
+	for( auto& elem : kb_map_mapping ) {
+		elem.second.erase(obj);
+	}
+}
+
+tracking_processor &object_movement_processor::tracking()
+{
+	return object_tracking;
+}
+
+//////////////////////////////////////
+/// tracking_processor implementation
+/////////////////////////////////////
+
+bool tracking_processor::new_tracking(mov_obj_ptr target,
+							mov_obj_ptr object,
+							GLfloat distance_threashold)
+{
+	if( tracking_data.find( object ) != tracking_data.end() ){
+		WARN1("tracking_processor::new_tracking: Cannot add the same object twice!");
+		return false;
+	}
+	glm::vec3 target_pos = target->get_position(),
+			object_pos = object->get_position();
+	tracking_info new_track = {
+		target,
+		object,
+		target_pos,
+		object_pos,
+		distance_threashold,
+	};
+	auto ret = tracking_data.insert({ object, new_track });
+	return ret.second;
+}
+
+void tracking_processor::process_tracking()
+{
+	for( auto& entry : tracking_data ) {
+		auto target_pos = entry.second.target->get_position();
+		auto object_pos = entry.second.object->get_position();
+		GLfloat current_distance = glm::distance( target_pos, object_pos );
+		//We shall follow the target which is getting too far
+		if( current_distance > entry.second.distance_threshold ) {
+			glm::vec3 dir_vector = target_pos - object_pos;
+			dir_vector /= 100;
+			object_pos = object_pos + dir_vector;
+			entry.second.object->set_position( object_pos );
+		}
+		entry.second.last_target_position = target_pos;
+		entry.second.last_object_position = object_pos;
+		entry.second.last_recorded_distance = current_distance;
+	}
+}
+
+GLfloat tracking_processor::get_dist_from_target(mov_obj_ptr object)
+{
+	auto it = tracking_data.find(object);
+	if( it != tracking_data.end() ) {
+		return it->second.last_recorded_distance;
+	}
+	return -1;
 }
 
 }

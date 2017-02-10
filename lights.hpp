@@ -116,7 +116,7 @@ struct light_factory
 };
 
 class generic_light : public renderable::renderable_object,
-		public movable_object::movable_object
+		public movable::movable_object
 {
 protected:
 	GLuint VAO,VBO;

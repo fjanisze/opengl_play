@@ -21,16 +21,6 @@
 namespace opengl_play
 {
 
-enum class mov_direction
-{
-	left,
-	right,
-	top,
-	down,
-	forward,
-	backward
-};
-
 }
 
 #endif

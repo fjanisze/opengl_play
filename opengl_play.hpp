@@ -51,7 +51,7 @@ class opengl_ui
 							  light_2,
 							front_light;
 
-	movable_object::object_movement_processor movement_processor;
+	movable::object_movement_processor movement_processor;
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
