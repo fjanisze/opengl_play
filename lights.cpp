@@ -6,25 +6,14 @@ namespace lights
 std::vector<generic_light_ptr> object_lighting::all_lights;
 
 object_lighting::object_lighting(shaders::my_small_shaders * shader) :
-	frag_shader{ shader },
-	ambient_light_strength{ 0 },
-	ambient_light_color{ glm::vec3(0.0,0.0,0.0) }
+	frag_shader{ shader }
 {
 	LOG1("New object_lighting");
-}
-
-void object_lighting::update_ambient_colors()
-{
-	GLint light_color_uniform = glGetUniformLocation(*frag_shader,
-											   "ambient_light_color");
-	glUniform3f(light_color_uniform,
-				ambient_light_color.r,
-				ambient_light_color.g,
-				ambient_light_color.b);
-	GLint light_strength = glGetUniformLocation(*frag_shader,
-											   "ambient_light_strength");
-	glUniform1f(light_strength,
-				ambient_light_strength);
+	/*
+	 * Hardcoded size! This allow to support
+	 * something like 128 lights!
+	 */
+	light_data_buffer.resize( 1024 );
 }
 
 /*
@@ -38,49 +27,30 @@ void object_lighting::update_ambient_colors()
  */
 void object_lighting::calculate_lighting()
 {
-	static int max_supported_lights = 10;
-	ambient_light_color = glm::vec3(0.0,0.0,0.0);
 	int light_cnt = 0;
-	GLfloat light_pos[3 * max_supported_lights],
-			light_color[3 * max_supported_lights],
-			light_strength[max_supported_lights];
-	GLint   light_type[ max_supported_lights ];
+	std::size_t current_idx{ 0 };
+
 	for(auto & light : all_lights) {
-		auto light_data = light->get_light_color();
-		glm::vec3 cur_light = light_data.first;
-		ambient_light_color.r = std::max(ambient_light_color.r,cur_light.r);
-		ambient_light_color.g = std::max(ambient_light_color.g,cur_light.g);
-		ambient_light_color.b = std::max(ambient_light_color.b,cur_light.b);
-		auto pos = light->get_position();
-		light_pos[3 * light_cnt + 0] = pos.x;
-		light_pos[3 * light_cnt + 1] = pos.y;
-		light_pos[3 * light_cnt + 2] = pos.z;
-
-		light_color[3 * light_cnt + 0] = cur_light.r;
-		light_color[3 * light_cnt + 1] = cur_light.g;
-		light_color[3 * light_cnt + 2] = cur_light.b;
-
-		light_strength[light_cnt] = light_data.second;
-		light_type[light_cnt] = light->light_type();
+		auto light_data = light->get_light_data();
+		for( auto& entry : light_data ) {
+			light_data_buffer[ current_idx++ ] = entry;
+			if( current_idx >= 1024 ) {
+				ERR("Too much light data to fit!");
+				throw std::runtime_error("light_data_buffer too small!!");
+			}
+		}
 		++light_cnt;
 	}
+
 	GLint nl = glGetUniformLocation(*frag_shader,
 							   "number_of_lights");
-	GLint lp = glGetUniformLocation(*frag_shader,
-							   "light_pos");
-	GLint lc = glGetUniformLocation(*frag_shader,
-							   "light_color");
-	GLint ls = glGetUniformLocation(*frag_shader,
-							   "light_strength");
-	GLint lt = glGetUniformLocation(*frag_shader,
-							   "light_type");
-	glUniform3fv(lp,light_cnt,light_pos);
-	glUniform3fv(lc,light_cnt,light_color);
-	glUniform1fv(ls,light_cnt,light_strength);
-	glUniform1iv(lt,light_cnt,light_type);
-	glUniform1i(nl,light_cnt);
-	//Load the ambient light
-	update_ambient_colors();
+	glUniform1i(nl,all_lights.size());
+
+	GLint shader_light_buffer = glGetUniformLocation(*frag_shader,
+													 "light_data");
+	glUniform1fv(shader_light_buffer,
+				 current_idx,
+				 light_data_buffer.data());
 }
 
 void object_lighting::apply_object_color(const glm::vec3 &color)
@@ -136,6 +106,12 @@ void generic_light::init_render_buffers() throw (std::runtime_error)
 	glBindVertexArray(0);
 }
 
+generic_light::generic_light()
+{
+	//Setup the default size for a generic light
+	light_data.resize(light_data_size());
+}
+
 generic_light::generic_light(glm::vec3 position,
 						   glm::vec3 color,
 						   GLfloat strength) :
@@ -144,6 +120,8 @@ generic_light::generic_light(glm::vec3 position,
 {
 	set_position(position);
 	set_scale(0.5);
+	//Setup the default size for a generic light
+	light_data.resize(light_data_size());
 }
 
 generic_light::~generic_light()
@@ -167,8 +145,38 @@ std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 	return std::make_pair(light_color,color_strength);
 }
 
-std::vector<GLfloat> generic_light::get_light_data()
+std::size_t generic_light::light_data_size()
 {
+	/*
+	 * Those are the default values for a generic light
+	 */
+	return 1 + //type
+		   3 + //position
+		   3 + //color
+		   1;  //strength
+}
+
+const std::vector<GLfloat>& generic_light::get_light_data()
+{
+	/*
+	 * The format of the data for a generic
+	 * light is :
+	 * light_type = 1 float (0)
+	 * light_pos  = 3 float (x,y,z)
+	 * light_color= 3 float (r,b,g)
+	 * strength   = 1 float (s)
+	 */
+	//TODO: Do not always update, just if needed
+	light_data[0] = static_cast<int>(light_type());
+	glm::vec3 pos = get_position();
+	light_data[1] = pos.x;
+	light_data[2] = pos.y;
+	light_data[3] = pos.z;
+	auto color_info = get_light_color();
+	light_data[4] = color_info.first.r;
+	light_data[5] = color_info.first.g;
+	light_data[6] = color_info.first.b;
+	light_data[7] = color_info.second;
 	return light_data;
 }
 

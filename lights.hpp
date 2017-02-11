@@ -79,23 +79,25 @@ class object_lighting
 {
 	static std::vector<generic_light_ptr> all_lights;
 	shaders::my_small_shaders * frag_shader;
-	void      update_ambient_colors();
-	GLfloat   ambient_light_strength;
-	glm::vec3 ambient_light_color;
+	std::vector<GLfloat> light_data_buffer;
 public:
 	object_lighting(shaders::my_small_shaders* shader);
 	void calculate_lighting();
 	void apply_object_color(const glm::vec3& color);
+	/*
+	 * At the moment the limit on the amount of lights
+	 * is relaxed, increasing the light_data_buffer is
+	 * sufficient to increase the amount of lights.
+	 * That's why those functions are returning always
+	 * true, that might change in the future
+	 */
 	static bool can_add_simple_light() {
-		return all_lights.size() < 10;
+		return true;
 	}
 	template<typename LightT>
 	static bool add_simple_light(generic_light_ptr new_light) {
-		if( all_lights.size() < 10 ) {
-			all_lights.emplace_back(new_light);
-			return true;
-		}
-		return false;
+		all_lights.emplace_back(new_light);
+		return true;
 	}
 	virtual ~object_lighting() {}
 };
@@ -129,7 +131,7 @@ protected:
 	std::vector<GLfloat> light_data;
 	virtual void init_render_buffers() throw (std::runtime_error);
 public:
-	generic_light() = default;
+	generic_light();
 	generic_light(glm::vec3 position,
 				 glm::vec3 color,
 				 GLfloat   strength);
@@ -148,7 +150,13 @@ public:
 	 * depends on the light itself, but mostly contains
 	 * stuff like: type,position,color &c.
 	 */
-	std::vector<GLfloat> get_light_data();
+	virtual const std::vector<GLfloat> &get_light_data();
+	/*
+	 * Each light might have a different data
+	 * size since the amount of specific information
+	 * might be different
+	 */
+	virtual std::size_t light_data_size();
 };
 
 /*
