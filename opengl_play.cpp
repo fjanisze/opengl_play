@@ -251,13 +251,13 @@ void opengl_ui::enter_main_loop()
 
 	//Adding a light
 	glm::vec3 light_1_pos{0.0,1.5,0.0},
-			  light_2_pos{2.0,4.0,2.0};
+			  light_2_pos{2.0,8.0,2.0};
 	light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
 												 6.0);
 	light_2 = lights::light_factory<lights::point_light>::create(light_2_pos,
 												 glm::vec3(1.0,1.0,0.8),
-												 5.0);
+												 9.0);
 
 	//Create a directional light
 	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
@@ -277,10 +277,7 @@ void opengl_ui::enter_main_loop()
 		{GLFW_KEY_UP, { movable::mov_direction::forward, 0.4} },
 		{GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.2} }
 	};
-
 	movement_processor.register_movable_object(light_1,mapping);
-	movement_processor.tracking().new_tracking(light_1,camera,15.0);
-	camera->set_target(light_1);
 
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {

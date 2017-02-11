@@ -255,6 +255,7 @@ bool tracking_processor::new_tracking(mov_obj_ptr target,
 							mov_obj_ptr object,
 							GLfloat distance_threashold)
 {
+	LOG1("new_tracking: New tracking setup!");
 	if( tracking_data.find( object ) != tracking_data.end() ){
 		WARN1("tracking_processor::new_tracking: Cannot add the same object twice!");
 		return false;

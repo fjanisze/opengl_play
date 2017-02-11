@@ -7,7 +7,7 @@ std::vector<generic_light_ptr> object_lighting::all_lights;
 
 object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 	frag_shader{ shader },
-	ambient_light_strenght{ 0 },
+	ambient_light_strength{ 0 },
 	ambient_light_color{ glm::vec3(0.0,0.0,0.0) }
 {
 	LOG1("New object_lighting");
@@ -21,15 +21,15 @@ void object_lighting::update_ambient_colors()
 				ambient_light_color.r,
 				ambient_light_color.g,
 				ambient_light_color.b);
-	GLint light_strenght = glGetUniformLocation(*frag_shader,
-											   "ambient_light_strenght");
-	glUniform1f(light_strenght,
-				ambient_light_strenght);
+	GLint light_strength = glGetUniformLocation(*frag_shader,
+											   "ambient_light_strength");
+	glUniform1f(light_strength,
+				ambient_light_strength);
 }
 
 /*
  * Calculate the ambient light color and intensity,
- * load to the proper uniforms the position,color and strenght
+ * load to the proper uniforms the position,color and strength
  * of all the lights in the scene.
  *
  * Those information will be used during the render
@@ -138,9 +138,9 @@ void generic_light::init_render_buffers() throw (std::runtime_error)
 
 generic_light::generic_light(glm::vec3 position,
 						   glm::vec3 color,
-						   GLfloat strenght) :
+						   GLfloat strength) :
 	light_color{ color },
-	color_strenght{ strenght }
+	color_strength{ strength }
 {
 	set_position(position);
 	set_scale(0.5);
@@ -152,19 +152,24 @@ generic_light::~generic_light()
 	glDeleteBuffers(1,&VBO);
 }
 
-GLfloat generic_light::get_strenght()
+GLfloat generic_light::get_strength()
 {
-	return color_strenght;
+	return color_strength;
 }
 
-void generic_light::set_strenght(GLfloat strenght)
+void generic_light::set_strength(GLfloat strength)
 {
-	color_strenght = strenght;
+	color_strength = strength;
 }
 
 std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 {
-	return std::make_pair(light_color,color_strenght);
+	return std::make_pair(light_color,color_strength);
+}
+
+std::vector<GLfloat> generic_light::get_light_data()
+{
+	return light_data;
 }
 
 
@@ -175,8 +180,8 @@ std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
 
 point_light::point_light(glm::vec3 position,
 						   glm::vec3 color,
-						   GLfloat strenght) :
-	generic_light(position,color,strenght)
+						   GLfloat strength) :
+	generic_light(position,color,strength)
 {
 	LOG1("Constructor: point_light");
 	init_render_buffers();
@@ -206,10 +211,10 @@ void point_light::prepare_for_render()
 				light_color.g,
 				light_color.b);
 
-	GLint obj_col_strenght_uniform = glGetUniformLocation(light_shader,
-											   "light_strenght");
-	glUniform1f(obj_col_strenght_uniform,
-				color_strenght);
+	GLint obj_col_strength_uniform = glGetUniformLocation(light_shader,
+											   "light_strength");
+	glUniform1f(obj_col_strength_uniform,
+				color_strength);
 
 	glm::mat4 model = get_model_matrix();
 
@@ -245,11 +250,23 @@ void point_light::rotate_object(GLfloat yaw)
 
 directional_light::directional_light(glm::vec3 direction,
 									 glm::vec3 color,
-									 GLfloat strenght)
+									 GLfloat strength)
 {
 	set_position(direction);
 	light_color = color;
-	color_strenght = strenght;
+	color_strength = strength;
+}
+
+//////////////////////////////////////
+/// spot_light implementation
+/////////////////////////////////////
+
+spot_light::spot_light(glm::vec3 position,
+			glm::vec3 color,
+			GLfloat strength) :
+	generic_light::generic_light(position,color,strength)
+{
+
 }
 
 }

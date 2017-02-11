@@ -15,11 +15,11 @@ uniform int       light_type[ 10 ];
 uniform vec3      light_pos[ 10 ];
 uniform vec3      light_color[ 10 ];
 uniform float     light_strength[ 10 ];
-uniform float     ambient_light_strenght = 1.0;
+uniform float     ambient_light_strength = 1.0;
 
 void main()
 {
-    vec3 ambient = ambient_light_strenght * ambient_light_color;
+    vec3 ambient = ambient_light_strength * ambient_light_color;
     vec3 final_object_color;
     //Calculate lights
     vec3 diffuse_res = vec3(0.0);
@@ -28,7 +28,7 @@ void main()
     vec3 light_dir;
     vec3 norm = normalize(normal);
     for( int light_idx = 0 ; light_idx < number_of_lights ; ++light_idx ) {
-	if( light_type[ light_idx ] == 0 ) //Spot light
+	if( light_type[ light_idx ] == 0 ) //Point light
 	{
 	    float dist = length(light_pos[light_idx] - frag_pos);
 	    attenuation = (1.0 + dist * 0.22 + dist*dist*0.2);

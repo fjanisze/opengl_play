@@ -63,8 +63,9 @@ const GLfloat cube_vertices[] = {
  * in the shader
  */
 enum type_of_light {
-	Spot_Light,
-	Directional_Light
+	Point_Light,
+	Directional_Light,
+	Spot_light
 };
 
 class generic_light;
@@ -79,7 +80,7 @@ class object_lighting
 	static std::vector<generic_light_ptr> all_lights;
 	shaders::my_small_shaders * frag_shader;
 	void      update_ambient_colors();
-	GLfloat   ambient_light_strenght;
+	GLfloat   ambient_light_strength;
 	glm::vec3 ambient_light_color;
 public:
 	object_lighting(shaders::my_small_shaders* shader);
@@ -123,30 +124,46 @@ protected:
 	shaders::my_small_shaders light_shader;
 	std::unique_ptr<GLfloat[]> cube_vrtx;
 	glm::vec3 light_color;
-	GLfloat   color_strenght;
+	GLfloat   color_strength;
 	glm::mat4 view,projection;
+	std::vector<GLfloat> light_data;
 	virtual void init_render_buffers() throw (std::runtime_error);
 public:
 	generic_light() = default;
 	generic_light(glm::vec3 position,
 				 glm::vec3 color,
-				 GLfloat   strenght);
+				 GLfloat   strength);
 	virtual type_of_light light_type() = 0;
 	~generic_light();
-	GLfloat get_strenght();
-	void    set_strenght(GLfloat strenght);
+	GLfloat get_strength();
+	void    set_strength(GLfloat strength);
 	std::pair<glm::vec3,GLfloat> get_light_color();
+	/*
+	 * get_light_data return a vector with
+	 * all the information needed to manipulate/render
+	 * the light. Those informations are processed
+	 * by the fragment shader.
+	 *
+	 * What does each light return in this vector
+	 * depends on the light itself, but mostly contains
+	 * stuff like: type,position,color &c.
+	 */
+	std::vector<GLfloat> get_light_data();
 };
 
+/*
+ * Cast light in every direction at equal
+ * intensity
+ */
 class point_light : public generic_light
 {
 public:
 	point_light() = default;
 	point_light(glm::vec3 position,
 				 glm::vec3 color,
-				 GLfloat   strenght);
+				 GLfloat   strength);
 	type_of_light light_type() {
-		return type_of_light::Spot_Light;
+		return type_of_light::Point_Light;
 	}
 	~point_light();
 	void set_transformations(glm::mat4 v, glm::mat4 p);
@@ -157,25 +174,43 @@ public:
 	void rotate_object(GLfloat yaw);
 };
 
+/*
+ * Directional lights do not have a position,
+ * they are somewhere far away and the rays are
+ * coming from a certain 'direction' toward
+ * out scene.
+ */
 class directional_light : public generic_light
 {
-	/*
-	 * Directional lights do not have a position,
-	 * they are somewhere far away and the rays are
-	 * coming from a certain 'direction' toward
-	 * out scene.
-	 *
-	 * light_position has the meaning of direction
-	 */
 public:
 	directional_light(glm::vec3 direction,
 				 glm::vec3 color,
-				 GLfloat   strenght);
+				 GLfloat   strength);
+
 	type_of_light light_type(){
 		return type_of_light::Directional_Light;
 	}
 
 	directional_light() {}
+};
+
+/*
+ * Cast light only in a certain area or direction,
+ * everything that is outside the radius of the spotlight
+ * is not illuminated
+ */
+class spot_light : public generic_light
+{
+public:
+	spot_light(glm::vec3 position,
+				 glm::vec3 color,
+				 GLfloat   strength);
+
+	type_of_light light_type(){
+		return type_of_light::Spot_light;
+	}
+
+	spot_light() {}
 };
 
 
