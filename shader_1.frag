@@ -24,13 +24,17 @@ void main()
     int buf_idx = 0;
     float light_type;
     vec3 light_pos,
-         light_color;
-    float light_strength;
+         light_color,
+         light_direction;
+    float light_strength,
+          cut_off_angle,
+          out_cutoff_angle;
     for( int light_idx = 0 ; light_idx < number_of_lights ; ++light_idx ) {
 	/*
-	 * Extract the light data from the common light buffer
+	 * Extract the light data from the common light buffer.
+	 * The initial set of informations is common to all the lights
 	 */
-	if( light_data[ buf_idx ] <= 1 ) //Point light or directional light
+	if( light_data[ buf_idx ] <= 2 )
 	{
 	    light_type = light_data[ buf_idx ];
 	    ++buf_idx;
@@ -38,30 +42,62 @@ void main()
 	            light_data[ buf_idx + 1],
 	            light_data[ buf_idx + 2]);
 	    buf_idx += 3;
-	    light_color = vec3( light_data[ buf_idx],
+	    light_color = vec3( light_data[ buf_idx ],
 	            light_data[ buf_idx + 1],
 	            light_data[ buf_idx + 2]);
 	    buf_idx += 3;
 	    light_strength = light_data[ buf_idx ];
 	    ++buf_idx;
 	}
-	//Now perform the calculations
-	if( light_type == 0 ) //Point light
+	//Extract specific information
+	if( light_type == 2 )
 	{
-	    float dist = length(light_pos - frag_pos);
+	    light_direction = vec3( light_data[ buf_idx ],
+	            light_data[ buf_idx + 1],
+	            light_data[ buf_idx + 2]);
+	    buf_idx += 3;
+	    cut_off_angle = light_data[ buf_idx++ ];
+	    out_cutoff_angle = light_data[ buf_idx ];
+	    ++buf_idx;
+	}
+	//Now perform the calculations
+	if( light_type == 0 )
+	{
+	    float dist = length( light_pos - frag_pos );
 	    attenuation = (1.0 + dist * 0.22 + dist*dist*0.2);
 	    attenuation = light_strength / attenuation;
 	    light_dir = normalize( light_pos - frag_pos );
 	}
-	else if( light_type == 1) //Directional light
+	else if( light_type == 1 ) //Directional light
 	{
+	    float dist = length( light_pos - frag_pos );
 	    light_dir = normalize( light_pos );
-	    attenuation = 1.0;
+	    attenuation = light_strength / ( sqrt(dist) );
+	}
+	else if( light_type == 2 ) //Spot light
+	{
+	    light_dir = normalize( light_pos - frag_pos );
+	    float dist = length( light_pos - frag_pos );
+	    //This angle define the cone of the light,
+	    //everything whithin this code is illuminated
+	    float theta = dot( light_dir, normalize(-light_direction) );
+	    //Angle which define the outer cone of the light,
+	    //Things moving away from the theta angle are less
+	    //illuminated
+	    float epsilon = cut_off_angle - out_cutoff_angle;
+	    float intensity = clamp((theta - out_cutoff_angle) / epsilon,
+	                            0.0,1.0);
+	    attenuation = max( 1.0 + dist * 0.40 , 4 );
+	    attenuation = light_strength * intensity / attenuation;
+	}
+	if( attenuation == 0 ) {
+	    continue;
 	}
 	//Common diffuse light calculations
 	float diff = max( dot( norm, light_dir ), 0.0);
 	vec3 diffuse = diff * light_color;
-	diffuse *= ( vec3(texture(loaded_texture,texture_coords)) * attenuation );
+	diffuse *= vec3(texture(loaded_texture,texture_coords));
+	diffuse *= attenuation;
 	diffuse_res += diffuse;
 	//The specular calculations are the same for both the lights
 	vec3 view_dir = normalize( camera_pos - frag_pos );

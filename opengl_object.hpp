@@ -42,6 +42,7 @@ struct object_data
 			view,
 			projection;
 	glm::vec3 color;
+	GLfloat scale;
 };
 
 class little_object : lights::object_lighting ,
@@ -76,7 +77,7 @@ public:
 	glm::vec3 get_object_position();
 	void scale(GLfloat amount);
 	void set_transformations(glm::mat4 view,glm::mat4 projection);
-	int add_object(const glm::vec3& coordinates,const glm::vec3& color);
+	int add_object(const glm::vec3& coordinates,const glm::vec3& color,GLfloat scale);
 	bool select_object(int id);
 	bool release_current_object();
 	void modify_view(glm::mat4 new_view);

@@ -186,7 +186,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({5.0,5.0,15.0},{0.0,0.0,0.0});
+	camera = my_camera::create_camera({-3.0,-3.0,-10.0},{0.0,0.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -222,17 +222,20 @@ void opengl_ui::enter_main_loop()
 						(GLfloat)win_w / (GLfloat)win_h,
 						0.1f, 1000.0f);
 
-	object->add_object(glm::vec3(2.0,2.0,2.0),
-					   glm::vec3(1.0,1.0,1.0));
+	std::vector<std::pair<glm::vec3,GLfloat> > objects = {
+		{ {2.0,2.0,2.0}, 1.0 },
+		{ {5.0,12.0,5.0}, 1.0 },
+		{ {-4.0,6.0,-3.0}, 1.0 },
+		{ {0.0,0.0,0.0}, 1.0 },
+		{ {15.0,15.0,15.0,}, 6.0 },
+		{ {15.0,35.0,-15.0,}, 6.0 },
+		{ {32.0,-15.0,44.0,}, 6.0 },
+		{ {-23.0,-1.0,-40.0,}, 6.0 },
+	};
 
-	object->add_object(glm::vec3(5.0,12.0,5.0),
-					   glm::vec3(1.0,1.0,1.0));
-
-	object->add_object(glm::vec3(-4.0,6.0,-3.0),
-					   glm::vec3(1.0,1.0,1.0));
-
-	object->add_object(glm::vec3(0.0,0.0,0.0),
-						glm::vec3(1.0,1.0,1.0));
+	for( auto& obj : objects ) {
+		object->add_object(obj.first, {1.0,1.0,1.0}, obj.second);
+	}
 
 	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
 		{{50,0,0},{1.0,0.0,0.0}},
@@ -252,22 +255,39 @@ void opengl_ui::enter_main_loop()
 	//Adding a light
 	glm::vec3 light_1_pos{0.0,1.5,0.0},
 			  light_2_pos{2.0,8.0,2.0};
-	light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
+	/*light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
 												 glm::vec3(1.0,1.0,1.0),
-												 6.0);
+												 6.0);*/
 	light_2 = lights::light_factory<lights::point_light>::create(light_2_pos,
 												 glm::vec3(1.0,1.0,0.8),
-												 9.0);
+												 10.0);
 
 	//Create a directional light
 	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
 		glm::vec3(100,100,100),
 		glm::vec3(1.0,1.0,1.0),
-		100);
+		10);
 
 	GLfloat light_2_angle = 0.0,
 			light_2_distance = glm::length(light_2->get_position()) * 2;
 
+	lights::generic_light_ptr spot_light = lights::light_factory<lights::spot_light>::create(
+				glm::vec3(13.0,13.0,-2.0),
+				glm::vec3(1.0,1.0,0.8),
+				12,
+				glm::vec3(15.0,15.0,15.0),
+				6.5,
+				9.5);
+	lights::generic_light_ptr flash_light = lights::light_factory<lights::flash_light>::create(
+				camera,
+				glm::vec3(13.0,13.0,-2.0),
+				glm::vec3(1.0,0.9,0.9),
+				20,
+				glm::vec3(12.0,12.0,12.0),
+				4.5,
+				6.5);
+
+	position_lines->add_line(glm::vec3(13.0,13.0,-2.0),glm::vec3(15.0,15.0,15.0),{1.0,1.0,1.0});
 
 	movable::key_mapping_vec mapping = {
 		{GLFW_KEY_LEFT, { movable::mov_direction::rot_yaw, 2} },
@@ -277,14 +297,14 @@ void opengl_ui::enter_main_loop()
 		{GLFW_KEY_UP, { movable::mov_direction::forward, 0.4} },
 		{GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.2} }
 	};
-	movement_processor.register_movable_object(light_1,mapping);
+//	movement_processor.register_movable_object(light_1,mapping);
 
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::top, 0.3} },
-		{ GLFW_KEY_A, { movable::mov_direction::left, 0.3} },
-		{ GLFW_KEY_D, { movable::mov_direction::right, 0.3} },
-		{ GLFW_KEY_S, { movable::mov_direction::down, 0.3} },
+		{ GLFW_KEY_W, { movable::mov_direction::top, 0.5} },
+		{ GLFW_KEY_A, { movable::mov_direction::left, 0.5} },
+		{ GLFW_KEY_D, { movable::mov_direction::right, 0.5} },
+		{ GLFW_KEY_S, { movable::mov_direction::down, 0.5} },
 	};
 	movement_processor.register_movable_object(camera,camera_keys);
 

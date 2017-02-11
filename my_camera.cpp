@@ -76,10 +76,10 @@ void my_camera::modify_angle(mov_angles angle,GLfloat amount)
 			return;
 		}
 
-		if( current_yaw >= 359.9 ) current_yaw = 0.1;
-		if( current_yaw <= 0.0 ) current_yaw = 360;
-		if( current_pitch >= 89.9 ) current_pitch = 89.9;
-		if( current_pitch <= -89.9 ) current_pitch = -89.9;
+		if( current_yaw >= 359.99 ) current_yaw = 0.01;
+		if( current_yaw <= 0.0 ) current_yaw = 359.99;
+		if( current_pitch >= 89.99 ) current_pitch = 89.99;
+		if( current_pitch <= -89.99 ) current_pitch = -89.99;
 
 		cam_front.x += cos(glm::radians(current_pitch)) * cos(glm::radians(current_yaw));
 		cam_front.y += sin(glm::radians(current_pitch));

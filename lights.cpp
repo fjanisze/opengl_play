@@ -32,6 +32,13 @@ void object_lighting::calculate_lighting()
 
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_data();
+		//Debug stuff..
+		/*if( light->light_type() == type_of_light::Spot_light )
+		{
+			for(auto e:light_data)
+				std::cout<<e<<",";
+			std::cout<<std::endl;
+		}*/
 		for( auto& entry : light_data ) {
 			light_data_buffer[ current_idx++ ] = entry;
 			if( current_idx >= 1024 ) {
@@ -106,6 +113,21 @@ void generic_light::init_render_buffers() throw (std::runtime_error)
 	glBindVertexArray(0);
 }
 
+std::size_t generic_light::fill_common_light_data()
+{
+	light_data[0] = static_cast<int>(light_type());
+	glm::vec3 pos = get_position();
+	light_data[1] = pos.x;
+	light_data[2] = pos.y;
+	light_data[3] = pos.z;
+	auto color_info = get_light_color();
+	light_data[4] = color_info.first.r;
+	light_data[5] = color_info.first.g;
+	light_data[6] = color_info.first.b;
+	light_data[7] = color_info.second;
+	return 8; //Next valid index
+}
+
 generic_light::generic_light()
 {
 	//Setup the default size for a generic light
@@ -167,16 +189,7 @@ const std::vector<GLfloat>& generic_light::get_light_data()
 	 * strength   = 1 float (s)
 	 */
 	//TODO: Do not always update, just if needed
-	light_data[0] = static_cast<int>(light_type());
-	glm::vec3 pos = get_position();
-	light_data[1] = pos.x;
-	light_data[2] = pos.y;
-	light_data[3] = pos.z;
-	auto color_info = get_light_color();
-	light_data[4] = color_info.first.r;
-	light_data[5] = color_info.first.g;
-	light_data[6] = color_info.first.b;
-	light_data[7] = color_info.second;
+	fill_common_light_data();
 	return light_data;
 }
 
@@ -266,15 +279,82 @@ directional_light::directional_light(glm::vec3 direction,
 }
 
 //////////////////////////////////////
-/// spot_light implementation
+/// spot_light and flash_light implementation
 /////////////////////////////////////
 
+/*
+ * In the constructor the parameter 'direction'
+ * is supposed to be the point where the light
+ * is pointing, this point is understand by the
+ * shader as the offset from the current light
+ * position, so to make the whole thing work
+ * correctly we need to calculate light_direction
+ * as the offset 'from' the current position TO
+ * the 'direction' choosen by the user.
+ */
 spot_light::spot_light(glm::vec3 position,
 			glm::vec3 color,
-			GLfloat strength) :
-	generic_light::generic_light(position,color,strength)
+			GLfloat strength,
+			glm::vec3 direction,
+			GLfloat cut_off_angle,
+			GLfloat out_cutoff_angle) :
+	generic_light::generic_light(position,color,strength),
+	light_direction{ direction - position },
+	cut_off{ glm::cos( glm::radians(cut_off_angle) ) },
+	out_cutoff{ glm::cos( glm::radians( out_cutoff_angle) ) }
+{
+	light_data.resize( light_data_size() );
+}
+
+std::size_t spot_light::light_data_size()
+{
+	/*
+	 * The additional elements are the light direction
+	 * plus the two cutoff angles
+	 */
+	return generic_light::light_data_size() + 5;
+}
+
+const std::vector<GLfloat> &spot_light::get_light_data()
+{
+	std::size_t idx = fill_common_light_data();
+	light_data[ idx++ ] = light_direction.x;
+	light_data[ idx++ ] = light_direction.y;
+	light_data[ idx++ ] = light_direction.z;
+	light_data[ idx++ ] = cut_off;
+	light_data[ idx ] = out_cutoff;
+	return light_data;
+}
+
+flash_light::flash_light(opengl_play::camera_obj camera,
+				glm::vec3 position,
+				glm::vec3 color,
+				GLfloat strength,
+				glm::vec3 direction,
+				GLfloat cut_off_angle,
+				GLfloat out_cutoff_angle) :
+	spot_light::spot_light(position,
+						   color,
+						   strength,
+						   direction,
+						   cut_off_angle,
+						   out_cutoff_angle),
+	camera_ptr{ camera }
 {
 
+}
+
+const std::vector<GLfloat> &flash_light::get_light_data()
+{
+	/*
+	 * Update the camera position and direction on the
+	 * basis of the camera position
+	 */
+	glm::vec3 new_position = camera_ptr->get_position(),
+			new_direction = camera_ptr->get_camera_front();
+	set_position(new_position);
+	light_direction = new_direction;
+	return spot_light::get_light_data();
 }
 
 }

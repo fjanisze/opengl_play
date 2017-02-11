@@ -2,6 +2,7 @@
 #include <shaders.hpp>
 #include <renderable_object.hpp>
 #include <movable_object.hpp>
+#include "my_camera.hpp"
 
 #ifndef LIGHTS_HPP
 #define LIGHTS_HPP
@@ -130,6 +131,12 @@ protected:
 	glm::mat4 view,projection;
 	std::vector<GLfloat> light_data;
 	virtual void init_render_buffers() throw (std::runtime_error);
+	/*
+	 * Certain light data like position, color &c
+	 * are commong whithin all the lights,
+	 * this function fill those common information
+	 */
+	std::size_t fill_common_light_data();
 public:
 	generic_light();
 	generic_light(glm::vec3 position,
@@ -191,6 +198,7 @@ public:
 class directional_light : public generic_light
 {
 public:
+	directional_light() = default;
 	directional_light(glm::vec3 direction,
 				 glm::vec3 color,
 				 GLfloat   strength);
@@ -198,8 +206,6 @@ public:
 	type_of_light light_type(){
 		return type_of_light::Directional_Light;
 	}
-
-	directional_light() {}
 };
 
 /*
@@ -209,16 +215,50 @@ public:
  */
 class spot_light : public generic_light
 {
+protected:
+	GLfloat cut_off,
+			out_cutoff;
+	glm::vec3 light_direction;
 public:
+	spot_light() = default;
 	spot_light(glm::vec3 position,
-				 glm::vec3 color,
-				 GLfloat   strength);
+			glm::vec3 color,
+			GLfloat   strength,
+			glm::vec3 direction,
+			GLfloat cut_off_angle,
+			GLfloat out_cutoff_angle);
 
 	type_of_light light_type(){
 		return type_of_light::Spot_light;
 	}
 
-	spot_light() {}
+	std::size_t light_data_size() override;
+	const std::vector<GLfloat>& get_light_data() override;
+};
+
+/*
+ * A flashlight is a regular spot_light which is
+ * 'attached' to the camera, it's position and
+ * direction change at every camera movement
+ */
+class flash_light : public spot_light
+{
+	opengl_play::camera_obj camera_ptr;
+public:
+	flash_light() = default;
+	flash_light(opengl_play::camera_obj camera,
+			glm::vec3 position,
+			glm::vec3 color,
+			GLfloat   strength,
+			glm::vec3 direction,
+			GLfloat cut_off_angle,
+			GLfloat out_cutoff_angle);
+
+	type_of_light light_type(){
+		return type_of_light::Spot_light;
+	}
+
+	const std::vector<GLfloat>& get_light_data() override;
 };
 
 

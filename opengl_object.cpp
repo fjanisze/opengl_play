@@ -166,6 +166,10 @@ std::set<int> little_object::get_all_objects()
 
 void little_object::apply_transformations(decltype(objects)::value_type& elem)
 {
+	elem.second.model = glm::scale( elem.second.model,
+									glm::vec3(elem.second.scale,
+											  elem.second.scale,
+											  elem.second.scale) );
 	GLint model_loc = glGetUniformLocation(obj_shader,"model");
 	GLint view_loc = glGetUniformLocation(obj_shader,"view");
 	GLint projection_loc = glGetUniformLocation(obj_shader,"projection");
@@ -232,9 +236,7 @@ void little_object::move(mov_direction dir, GLfloat amount)
 void little_object::scale(GLfloat amount)
 {
 	if( any_object_selected() ) {
-		sel_obj_it->second.model = glm::scale(
-					sel_obj_it->second.model,
-					glm::vec3(amount,amount,amount));
+		sel_obj_it->second.scale = amount;
 	} else {
 		WARN1("scale: Select a valid object first!");
 	}
@@ -250,12 +252,14 @@ void little_object::set_transformations(glm::mat4 view,
 }
 
 int little_object::add_object(const glm::vec3 &coordinates,
-							  const glm::vec3& color)
+							  const glm::vec3& color,
+							  GLfloat scale)
 {
 	int id = next_object_id++;
 	object_data data;
 	data.position = coordinates;
 	data.color = color;
+	data.scale = scale;
 	objects.insert({id, data});
 	return id;
 }

@@ -94,7 +94,7 @@ void my_static_lines::prepare_for_render()
 void my_static_lines::render()
 {
 	glBindVertexArray(VAO);
-	glDrawArrays(GL_LINE_STRIP,0,lines.size() * 2);
+	glDrawArrays(GL_LINES,0,lines.size() * 2);
 	glBindVertexArray(0);
 }
 
