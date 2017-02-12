@@ -48,14 +48,14 @@ void my_mesh::setup_mesh()
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
 						  (GLvoid*)0);
-	// Vertex Normals
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
-						  (GLvoid*)offsetof(vertex_t, normal));
 	// Vertex Texture Coords
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
 						  (GLvoid*)offsetof(vertex_t, texture_coord));
+	// Vertex Normals
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+						  (GLvoid*)offsetof(vertex_t, normal));
 
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
@@ -74,22 +74,25 @@ void my_mesh::render()
 		std::string name;
 		if( current_tex.type == texture_type::diffuse )
 		{
-			name = "texture_diffuse" + std::to_string(diffuse_nr++);
+			name = "loaded_texture" + std::to_string(diffuse_nr++);
 		}
 		else if( current_tex.type == texture_type::specular )
 		{
-			name = "texture_specular" + std::to_string(specular_nr++);
-
+			name = "loaded_texture_specular_map" + std::to_string(specular_nr++);
 		}
-		GLint map = glGetUniformLocation(shader->get_program(), name.c_str());
+		GLint map = glGetUniformLocation(shader->get_program(),
+										 name.c_str());
 		if( map >= 0 ) {
 			glUniform1f(map,current_unit);
+		} else {
+			ERR("Unable to setup the texture unit! ",
+				name.c_str());
 		}
 
 		glBindTexture(GL_TEXTURE_2D, current_tex.id);
 		++current_unit;
 	}
-	glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 
 	glDrawElements(GL_TRIANGLES, indices->size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
@@ -101,6 +104,7 @@ void my_mesh::render()
 
 my_model::my_model(shaders::my_small_shaders *shad,
 				const std::string &model_path) :
+	lights::object_lighting(shad),
 	shader{ shad },
 	model_path{ model_path }
 {
@@ -120,6 +124,9 @@ void my_model::render(glm::mat4 view,glm::mat4 projection)
 	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+
+	calculate_lighting();
+
 	for( auto& mesh : meshes ) {
 		mesh->render();
 	}

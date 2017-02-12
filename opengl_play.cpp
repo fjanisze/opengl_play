@@ -243,6 +243,14 @@ void opengl_ui::enter_main_loop()
 		glm::vec3(1.0,1.0,1.0),
 		10);
 
+	//Create a flash light
+	lights::generic_light_ptr flash_light = lights::light_factory<lights::flash_light>::create(
+		camera,
+		glm::vec3(1.0,1.0,0.7),
+		6,
+		6.5,
+		10.5);
+
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
 		{ GLFW_KEY_W, { movable::mov_direction::top, 0.5} },
@@ -273,7 +281,7 @@ void opengl_ui::enter_main_loop()
 		glfwPollEvents();
 		evaluate_key_status();
 		movement_processor.process_movements();
-		camera->follow_target();
+		//camera->follow_target();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
@@ -287,8 +295,8 @@ void opengl_ui::enter_main_loop()
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		renderable::renderable_object::render_renderables(camera->get_view(),
-											projection);
+	/*	renderable::renderable_object::render_renderables(camera->get_view(),
+											projection);*/
 
 		model.render(camera->get_view(),projection);
 

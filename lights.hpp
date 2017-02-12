@@ -116,6 +116,8 @@ struct light_factory
 		if( false == object_lighting::add_simple_light<LightT>(light) ) {
 			return nullptr;
 		}
+		LOG1("Creating a new light, type: ",
+			 light->light_type());
 		return light;
 	}
 };
@@ -248,10 +250,8 @@ class flash_light : public spot_light
 public:
 	flash_light() = default;
 	flash_light(opengl_play::camera_obj camera,
-			glm::vec3 position,
 			glm::vec3 color,
 			GLfloat   strength,
-			glm::vec3 direction,
 			GLfloat cut_off_angle,
 			GLfloat out_cutoff_angle);
 

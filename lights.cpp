@@ -33,7 +33,7 @@ void object_lighting::calculate_lighting()
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_data();
 		//Debug stuff..
-		/*if( light->light_type() == type_of_light::Spot_light )
+/*		if( light->light_type() == type_of_light::Directional_Light )
 		{
 			for(auto e:light_data)
 				std::cout<<e<<",";
@@ -51,13 +51,29 @@ void object_lighting::calculate_lighting()
 
 	GLint nl = glGetUniformLocation(*frag_shader,
 							   "number_of_lights");
-	glUniform1i(nl,all_lights.size());
+
+	if( nl < 0 )
+	{
+		ERR("Unable to load the uniform number_of_lights");
+	}
+	else
+	{
+		glUniform1i(nl,all_lights.size());
+	}
 
 	GLint shader_light_buffer = glGetUniformLocation(*frag_shader,
 													 "light_data");
-	glUniform1fv(shader_light_buffer,
-				 current_idx,
-				 light_data_buffer.data());
+
+	if( shader_light_buffer < 0 )
+	{
+		ERR("Unable to load the uniform shader_light_buffer");
+	}
+	else
+	{
+		glUniform1fv(shader_light_buffer,
+					 current_idx,
+					 light_data_buffer.data());
+	}
 }
 
 void object_lighting::apply_object_color(const glm::vec3 &color)
@@ -327,16 +343,14 @@ const std::vector<GLfloat> &spot_light::get_light_data()
 }
 
 flash_light::flash_light(opengl_play::camera_obj camera,
-				glm::vec3 position,
 				glm::vec3 color,
 				GLfloat strength,
-				glm::vec3 direction,
 				GLfloat cut_off_angle,
 				GLfloat out_cutoff_angle) :
-	spot_light::spot_light(position,
+	spot_light::spot_light(glm::vec3(0.0), //Do not matter
 						   color,
 						   strength,
-						   direction,
+						   glm::vec3(0.0), //Do not matter
 						   cut_off_angle,
 						   out_cutoff_angle),
 	camera_ptr{ camera }

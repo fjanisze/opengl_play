@@ -2,6 +2,7 @@
 #include <shaders.hpp>
 #include <renderable_object.hpp>
 #include <textures.hpp>
+#include <lights.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -13,8 +14,8 @@ namespace models
 struct vertex_t
 {
 	glm::vec3 coordinate;
-	glm::vec3 normal;
 	glm::vec2 texture_coord;
+	glm::vec3 normal;
 };
 
 using namespace textures;
@@ -54,7 +55,7 @@ private:
  * all the meshes data structure which then are
  * used for drawing purpose
  */
-class my_model
+class my_model : lights::object_lighting
 {
 public:
 	using mesh_ptr = std::unique_ptr<my_mesh>;
