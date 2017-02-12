@@ -1,4 +1,5 @@
 #include "opengl_play.hpp"
+#include <models.hpp>
 
 namespace opengl_play
 {
@@ -207,7 +208,6 @@ void opengl_ui::prepare_for_main_loop()
 void opengl_ui::enter_main_loop()
 {
 	check_for_errors();
-	//now we have our object configured and ready to be rendered
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -221,21 +221,6 @@ void opengl_ui::enter_main_loop()
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
 						0.1f, 1000.0f);
-
-	std::vector<std::pair<glm::vec3,GLfloat> > objects = {
-		{ {2.0,2.0,2.0}, 1.0 },
-		{ {5.0,12.0,5.0}, 1.0 },
-		{ {-4.0,6.0,-3.0}, 1.0 },
-		{ {0.0,0.0,0.0}, 1.0 },
-		{ {15.0,15.0,15.0,}, 6.0 },
-		{ {15.0,35.0,-15.0,}, 6.0 },
-		{ {32.0,-15.0,44.0,}, 6.0 },
-		{ {-23.0,-1.0,-40.0,}, 6.0 },
-	};
-
-	for( auto& obj : objects ) {
-		object->add_object(obj.first, {1.0,1.0,1.0}, obj.second);
-	}
 
 	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
 		{{50,0,0},{1.0,0.0,0.0}},
@@ -252,52 +237,11 @@ void opengl_ui::enter_main_loop()
 		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
 	}
 
-	//Adding a light
-	glm::vec3 light_1_pos{0.0,1.5,0.0},
-			  light_2_pos{2.0,8.0,2.0};
-	/*light_1 = lights::light_factory<lights::point_light>::create(light_1_pos,
-												 glm::vec3(1.0,1.0,1.0),
-												 6.0);*/
-	light_2 = lights::light_factory<lights::point_light>::create(light_2_pos,
-												 glm::vec3(1.0,1.0,0.8),
-												 10.0);
-
 	//Create a directional light
 	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
 		glm::vec3(100,100,100),
 		glm::vec3(1.0,1.0,1.0),
 		10);
-
-	GLfloat light_2_angle = 0.0,
-			light_2_distance = glm::length(light_2->get_position()) * 2;
-
-	lights::generic_light_ptr spot_light = lights::light_factory<lights::spot_light>::create(
-				glm::vec3(13.0,13.0,-2.0),
-				glm::vec3(1.0,1.0,0.8),
-				12,
-				glm::vec3(15.0,15.0,15.0),
-				6.5,
-				9.5);
-	lights::generic_light_ptr flash_light = lights::light_factory<lights::flash_light>::create(
-				camera,
-				glm::vec3(13.0,13.0,-2.0),
-				glm::vec3(1.0,0.9,0.9),
-				20,
-				glm::vec3(12.0,12.0,12.0),
-				4.5,
-				6.5);
-
-	position_lines->add_line(glm::vec3(13.0,13.0,-2.0),glm::vec3(15.0,15.0,15.0),{1.0,1.0,1.0});
-
-	movable::key_mapping_vec mapping = {
-		{GLFW_KEY_LEFT, { movable::mov_direction::rot_yaw, 2} },
-		{GLFW_KEY_RIGHT, { movable::mov_direction::rot_yaw, -2} },
-		{GLFW_KEY_PAGE_UP, { movable::mov_direction::rot_pitch, -2} },
-		{GLFW_KEY_PAGE_DOWN, { movable::mov_direction::rot_pitch, 2} },
-		{GLFW_KEY_UP, { movable::mov_direction::forward, 0.4} },
-		{GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.2} }
-	};
-//	movement_processor.register_movable_object(light_1,mapping);
 
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
@@ -307,6 +251,20 @@ void opengl_ui::enter_main_loop()
 		{ GLFW_KEY_S, { movable::mov_direction::down, 0.5} },
 	};
 	movement_processor.register_movable_object(camera,camera_keys);
+
+	/* Load the model */
+	shaders::my_small_shaders model_shader;
+	model_shader.load_vertex_shader(
+				model_shader.read_shader_body("../model_shader.vert"));
+	model_shader.load_fragment_shader(
+				model_shader.read_shader_body("../model_shader.frag"));
+
+	if(!model_shader.create_shader_program()) {
+		ERR("Unable to create the shader program");
+		throw std::runtime_error("Failed to create the model_shader.");
+	}
+
+	models::my_model model(&model_shader,"../models/nanosuit/nanosuit.obj");
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -326,18 +284,13 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
-		light_2_pos.x = std::cos(light_2_angle) * light_2_distance;
-		light_2_pos.y = std::sin(light_2_angle) * light_2_distance;
-		light_2_angle += 0.05;
-		if(light_2_angle >= 360)
-			light_2_angle = 0;
-		light_2->set_position(light_2_pos);
-
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderable::renderable_object::render_renderables(camera->get_view(),
 											projection);
+
+		model.render();
 
 		fps_info->render_text();
 

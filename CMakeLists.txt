@@ -1,6 +1,8 @@
 project(opengl_play)
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_VERBOSE_MAKEFILE 1)
+
 #########################################################
 # C++1y
 #########################################################
@@ -26,10 +28,6 @@ set(CMAKE_CXX_FLAGS "${CPP_VER_FLAG} ${COMPILER_OPT_LVL}")
 #########################################################
 
 find_package(Threads REQUIRED)
-if(THREADS_HAVE_PTHREAD_ARG)
-  set_property(TARGET my_app PROPERTY COMPILE_OPTIONS "-pthread")
-  set_property(TARGET my_app PROPERTY INTERFACE_COMPILE_OPTIONS "-pthread")
-endif()
 
 #########################################################
 # FIND GLUT
@@ -92,6 +90,19 @@ add_subdirectory("./SOIL/")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/SOIL/")
 
 #########################################################
+# FIND ASSIMP
+#########################################################
+
+find_package(ASSIMP REQUIRED)
+if(ASSIMP_FOUND)
+    include_directories(${ASSIMP_INCLUDE_DIR})
+    link_directories( ${ASSIMP_LIBRARIES} )
+    message(STATUS "Found asset importer library: ${ASSIMP_LIBRARIES}")
+else()
+    message(ERROR " ASSIMP not found!")
+endif()
+
+#########################################################
 # Remaining stuff
 #########################################################
 
@@ -115,6 +126,7 @@ target_link_libraries(
     ${GLEW_LIBRARIES}
     ${FREETYPE_LIBRARIES}
     ${GLM_LIBRARY_DIRS}
+    ${ASSIMP_LIBRARIES}
     glfw
     SOIL)
 
