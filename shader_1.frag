@@ -34,7 +34,7 @@ void main()
 	 * Extract the light data from the common light buffer.
 	 * The initial set of informations is common to all the lights
 	 */
-	if( light_data[ buf_idx ] <= 2 )
+	if( light_data[ buf_idx ] <= 3 )
 	{
 	    light_type = light_data[ buf_idx ];
 	    ++buf_idx;
@@ -50,7 +50,7 @@ void main()
 	    ++buf_idx;
 	}
 	//Extract specific information
-	if( light_type == 2 )
+	if( light_type == 2 || light_type == 3)
 	{
 	    light_direction = vec3( light_data[ buf_idx ],
 	            light_data[ buf_idx + 1],
@@ -74,7 +74,7 @@ void main()
 	    light_dir = normalize( light_pos );
 	    attenuation = light_strength / ( sqrt(dist) );
 	}
-	else if( light_type == 2 ) //Spot light
+	else if( light_type == 2 || light_type == 3) //Spot light or flashlight
 	{
 	    light_dir = normalize( light_pos - frag_pos );
 	    float dist = length( light_pos - frag_pos );
@@ -87,7 +87,10 @@ void main()
 	    float epsilon = cut_off_angle - out_cutoff_angle;
 	    float intensity = clamp((theta - out_cutoff_angle) / epsilon,
 	                            0.0,1.0);
-	    attenuation = max( 1.0 + dist * 0.40 , 4 );
+	    if( light_type == 2 )
+		attenuation = max( 1.0 + dist * 0.40 , 4 );
+	    else
+		attenuation = max( 1.0 + sqrt( dist ) , 6 );
 	    attenuation = light_strength * intensity / attenuation;
 	}
 	if( attenuation == 0 ) {

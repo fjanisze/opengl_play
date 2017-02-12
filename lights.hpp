@@ -66,7 +66,8 @@ const GLfloat cube_vertices[] = {
 enum type_of_light {
 	Point_Light,
 	Directional_Light,
-	Spot_light
+	Spot_light,
+	Flash_light
 };
 
 class generic_light;
@@ -255,7 +256,7 @@ public:
 			GLfloat out_cutoff_angle);
 
 	type_of_light light_type(){
-		return type_of_light::Spot_light;
+		return type_of_light::Flash_light;
 	}
 
 	const std::vector<GLfloat>& get_light_data() override;
