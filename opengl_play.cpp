@@ -187,7 +187,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({-3.0,-3.0,-10.0},{0.0,0.0,0.0});
+	camera = my_camera::create_camera({0.0,10.0,20.0},{0.0,10.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
