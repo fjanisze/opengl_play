@@ -16,9 +16,9 @@ void main()
 {
     vec3 final_object_color;
     //Calculate lights
-    vec3 diffuse_res = vec3(0.0);
+    vec3 diffuse_res = vec3(1.0);
     vec3 spec_res = vec3(0.0);
-    float attenuation;
+    float attenuation = 1.0;
     vec3 light_dir;
     vec3 norm = normalize(normal);
     int buf_idx = 0;
@@ -112,5 +112,5 @@ void main()
     }
     final_object_color = ( diffuse_res + spec_res ) * object_color;
     //Final color
-    color = vec4( final_object_color ,1.0);
+    color = vec4( final_object_color ,1.0 );
 }

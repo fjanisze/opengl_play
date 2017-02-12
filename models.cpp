@@ -57,13 +57,40 @@ void my_mesh::setup_mesh()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
 						  (GLvoid*)offsetof(vertex_t, texture_coord));
 
+	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
 }
 
 void my_mesh::render()
 {
-	//TODO: Missing textures..
 	glBindVertexArray(VAO);
+	GLuint current_unit = 0;
+	GLuint diffuse_nr = 1;
+	GLuint specular_nr = 1;
+
+	for( auto& current_tex : *textures )
+	{
+		glActiveTexture(GL_TEXTURE0 + current_unit);
+		std::string name;
+		if( current_tex.type == texture_type::diffuse )
+		{
+			name = "texture_diffuse" + std::to_string(diffuse_nr++);
+		}
+		else if( current_tex.type == texture_type::specular )
+		{
+			name = "texture_specular" + std::to_string(specular_nr++);
+
+		}
+		GLint map = glGetUniformLocation(shader->get_program(), name.c_str());
+		if( map >= 0 ) {
+			glUniform1f(map,current_unit);
+		}
+
+		glBindTexture(GL_TEXTURE_2D, current_tex.id);
+		++current_unit;
+	}
+	glActiveTexture(GL_TEXTURE0);
+
 	glDrawElements(GL_TRIANGLES, indices->size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
@@ -82,8 +109,17 @@ my_model::my_model(shaders::my_small_shaders *shad,
 	load_model();
 }
 
-void my_model::render()
+void my_model::render(glm::mat4 view,glm::mat4 projection)
 {
+	glm::mat4 model;
+	shader->use_shaders();
+	GLint model_loc = glGetUniformLocation(*shader,"model");
+	GLint view_loc = glGetUniformLocation(*shader,"view");
+	GLint projection_loc = glGetUniformLocation(*shader,"projection");
+
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 	for( auto& mesh : meshes ) {
 		mesh->render();
 	}
@@ -135,7 +171,7 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 {
 	my_mesh::vertices_ptr vertices = std::make_unique<std::vector<vertex_t>>();
 	my_mesh::indices_ptr  indices = std::make_unique<std::vector<GLuint>>();
-	my_mesh::textures_ptr textures = std::make_unique<std::vector<texture_t>>();
+	my_mesh::textures_ptr textures;
 
 	// Walk through each of the mesh's vertices
 	for(GLuint i = 0; i < mesh->mNumVertices; i++)
@@ -171,31 +207,46 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 		for(GLuint j = 0; j < face.mNumIndices; j++)
 			indices->push_back(face.mIndices[j]);
 	}
-/*
+
 	// Process materials
 	if(mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-		// We assume a convention for sampler names in the shaders. Each diffuse texture should be named
-		// as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER.
-		// Same applies to other texture as the following list summarizes:
-		// Diffuse: texture_diffuseN
-		// Specular: texture_specularN
-		// Normal: texture_normalN
 
-		// 1. Diffuse maps
-		vector<Texture> diffuseMaps = this->loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-		// 2. Specular maps
-		vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+		auto diffuse_maps = process_texture(material,
+									aiTextureType_DIFFUSE);
+		auto specular_maps = process_texture(material,
+									aiTextureType_SPECULAR);
+
+		diffuse_maps->insert(diffuse_maps->end(),
+							 specular_maps->begin(),
+							 specular_maps->end());
+		textures = std::move( diffuse_maps );
+		LOG1("Amount of texture loaded: ",
+			 textures->size());
 	}
-*/
+
 	// Return a mesh object created from the extracted mesh data
 	return std::make_unique<my_mesh>(shader,
 									 std::forward<my_mesh::vertices_ptr>( vertices ),
 									 std::forward<my_mesh::indices_ptr>( indices ),
-									 std::forward<my_mesh::textures_ptr>( textures) );
+									 std::forward<my_mesh::textures_ptr>( textures ) );
+}
+
+my_mesh::textures_ptr my_model::process_texture(aiMaterial *material,
+									aiTextureType type)
+{
+	my_mesh::textures_ptr textures = std::make_unique<std::vector<texture_t>>();
+	for(GLuint i{ 0 } ; i < material->GetTextureCount(type) ; ++i ) {
+		texture_t texture;
+		aiString path;
+		material->GetTexture( type, i, &path );
+		texture.type = map_texture_type( type );
+		texture.id = load_texture(model_directory + "/" + path.C_Str());
+		texture.path = path.C_Str();
+		textures->push_back(texture);
+	}
+	return std::move( textures );
 }
 
 }

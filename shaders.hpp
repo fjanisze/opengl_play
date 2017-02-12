@@ -18,8 +18,8 @@ namespace shaders
 class my_small_shaders
 {
 	GLuint vertex_shader,
-	fragment_shader,
-	shader_program;
+			fragment_shader,
+			shader_program;
 	GLchar log_buffer[512];
 	void load_shader_generic(GLuint& shader_target,
 							 const std::string& body,

@@ -1,6 +1,7 @@
 #include <headers.hpp>
 #include <shaders.hpp>
 #include <renderable_object.hpp>
+#include <textures.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -16,16 +17,7 @@ struct vertex_t
 	glm::vec2 texture_coord;
 };
 
-enum class texture_type
-{
-
-};
-
-struct texture_t
-{
-	GLuint id;
-	texture_type type;
-};
+using namespace textures;
 
 /*
  * Responsible for loading, storing, drawing
@@ -69,7 +61,7 @@ public:
 	my_model(shaders::my_small_shaders* shad,
 		const std::string& model_path);
 
-	void render();
+	void render(glm::mat4 view, glm::mat4 projection);
 private:
 	bool load_model();
 	/*
@@ -83,6 +75,12 @@ private:
 	 * the relative my_mesh
 	 */
 	mesh_ptr process_mesh(aiMesh* mesh,const aiScene* scene);
+	/*
+	 * Extract the texture information for
+	 * the mesh
+	 */
+	my_mesh::textures_ptr process_texture(aiMaterial* material,
+			aiTextureType type);
 private:
 	shaders::my_small_shaders* shader;
 	std::string model_path,

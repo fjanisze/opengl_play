@@ -290,7 +290,7 @@ void opengl_ui::enter_main_loop()
 		renderable::renderable_object::render_renderables(camera->get_view(),
 											projection);
 
-		model.render();
+		model.render(camera->get_view(),projection);
 
 		fps_info->render_text();
 

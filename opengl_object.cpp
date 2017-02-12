@@ -71,7 +71,8 @@ void little_object::init_vertices()
 	update_vertex_data();
 }
 
-texture_info little_object::load_texture(const std::string &filename, GLint wrapping_method)
+texture_info little_object::load_texture(const std::string &filename,
+								GLint wrapping_method)
 {
 	LOG1("Creating the texture for little_object");
 	texture_info TEX;
