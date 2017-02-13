@@ -118,7 +118,6 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
 		if(error != GL_NO_ERROR){
 			ERR("Error encountered in font_texture_loader::load_new_textureset: ",
 				error);
-			throw std::runtime_error("ERROR: font_texture_loader::load_new_textureset");
 		}
 
 		new_font_id = next_id++;

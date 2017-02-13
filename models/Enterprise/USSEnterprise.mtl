@@ -1,0 +1,15 @@
+# Blender MTL File: 'USSEnterprise.blend'
+# Material Count: 1
+
+newmtl Material
+Ns 96.078431
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.800000 0.800000 0.800000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd /home/fjanisze/Models/Enterprise/UV Maps/UV Textur.png
+map_Bump  /home/fjanisze/Models/Enterprise/UV Maps/NormalMap.png
+map_Ks  /home/fjanisze/Models/Enterprise/UV Maps/UV Textur.png

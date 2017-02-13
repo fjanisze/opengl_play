@@ -31,6 +31,7 @@ public:
 	glm::mat4 get_view();
 	void set_position(const glm::vec3& pos) override;
 	void set_target(movable::mov_obj_ptr object);
+	GLfloat get_dist_from_target();
 	void follow_target();
 	glm::vec3 get_camera_front();
 	static camera_obj create_camera(glm::vec3 pos,glm::vec3 target);

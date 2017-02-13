@@ -1,5 +1,6 @@
 #include <textures.hpp>
 #include <logger/logger.hpp>
+#include <mutex>
 
 namespace textures
 {
@@ -9,7 +10,7 @@ typedef unsigned char byte_t;
 texture_t load_texture(const std::string &filename,
 				GLint wrapping_method)
 {
-	LOG1("Creating the texture for little_object");
+	LOG1("load_texture: ",filename.c_str());
 	texture_t TEX;
 	//Load the texture image
 	byte_t* image = SOIL_load_image(filename.c_str(),
@@ -18,7 +19,8 @@ texture_t load_texture(const std::string &filename,
 									0,
 									SOIL_LOAD_RGB);
 	if(image == nullptr){
-		ERR("Unable to load the texture!");
+		ERR("Unable to load the texture! ",
+			filename.c_str());
 		throw std::runtime_error("Texture loading failed!");
 	}
 	LOG1("Loaded texture size: ",TEX.width,"/",TEX.height);

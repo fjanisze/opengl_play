@@ -182,12 +182,12 @@ opengl_ui::opengl_ui(int win_width,
 		throw std::runtime_error("GLEW Init failed!");
 	}
 
-	object = std::make_shared<little_object>();
+	//object = std::make_shared<little_object>();
 	position_lines = std::make_shared<my_static_lines>();
 
 	init_text();
 
-	camera = my_camera::create_camera({0.0,10.0,20.0},{0.0,10.0,0.0});
+	camera = my_camera::create_camera({10.0,20.0,-30.0},{0.0,0.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -239,17 +239,17 @@ void opengl_ui::enter_main_loop()
 
 	//Create a directional light
 	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
-		glm::vec3(100,100,100),
+		glm::vec3(100,60,100),
 		glm::vec3(1.0,1.0,1.0),
-		10);
+		6);
 
 	//Create a flash light
 	lights::generic_light_ptr flash_light = lights::light_factory<lights::flash_light>::create(
 		camera,
 		glm::vec3(1.0,1.0,0.7),
-		6,
-		6.5,
-		10.5);
+		4,
+		5.5,
+		7.5);
 
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
@@ -258,6 +258,7 @@ void opengl_ui::enter_main_loop()
 		{ GLFW_KEY_D, { movable::mov_direction::right, 0.5} },
 		{ GLFW_KEY_S, { movable::mov_direction::down, 0.5} },
 	};
+
 	movement_processor.register_movable_object(camera,camera_keys);
 
 	/* Load the model */
@@ -272,7 +273,23 @@ void opengl_ui::enter_main_loop()
 		throw std::runtime_error("Failed to create the model_shader.");
 	}
 
-	models::my_model model(&model_shader,"../models/nanosuit/nanosuit.obj");
+	models::model_ptr model = models::my_model::create(&model_shader,"../models/Enterprise/USSEnterprise.obj");
+
+	//Let our model be movable
+	//Register the camera as movable object
+	movable::key_mapping_vec model_keys = {
+		{ GLFW_KEY_UP, { movable::mov_direction::forward, 0.3} },
+		{ GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.3} },
+		{ GLFW_KEY_LEFT, { movable::mov_direction::rot_yaw, 0.5} },
+		{ GLFW_KEY_RIGHT, { movable::mov_direction::rot_yaw, -0.5} },
+		{ GLFW_KEY_PAGE_UP, { movable::mov_direction::rot_pitch, -0.5} },
+		{ GLFW_KEY_PAGE_DOWN, { movable::mov_direction::rot_pitch, 0.5} }
+	};
+
+	movement_processor.register_movable_object(model,model_keys);
+	//movement_processor.tracking().new_tracking(model,camera,40.0);
+	camera->set_target( model );
+
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -281,7 +298,7 @@ void opengl_ui::enter_main_loop()
 		glfwPollEvents();
 		evaluate_key_status();
 		movement_processor.process_movements();
-		//camera->follow_target();
+		camera->follow_target();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
@@ -295,10 +312,8 @@ void opengl_ui::enter_main_loop()
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/*	renderable::renderable_object::render_renderables(camera->get_view(),
-											projection);*/
-
-		model.render(camera->get_view(),projection);
+		renderable::renderable_object::render_renderables(camera->get_view(),
+											projection);
 
 		fps_info->render_text();
 
@@ -309,7 +324,7 @@ void opengl_ui::enter_main_loop()
 		std::stringstream ss;
 		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 		//Distance from the camera target
-		ss << ", target distance: "<<movement_processor.tracking().get_dist_from_target(camera);
+		ss << ", target distance: "<<camera->get_dist_from_target();
 		camera_info->set_text(ss.str());
 		camera_info->render_text();
 
@@ -344,7 +359,7 @@ opengl_ui::~opengl_ui()
 
 int main()
 {
-	opengl_play::opengl_ui entry(1024,768);
+	opengl_play::opengl_ui entry(1920,1280);
 	log_inst.set_thread_name("MAIN");
 
 	entry.prepare_for_main_loop();

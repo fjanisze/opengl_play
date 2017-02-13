@@ -17,7 +17,7 @@ uniform sampler2D loaded_texture_specular_map3;
 
 uniform vec3      object_color;
 uniform int       number_of_lights;
-uniform float     light_data[ 1024 ];
+uniform float     light_data[ 800 ];
 
 void main()
 {

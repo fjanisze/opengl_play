@@ -1,5 +1,10 @@
 #include <models.hpp>
 #include <logger/logger.hpp>
+#include <thread>
+#include <future>
+#include <functional>
+#include <chrono>
+#include <mutex>
 
 namespace models
 {
@@ -110,26 +115,42 @@ my_model::my_model(shaders::my_small_shaders *shad,
 {
 	LOG1("Creating a new my_model. Model path: ",
 		 model_path.c_str());
+
 	load_model();
+
+	add_renderable(this);
 }
 
-void my_model::render(glm::mat4 view,glm::mat4 projection)
+void my_model::set_transformations(glm::mat4 view, glm::mat4 projection)
 {
-	glm::mat4 model;
+	projection_matrix = projection;
+	view_matrix = view;
+}
+
+void my_model::prepare_for_render()
+{
 	shader->use_shaders();
 	GLint model_loc = glGetUniformLocation(*shader,"model");
 	GLint view_loc = glGetUniformLocation(*shader,"view");
 	GLint projection_loc = glGetUniformLocation(*shader,"projection");
 
 	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
 	calculate_lighting();
+}
 
+void my_model::render()
+{
 	for( auto& mesh : meshes ) {
 		mesh->render();
 	}
+}
+
+void my_model::clean_after_render()
+{
+
 }
 
 bool my_model::load_model()
@@ -152,6 +173,7 @@ bool my_model::load_model()
 	process_model(scene->mRootNode, scene);
 	return true;
 }
+
 
 void my_model::process_model(aiNode *node,
 					const aiScene *scene)
@@ -189,9 +211,11 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 		vertex.coordinate.y = mesh->mVertices[i].y;
 		vertex.coordinate.z = mesh->mVertices[i].z;
 		// Normals
-		vertex.normal.x = mesh->mNormals[i].x;
-		vertex.normal.y = mesh->mNormals[i].y;
-		vertex.normal.z = mesh->mNormals[i].z;
+		if( mesh->mNormals ) {
+			vertex.normal.x = mesh->mNormals[i].x;
+			vertex.normal.y = mesh->mNormals[i].y;
+			vertex.normal.z = mesh->mNormals[i].z;
+		}
 		// Texture Coordinates
 		if(mesh->mTextureCoords[0]) // Does the mesh contain texture coordinates?
 		{
@@ -205,7 +229,6 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 		vertices->push_back(vertex);
 	}
 
-
 	// Now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
 	for(GLuint i = 0; i < mesh->mNumFaces; i++)
 	{
@@ -218,7 +241,7 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 	// Process materials
 	if(mesh->mMaterialIndex >= 0)
 	{
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+		const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
 		auto diffuse_maps = process_texture(material,
 									aiTextureType_DIFFUSE);
@@ -229,18 +252,16 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 							 specular_maps->begin(),
 							 specular_maps->end());
 		textures = std::move( diffuse_maps );
-		LOG1("Amount of texture loaded: ",
-			 textures->size());
 	}
-
 	// Return a mesh object created from the extracted mesh data
 	return std::make_unique<my_mesh>(shader,
 									 std::forward<my_mesh::vertices_ptr>( vertices ),
 									 std::forward<my_mesh::indices_ptr>( indices ),
 									 std::forward<my_mesh::textures_ptr>( textures ) );
+	return nullptr;
 }
 
-my_mesh::textures_ptr my_model::process_texture(aiMaterial *material,
+my_mesh::textures_ptr my_model::process_texture(const aiMaterial *material,
 									aiTextureType type)
 {
 	my_mesh::textures_ptr textures = std::make_unique<std::vector<texture_t>>();
@@ -249,7 +270,11 @@ my_mesh::textures_ptr my_model::process_texture(aiMaterial *material,
 		aiString path;
 		material->GetTexture( type, i, &path );
 		texture.type = map_texture_type( type );
-		texture.id = load_texture(model_directory + "/" + path.C_Str());
+		std::string filename = path.C_Str();
+		std::size_t pos = filename.find_last_of("\\/");
+		if( pos != std::string::npos )
+			filename = filename.substr(pos + 1);
+		texture.id = load_texture(model_directory + "/" + filename.c_str());
 		texture.path = path.C_Str();
 		textures->push_back(texture);
 	}

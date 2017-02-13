@@ -1,5 +1,6 @@
 #include <renderable_object.hpp>
 #include <algorithm>
+#include <iostream>
 
 namespace renderable
 {

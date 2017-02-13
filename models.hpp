@@ -50,19 +50,34 @@ private:
 	textures_ptr textures;
 };
 
+class my_model;
+using model_ptr = std::shared_ptr<my_model>;
+
 /*
  * Responsible for loading models and creating
  * all the meshes data structure which then are
  * used for drawing purpose
  */
-class my_model : lights::object_lighting
+class my_model : public lights::object_lighting,
+		public renderable::renderable_object,
+		public movable::movable_object
+	//std::enable_shared_from_this< my_model >
 {
 public:
 	using mesh_ptr = std::unique_ptr<my_mesh>;
 	my_model(shaders::my_small_shaders* shad,
 		const std::string& model_path);
 
-	void render(glm::mat4 view, glm::mat4 projection);
+	void set_transformations(glm::mat4 view,glm::mat4 projection) override;
+	void prepare_for_render() override;
+	void render() override;
+	void clean_after_render() override;
+
+	static model_ptr create(shaders::my_small_shaders* shader,
+					const std::string& path) {
+		return std::make_shared< my_model >( shader, path );
+	}
+
 private:
 	bool load_model();
 	/*
@@ -80,13 +95,15 @@ private:
 	 * Extract the texture information for
 	 * the mesh
 	 */
-	my_mesh::textures_ptr process_texture(aiMaterial* material,
+	my_mesh::textures_ptr process_texture(const aiMaterial *material,
 			aiTextureType type);
 private:
 	shaders::my_small_shaders* shader;
 	std::string model_path,
 			model_directory;
 	std::vector<mesh_ptr> meshes;
+	glm::mat4 projection_matrix,
+			view_matrix;
 };
 
 }

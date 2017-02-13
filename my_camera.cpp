@@ -124,6 +124,15 @@ void my_camera::set_target(movable::mov_obj_ptr object)
 	target_to_follow = object;
 }
 
+GLfloat my_camera::get_dist_from_target()
+{
+	if( nullptr != target_to_follow ) {
+		return glm::distance( target_to_follow->get_position(),
+							  current_position );
+	}
+	return -1;
+}
+
 void my_camera::follow_target()
 {
 	if( nullptr != target_to_follow ) {
