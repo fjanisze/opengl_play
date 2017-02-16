@@ -7,6 +7,7 @@
 #include "my_lines.hpp"
 #include "lights.hpp"
 #include <movable_object.hpp>
+#include <random>
 
 namespace opengl_play
 {

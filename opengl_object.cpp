@@ -290,9 +290,9 @@ little_object::little_object() :
 	LOG1("little_object::little_object(): Construction.");
 
 	obj_shader.load_vertex_shader(
-				obj_shader.read_shader_body("../shader_1.vert"));
+				obj_shader.read_shader_body("../model_shader.vert"));
 	obj_shader.load_fragment_shader(
-				obj_shader.read_shader_body("../shader_1.frag"));
+				obj_shader.read_shader_body("../model_shader.frag"));
 
 	if(!obj_shader.create_shader_program()){
 		ERR("Unable to create the shader program!");

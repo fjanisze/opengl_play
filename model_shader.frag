@@ -95,10 +95,10 @@ void main()
 	    float intensity = clamp((theta - out_cutoff_angle) / epsilon,
 	                            0.0,1.0);
 	    if( light_type == 2 )
-		attenuation = max( 1.0 + dist * 0.40 , 4 );
+		attenuation = 1.0 + dist * 0.40;
 	    else
-		attenuation = max( 1.0 + sqrt( dist ) , 6 );
-	    attenuation = light_strength * intensity / attenuation;
+		attenuation = 1.0 + sqrt( dist );
+	    attenuation = min( light_strength * intensity / attenuation, 2.5 );
 	}
 	if( attenuation == 0 ) {
 	    continue;

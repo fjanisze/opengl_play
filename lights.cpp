@@ -191,7 +191,12 @@ std::size_t generic_light::light_data_size()
 	return 1 + //type
 		   3 + //position
 		   3 + //color
-		   1;  //strength
+			1;  //strength
+}
+
+void generic_light::attach_to_object(movable::mov_obj_ptr object)
+{
+	WARN1("attach_to_object not implemented!");
 }
 
 const std::vector<GLfloat>& generic_light::get_light_data()
@@ -322,6 +327,11 @@ spot_light::spot_light(glm::vec3 position,
 	light_data.resize( light_data_size() );
 }
 
+void spot_light::attach_to_object(movable::mov_obj_ptr object)
+{
+	target_obj = object;
+}
+
 std::size_t spot_light::light_data_size()
 {
 	/*
@@ -333,13 +343,49 @@ std::size_t spot_light::light_data_size()
 
 const std::vector<GLfloat> &spot_light::get_light_data()
 {
-	std::size_t idx = fill_common_light_data();
-	light_data[ idx++ ] = light_direction.x;
-	light_data[ idx++ ] = light_direction.y;
-	light_data[ idx++ ] = light_direction.z;
+	std::size_t idx{ 0 };
+	if( target_obj == nullptr ) {
+		idx = fill_common_light_data();
+		light_data[ idx     ] = light_direction.x;
+		light_data[ idx + 1 ] = light_direction.y;
+		light_data[ idx + 2 ] = light_direction.z;
+		idx += 3;
+	} else {
+		//Calculate the new position and direction
+		//on the base of the target model-matrix
+		glm::vec3 pos = target_obj->get_position();
+		recalculate_light_direction();
+		light_data[ idx     ] = static_cast<int>(light_type());
+		light_data[ idx + 1 ] = pos.x;
+		light_data[ idx + 2 ] = pos.y;
+		light_data[ idx + 3 ] = pos.z;
+		auto color_info = get_light_color();
+		light_data[ idx + 4 ] = color_info.first.r;
+		light_data[ idx + 5 ] = color_info.first.g;
+		light_data[ idx + 6 ] = color_info.first.b;
+		light_data[ idx + 7 ] = color_info.second;
+		light_data[ idx + 8 ] = light_direction.x;
+		light_data[ idx + 9 ] = light_direction.y;
+		light_data[ idx + 10 ] = light_direction.z;
+		idx += 11;
+	}
 	light_data[ idx++ ] = cut_off;
 	light_data[ idx ] = out_cutoff;
 	return light_data;
+}
+
+void spot_light::recalculate_light_direction()
+{
+	if( target_obj != nullptr ) {
+		//Calculate the new position and direction
+		//on the base of the target model-matrix
+		glm::mat4 model_mtx = target_obj->get_model_matrix();
+		glm::vec3 pos = glm::vec3( model_mtx[3].x, model_mtx[3].y, model_mtx[3].z );
+		model_mtx = glm::translate( model_mtx,
+							  glm::vec3(0.0,0.0,200.0) ); //Far enough?
+		light_direction = glm::normalize(
+					glm::vec3( model_mtx[3].x, model_mtx[3].y, model_mtx[3].z ) - pos );
+	}
 }
 
 flash_light::flash_light(opengl_play::camera_obj camera,

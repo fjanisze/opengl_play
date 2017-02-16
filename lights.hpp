@@ -167,6 +167,11 @@ public:
 	 * might be different
 	 */
 	virtual std::size_t light_data_size();
+	/*
+	 * Attach the spot_light to the object,
+	 * will cast the light in front of this object (+Z)
+	 */
+	virtual void attach_to_object( movable::mov_obj_ptr object );
 };
 
 /*
@@ -222,6 +227,7 @@ protected:
 	GLfloat cut_off,
 			out_cutoff;
 	glm::vec3 light_direction;
+	movable::mov_obj_ptr target_obj;
 public:
 	spot_light() = default;
 	spot_light(glm::vec3 position,
@@ -235,8 +241,17 @@ public:
 		return type_of_light::Spot_light;
 	}
 
+	void attach_to_object( movable::mov_obj_ptr object );
+
 	std::size_t light_data_size() override;
 	const std::vector<GLfloat>& get_light_data() override;
+private:
+	/*
+	 * If we're attached to a movable object,
+	 * then we need to recalculate the direction light
+	 * if the target moves
+	 */
+	void recalculate_light_direction();
 };
 
 /*

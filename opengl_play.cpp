@@ -182,7 +182,7 @@ opengl_ui::opengl_ui(int win_width,
 		throw std::runtime_error("GLEW Init failed!");
 	}
 
-	//object = std::make_shared<little_object>();
+	object = std::make_shared<little_object>();
 	position_lines = std::make_shared<my_static_lines>();
 
 	init_text();
@@ -237,19 +237,34 @@ void opengl_ui::enter_main_loop()
 		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
 	}
 
+	//Create some random cubes
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dist(-100,100);
+
+	for( int i{ 0 } ; i < 100 ; ++i ) {
+		glm::vec3 pos = {
+			dist(gen),
+			dist(gen),
+			dist(gen)
+		};
+		DUMP_VEC3("obj: ",pos);
+		object->add_object(pos,glm::vec3(1.0),1.5);
+	}
+
 	//Create a directional light
 	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
 		glm::vec3(100,60,100),
 		glm::vec3(1.0,1.0,1.0),
-		6);
-
+		10);
+/*
 	//Create a flash light
 	lights::generic_light_ptr flash_light = lights::light_factory<lights::flash_light>::create(
 		camera,
 		glm::vec3(1.0,1.0,0.7),
 		4,
 		5.5,
-		7.5);
+		7.5);*/
 
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
@@ -278,7 +293,7 @@ void opengl_ui::enter_main_loop()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_UP, { movable::mov_direction::forward, 0.3} },
+		{ GLFW_KEY_UP, { movable::mov_direction::forward, 0.7} },
 		{ GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.3} },
 		{ GLFW_KEY_LEFT, { movable::mov_direction::rot_yaw, 0.5} },
 		{ GLFW_KEY_RIGHT, { movable::mov_direction::rot_yaw, -0.5} },
@@ -287,9 +302,18 @@ void opengl_ui::enter_main_loop()
 	};
 
 	movement_processor.register_movable_object(model,model_keys);
-	//movement_processor.tracking().new_tracking(model,camera,40.0);
+	movement_processor.tracking().new_tracking(model,camera,30.0);
 	camera->set_target( model );
 
+	//Create a spot light and attach it to the model
+	lights::generic_light_ptr model_light = lights::light_factory<lights::spot_light>::create(
+		model->get_position(),
+		glm::vec3(1.0,1.0,0.7),
+		200,
+		model->get_position(),
+		20,
+		30);
+	model_light->attach_to_object( model );
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
