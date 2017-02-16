@@ -68,18 +68,18 @@ void main()
 	    ++buf_idx;
 	}
 	//Now perform the calculations
-	if( light_type == 0 )
+	if( light_type == 0 ) //Point light
 	{
 	    float dist = length( light_pos - frag_pos );
 	    attenuation = (1.0 + dist * 0.22 + dist*dist*0.2);
-	    attenuation = light_strength / attenuation;
+	    attenuation = max( light_strength / attenuation, .5);
 	    light_dir = normalize( light_pos - frag_pos );
 	}
 	else if( light_type == 1 ) //Directional light
 	{
 	    float dist = length( light_pos - frag_pos );
 	    light_dir = normalize( light_pos );
-	    attenuation = light_strength / ( sqrt(dist) );
+	    attenuation = light_strength / sqrt(dist);
 	}
 	else if( light_type == 2 || light_type == 3) //Spot light or flashlight
 	{

@@ -71,11 +71,12 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 	GLdouble x_delta = (x - last_mouse_x) * 0.1,
 			y_delta = (last_mouse_y - y) * 0.1;
 
-	camera->modify_angle(movable::mov_angles::yaw,x_delta);
-	camera->modify_angle(movable::mov_angles::pitch,y_delta);
+	//camera->modify_angle(movable::mov_angles::yaw,x_delta);
+	//camera->modify_angle(movable::mov_angles::pitch,y_delta);
 
 	last_mouse_x = x;
 	last_mouse_y = y;
+	movement_processor.mouse_input(x, y);
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -240,32 +241,45 @@ void opengl_ui::enter_main_loop()
 	//Create some random cubes
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> dist(-100,100);
+	std::uniform_int_distribution<> dist(-50000,50000);
 
 	for( int i{ 0 } ; i < 100 ; ++i ) {
 		glm::vec3 pos = {
-			dist(gen),
-			dist(gen),
-			dist(gen)
+			dist(gen) % 1000,
+			dist(gen) % 1000,
+			dist(gen) % 1000
 		};
-		DUMP_VEC3("obj: ",pos);
 		object->add_object(pos,glm::vec3(1.0),1.5);
 	}
 
-	//Create a directional light
-	lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
-		glm::vec3(100,60,100),
-		glm::vec3(1.0,1.0,1.0),
-		10);
-/*
-	//Create a flash light
-	lights::generic_light_ptr flash_light = lights::light_factory<lights::flash_light>::create(
-		camera,
-		glm::vec3(1.0,1.0,0.7),
-		4,
-		5.5,
-		7.5);*/
+	std::vector<lights::generic_light_ptr> dir_lights;
 
+	/*
+	 * Create some random lights, distant stars..
+	 */
+	for( int i{ 0 }; i < 10 ; ++i ) {
+		glm::vec3 pos{ dist(gen), dist(gen), dist(gen) };
+		GLfloat len = glm::length( pos );
+		GLfloat x_angle = glm::acos( pos.x / len ),
+				y_angle = glm::acos( pos.y / len ),
+				z_angle = glm::acos( pos.z / len );
+		pos = glm::vec3( glm::cos(x_angle) * std::min(5000, dist(gen)),
+						 glm::cos(y_angle) * std::min(5000, dist(gen)),
+						 glm::cos(z_angle) * std::min(5000, dist(gen)));
+		//A little of random coloring (almost white colors)
+		glm::vec3 color = glm::abs( glm::normalize( pos ) );
+		color.r /= 10;
+		color.b /= 7;
+		color.g /= 40;
+		color = glm::vec3(1.0) - color;
+		GLfloat strength = std::max( 7, dist(gen) % 100 );
+		lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
+			pos,
+			color,
+			strength);
+		dir_lights.push_back( dir_light );
+	}
+/*
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
 		{ GLFW_KEY_W, { movable::mov_direction::top, 0.5} },
@@ -274,7 +288,7 @@ void opengl_ui::enter_main_loop()
 		{ GLFW_KEY_S, { movable::mov_direction::down, 0.5} },
 	};
 
-	movement_processor.register_movable_object(camera,camera_keys);
+	movement_processor.register_movable_object(camera,camera_keys);*/
 
 	/* Load the model */
 	shaders::my_small_shaders model_shader;
@@ -293,14 +307,21 @@ void opengl_ui::enter_main_loop()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_UP, { movable::mov_direction::forward, 0.7} },
-		{ GLFW_KEY_DOWN, { movable::mov_direction::backward, 0.3} },
-		{ GLFW_KEY_LEFT, { movable::mov_direction::rot_yaw, 0.5} },
-		{ GLFW_KEY_RIGHT, { movable::mov_direction::rot_yaw, -0.5} },
-		{ GLFW_KEY_PAGE_UP, { movable::mov_direction::rot_pitch, -0.5} },
-		{ GLFW_KEY_PAGE_DOWN, { movable::mov_direction::rot_pitch, 0.5} }
+		{ GLFW_KEY_W, { movable::mov_direction::forward, 0.7} },
+		{ GLFW_KEY_S, { movable::mov_direction::backward, 0.3} },
+		{ GLFW_KEY_D, { movable::mov_direction::rot_roll, 0.3} },
+		{ GLFW_KEY_A, { movable::mov_direction::rot_roll, -0.3} },
 	};
 
+	movable::mouse_mapping_vec model_mouse = {
+		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::rot_pitch, 0.2} },
+		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::rot_pitch, -0.2} },
+		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::rot_yaw, -0.2} },
+		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::rot_yaw, 0.2} },
+
+	};
+
+	movement_processor.register_movable_object(model,model_mouse);
 	movement_processor.register_movable_object(model,model_keys);
 	movement_processor.tracking().new_tracking(model,camera,30.0);
 	camera->set_target( model );
@@ -309,7 +330,7 @@ void opengl_ui::enter_main_loop()
 	lights::generic_light_ptr model_light = lights::light_factory<lights::spot_light>::create(
 		model->get_position(),
 		glm::vec3(1.0,1.0,0.7),
-		200,
+		100,
 		model->get_position(),
 		20,
 		30);

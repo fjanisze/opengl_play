@@ -145,7 +145,9 @@ glm::mat4 movable_object::get_model_matrix()
 /// object_movement_processor implementation
 /////////////////////////////////////
 
-object_movement_processor::object_movement_processor()
+object_movement_processor::object_movement_processor() :
+	last_mouse_x_position{ -1 },
+	last_mouse_y_position{ -1 }
 {
 	LOG1("Creating object_movement_processor");
 	key_status.resize(1024);
@@ -155,7 +157,25 @@ object_movement_processor::object_movement_processor()
 void object_movement_processor::mouse_input(GLdouble new_x,
 								GLdouble new_y)
 {
-	ERR("object_movement_processor::mouse_input: NOT IMPLEMENTED!");
+	if( last_mouse_x_position > 0 &&
+			last_mouse_y_position > 0 ) {
+		GLdouble x_delta = new_x - last_mouse_x_position,
+				y_delta = last_mouse_y_position - new_y;
+
+		if( x_delta > 0 ) {
+			mouse_status[ mouse_movement_types::yaw_increase ] += x_delta;
+		} else if( x_delta < 0 ){
+			mouse_status[ mouse_movement_types::yaw_decrease ] -= x_delta;
+		}
+
+		if( y_delta > 0 ) {
+			mouse_status[ mouse_movement_types::pitch_increse ] += y_delta;
+		} else if( y_delta < 0 ){
+			mouse_status[ mouse_movement_types::pitch_decrease ] -= y_delta;
+		}
+	}
+	last_mouse_x_position = new_x;
+	last_mouse_y_position = new_y;
 }
 
 void object_movement_processor::keyboard_input(int key,
@@ -178,6 +198,9 @@ void object_movement_processor::keyboard_input(int key,
 
 void object_movement_processor::process_movements()
 {
+	/*
+	 * Process keyboard movements
+	 */
 	for( int key = 0 ; key < key_status.size() ; ++key ) {
 		if( key_status[ key ] == key_status_t::pressed ) {
 			/*
@@ -185,8 +208,8 @@ void object_movement_processor::process_movements()
 			 * has registered a movable_object to perform
 			 * a movement if this key is pressed.
 			 */
-			auto it = kb_map_mapping.find( key );
-			if( it != kb_map_mapping.end() ) {
+			auto it = keyb_mapping.find( key );
+			if( it != keyb_mapping.end() ) {
 				/*
 				 * For each registered object, perform the
 				 * proper movement
@@ -221,6 +244,24 @@ void object_movement_processor::process_movements()
 			}
 		}
 	}
+	/*
+	 * Process mouse movements
+	 */
+	for( auto& movement : mouse_status ) {
+		if( movement.second != 0 ) {
+			GLfloat amount = movement.second;
+			for( auto& dir_map : mouse_mapping[ movement.first ] ) {
+				/*
+				 * For all the registered object, trigger the movement
+				 */
+				for( auto& dir : dir_map.second ) {
+					dir_map.first->modify_angle( to_mov_angles( movement.first ) , amount * dir.speed );
+				}
+			}
+			movement.second = 0;
+		}
+	}
+
 	//Are there movement to perform
 	//due to tracking setup?
 	object_tracking.process_tracking();
@@ -231,13 +272,22 @@ void object_movement_processor::register_movable_object(mov_obj_ptr obj,
 {
 	for( auto& key : key_mapping )
 	{
-		kb_map_mapping[ key.first ][ obj ].push_back( key.second );
+		keyb_mapping[ key.first ][ obj ].push_back( key.second );
+	}
+}
+
+void object_movement_processor::register_movable_object(mov_obj_ptr obj,
+									mouse_mapping_vec mapping)
+{
+	for( auto& mouse_mov : mapping )
+	{
+		mouse_mapping[ mouse_mov.first ][ obj ].push_back( mouse_mov.second );
 	}
 }
 
 void object_movement_processor::unregister_movable_object(mov_obj_ptr obj)
 {
-	for( auto& elem : kb_map_mapping ) {
+	for( auto& elem : keyb_mapping ) {
 		elem.second.erase(obj);
 	}
 }

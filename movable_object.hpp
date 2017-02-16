@@ -35,6 +35,7 @@ enum class mov_direction
 	rot_roll
 };
 
+
 /*
  * Every movable object should inherit from
  * this class, which implements the operations
@@ -132,8 +133,37 @@ struct direction_details
 	GLfloat speed;
 };
 
+//Mapping for the keyboard
 using mov_key_mapping = std::pair<key_code_t,direction_details>;
 using key_mapping_vec = std::vector<mov_key_mapping>;
+
+/*
+ * For mapping mouse movements into object
+ * movements
+ */
+enum class mouse_movement_types {
+	pitch_increse,
+	pitch_decrease,
+	yaw_increase,
+	yaw_decrease
+};
+
+/*
+ * That's usefull to pass a mouse_movement_types type
+ * to the function modify_angle
+ */
+constexpr
+mov_angles to_mov_angles( const mouse_movement_types& mov )
+{
+	if( mov == mouse_movement_types::pitch_decrease ||
+			mov == mouse_movement_types::pitch_increse )
+		return mov_angles::pitch;
+	return mov_angles::yaw;
+}
+
+//Mapping for the mouse
+using mov_mouse_mapping = std::pair<mouse_movement_types,direction_details>;
+using mouse_mapping_vec = std::vector<mov_mouse_mapping>;
 
 /*
  * This class process the keyboard and mouse
@@ -172,6 +202,8 @@ public:
 	 */
 	void register_movable_object(mov_obj_ptr obj,
 						key_mapping_vec key_mapping);
+	void register_movable_object(mov_obj_ptr obj,
+						mouse_mapping_vec mapping);
 	void unregister_movable_object(mov_obj_ptr obj);
 
 	tracking_processor& tracking();
@@ -187,7 +219,17 @@ private:
 	//Registered mappings
 	using dir_vector = std::vector<direction_details>;
 	using obj_dir_map = std::map<mov_obj_ptr, dir_vector>;
-	std::map<key_code_t,obj_dir_map> kb_map_mapping;
+	std::map<key_code_t,obj_dir_map> keyb_mapping;
+	//Registered mapping for the mouse movements
+	std::map<mouse_movement_types,obj_dir_map> mouse_mapping;
+	GLdouble last_mouse_x_position,
+			last_mouse_y_position;
+	/*
+	 * For each possible mouse movement indicate
+	 * how much the mouse moved from the previous
+	 * processed position (0 if no movements)
+	 */
+	std::unordered_map<mouse_movement_types,GLfloat> mouse_status;
 	//To enable object tracking
 	tracking_processor object_tracking;
 };

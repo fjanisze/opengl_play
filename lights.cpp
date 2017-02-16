@@ -233,6 +233,7 @@ point_light::point_light(glm::vec3 position,
 
 point_light::~point_light()
 {
+	remove_renderable( this );
 }
 
 void point_light::set_transformations(glm::mat4 v,

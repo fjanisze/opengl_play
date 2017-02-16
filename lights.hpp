@@ -146,7 +146,7 @@ public:
 				 glm::vec3 color,
 				 GLfloat   strength);
 	virtual type_of_light light_type() = 0;
-	~generic_light();
+	virtual ~generic_light();
 	GLfloat get_strength();
 	void    set_strength(GLfloat strength);
 	std::pair<glm::vec3,GLfloat> get_light_color();
