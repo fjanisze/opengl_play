@@ -279,16 +279,18 @@ void opengl_ui::enter_main_loop()
 			strength);
 		dir_lights.push_back( dir_light );
 	}
-/*
+
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
 		{ GLFW_KEY_W, { movable::mov_direction::top, 0.5} },
 		{ GLFW_KEY_A, { movable::mov_direction::left, 0.5} },
 		{ GLFW_KEY_D, { movable::mov_direction::right, 0.5} },
 		{ GLFW_KEY_S, { movable::mov_direction::down, 0.5} },
+		{ GLFW_KEY_Q, { movable::mov_direction::rot_roll, -0.5} },
+		{ GLFW_KEY_E, { movable::mov_direction::rot_roll, 0.5} },
 	};
 
-	movement_processor.register_movable_object(camera,camera_keys);*/
+	//movement_processor.register_movable_object(camera,camera_keys);
 
 	/* Load the model */
 	shaders::my_small_shaders model_shader;
@@ -325,6 +327,11 @@ void opengl_ui::enter_main_loop()
 	movement_processor.register_movable_object(model,model_keys);
 	movement_processor.tracking().new_tracking(model,camera,30.0);
 	camera->set_target( model );
+	camera->setup_following_options(
+				//new_option<GLfloat>( camera_opt::max_target_distance, 30),
+				new_option<GLfloat>( camera_opt::camera_tilt, -20),
+				new_option<GLfloat>( camera_opt::mimic_dynamics, 30 )
+				);
 
 	//Create a spot light and attach it to the model
 	lights::generic_light_ptr model_light = lights::light_factory<lights::spot_light>::create(
@@ -362,12 +369,13 @@ void opengl_ui::enter_main_loop()
 
 		fps_info->render_text();
 
-		auto yaw = camera->get_yaw(),
-			pitch = camera->get_pitch();
+		auto yaw = model->get_yaw(),
+			pitch = model->get_pitch(),
+			roll = model->get_roll();
 		auto pos = camera->get_position();
 
 		std::stringstream ss;
-		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
+		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 		//Distance from the camera target
 		ss << ", target distance: "<<camera->get_dist_from_target();
 		camera_info->set_text(ss.str());

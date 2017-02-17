@@ -14,7 +14,7 @@ movable_object::movable_object() :
 	current_position{ glm::vec3() },
 	current_yaw{ 0 },
 	current_pitch{ 0 },
-	current_roll{ 0 },
+	current_roll{ 90 },
 	current_scale{ 1.0 }
 {
 
@@ -157,8 +157,8 @@ object_movement_processor::object_movement_processor() :
 void object_movement_processor::mouse_input(GLdouble new_x,
 								GLdouble new_y)
 {
-	if( last_mouse_x_position > 0 &&
-			last_mouse_y_position > 0 ) {
+	static bool first_input{ true };
+	if( false == first_input ) {
 		GLdouble x_delta = new_x - last_mouse_x_position,
 				y_delta = last_mouse_y_position - new_y;
 
@@ -173,6 +173,8 @@ void object_movement_processor::mouse_input(GLdouble new_x,
 		} else if( y_delta < 0 ){
 			mouse_status[ mouse_movement_types::pitch_decrease ] -= y_delta;
 		}
+	} else {
+		first_input = false;
 	}
 	last_mouse_x_position = new_x;
 	last_mouse_y_position = new_y;
