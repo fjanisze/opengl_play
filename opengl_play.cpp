@@ -243,14 +243,16 @@ void opengl_ui::enter_main_loop()
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> dist(-50000,50000);
 
-	for( int i{ 0 } ; i < 100 ; ++i ) {
+	for( int i{ 0 } ; i < 100000 ; ++i ) {
 		glm::vec3 pos = {
-			dist(gen) % 1000,
-			dist(gen) % 1000,
-			dist(gen) % 1000
+			dist(gen) % 5000,
+			dist(gen) % 5000,
+			dist(gen) % 5000
 		};
 		object->add_object(pos,glm::vec3(1.0),1.5);
 	}
+
+	object->limit_render_distance(camera, 1000);
 
 	std::vector<lights::generic_light_ptr> dir_lights;
 
@@ -325,12 +327,11 @@ void opengl_ui::enter_main_loop()
 
 	movement_processor.register_movable_object(model,model_mouse);
 	movement_processor.register_movable_object(model,model_keys);
-	movement_processor.tracking().new_tracking(model,camera,30.0);
+	//movement_processor.tracking().new_tracking(model,camera,30.0);
 	camera->set_target( model );
 	camera->setup_following_options(
-				//new_option<GLfloat>( camera_opt::max_target_distance, 30),
-				new_option<GLfloat>( camera_opt::camera_tilt, -20),
-				new_option<GLfloat>( camera_opt::mimic_dynamics, 30 )
+				new_option<GLfloat>( camera_opt::max_target_distance, 30),
+				new_option<GLfloat>( camera_opt::camera_tilt, -20)
 				);
 
 	//Create a spot light and attach it to the model
@@ -364,6 +365,9 @@ void opengl_ui::enter_main_loop()
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		/*
+		 * TODO: Why drawing stuff behind the camera???
+		 */
 		renderable::renderable_object::render_renderables(camera->get_view(),
 											projection);
 

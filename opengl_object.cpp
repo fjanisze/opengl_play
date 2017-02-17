@@ -140,6 +140,13 @@ bool little_object::any_object_selected()
 	return sel_obj_it != objects.end();
 }
 
+void little_object::limit_render_distance(movable::mov_obj_ptr target,
+								GLfloat radius)
+{
+	render_radius_origin = target;
+	render_radius = radius;
+}
+
 glm::vec3 little_object::get_object_position()
 {
 	if( any_object_selected() ) {
@@ -285,7 +292,8 @@ bool little_object::release_current_object()
 little_object::little_object() :
 	lights::object_lighting(&obj_shader),
 	selected_object{0},
-	next_object_id{1}
+	next_object_id{1},
+	render_radius{ -1 } //No limits
 {
 	LOG1("little_object::little_object(): Construction.");
 
@@ -373,6 +381,48 @@ void little_object::prepare_for_render()
 }
 
 void little_object::render()
+{
+	if( nullptr != render_radius_origin) {
+		glm::vec3 render_origin = render_radius_origin->get_position();
+		render_with_radius(render_origin);
+	} else {
+		render_all();
+	}
+}
+
+/*
+ * Those are mostly identical functions,
+ * render_with_radius has some additional ifs,
+ * to avoid those ifs at every frame for every
+ * little_objects (there might be thousands of them)
+ * I decided to introduce a little duplication
+ * and have them divided. To avoid duplication I can use
+ * one piece of code with one more if.
+ * if( render_radius > 0 ) {
+ *	if( distance(origin, position) > render_radius )
+ *		skip rendering.
+ * }
+ * Little improvement, but better than nothing..
+ */
+void little_object::render_with_radius(glm::vec3 origin)
+{
+	glBindVertexArray(VAO);
+	for(auto& object : objects) {
+		if( glm::distance( origin, object.second.position ) > render_radius ) {
+			continue;
+		}
+		apply_position(object);
+		apply_transformations(object);
+
+		apply_object_color(object.second.color);
+
+		glDrawArrays(GL_TRIANGLES,0,36);
+	}
+	//Unbind the VAO
+	glBindVertexArray(0);
+}
+
+void little_object::render_all()
 {
 	glBindVertexArray(VAO);
 	for(auto& object : objects) {

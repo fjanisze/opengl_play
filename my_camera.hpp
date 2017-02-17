@@ -24,7 +24,6 @@ enum class camera_opt {
 	max_target_distance,
 	camera_tilt, //Fixed tilt in respect to the target
 	camera_pan, //Fixed pan in respect to the target
-	mimic_dynamics, //Mimit che movement of the object, (stay on -Z)
 };
 
 /*
@@ -102,10 +101,6 @@ void my_camera::setup_following_options(CUR_OPT &&opt,
 	case camera_opt::camera_tilt:
 		LOG1("Setting up camera tilt to:",opt.second);
 		follow_opt.camera_tilt = opt.second;
-		break;
-	case camera_opt::mimic_dynamics:
-		LOG1("Mimic the dynamic of the target object");
-		follow_opt.target_max_distance = opt.second;
 		break;
 	default:
 		ERR("Unrecognized camera option: ",

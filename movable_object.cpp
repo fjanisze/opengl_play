@@ -251,16 +251,17 @@ void object_movement_processor::process_movements()
 	 */
 	for( auto& movement : mouse_status ) {
 		if( movement.second != 0 ) {
-			GLfloat amount = movement.second;
+			GLfloat amount = movement.second / 50;
 			for( auto& dir_map : mouse_mapping[ movement.first ] ) {
 				/*
 				 * For all the registered object, trigger the movement
 				 */
 				for( auto& dir : dir_map.second ) {
-					dir_map.first->modify_angle( to_mov_angles( movement.first ) , amount * dir.speed );
+					dir_map.first->modify_angle( to_mov_angles( movement.first ) ,
+									amount * dir.speed );
 				}
 			}
-			movement.second = 0;
+			movement.second = std::max<GLfloat>( movement.second - amount, 0.0);
 		}
 	}
 
