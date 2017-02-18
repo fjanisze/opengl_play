@@ -209,107 +209,15 @@ void object_movement_processor::process_movements()
 	/*
 	 * Process keyboard movements
 	 */
-	for( int key = 0 ; key < key_status.size() ; ++key ) {
-		if( key_status[ key ] == key_status_t::pressed ) {
-			/*
-			 * the key 'key' is pressed, check whether anybody
-			 * has registered a movable_object to perform
-			 * a movement if this key is pressed.
-			 */
-			auto it = keyb_mapping.find( key );
-			if( it != keyb_mapping.end() ) {
-				/*
-				 * For each registered object, perform the
-				 * proper movement
-				 */
-				for( auto& movable : it->second ) {
-					mov_obj_ptr obj = movable.first;
-					movement_mapping& mov_setup = obj->get_movement_setup();
-					for( auto& dir : movable.second ) {
-						auto sp_setup = mov_setup[ dir ];
-						GLfloat speed = sp_setup.speed[ sp_setup.current_speed ];
-						switch( dir ) {
-						case mov_direction::left:
-						case mov_direction::right:
-						case mov_direction::top:
-						case mov_direction::down:
-						case mov_direction::forward:
-						case mov_direction::backward:
-							obj->move(dir, speed);
-							break;
-						case mov_direction::yaw_dec:
-							speed *= -1;
-						case mov_direction::yaw_inc:
-							obj->modify_angle(mov_angles::yaw, speed);
-							break;
-						case mov_direction::pitch_dec:
-							speed *= -1;
-						case mov_direction::pitch_inc:
-							obj->modify_angle(mov_angles::pitch, speed);
-							break;
-						case mov_direction::roll_dec:
-							speed *= -1;
-						case mov_direction::roll_inc:
-							obj->modify_angle(mov_angles::roll, speed);
-							break;
-						default:
-							ERR("process_movement: Unrecognize movement direction");
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
+	process_impl_keyboard();
 	/*
 	 * Process mouse movements
 	 */
-	for( auto& movement : mouse_status ) {
-		if( movement.second != 0 ) {
-			GLfloat amount = movement.second / 50;
-			//Is anybody registered for this movement?
-			if( mouse_mapping[ movement.first ].empty() ) {
-				movement.second = 0;//Nope? Clean..
-			} else {
-				for( auto& dir_map : mouse_mapping[ movement.first ] ) {
-					mov_obj_ptr obj = dir_map.first;
-					movement_mapping& mov_setup = obj->get_movement_setup();
-					for( auto dir : dir_map.second ) {
-						auto sp_setup = mov_setup[ dir ];
-						GLfloat speed = sp_setup.speed[ sp_setup.current_speed ] * amount;
-						switch( dir ) {
-						case mov_direction::pitch_dec:
-							speed *= -1;
-						case mov_direction::pitch_inc:
-							obj->modify_angle( mov_angles::pitch, speed );
-							break;
-						case mov_direction::yaw_dec:
-							speed *= -1;
-						case mov_direction::yaw_inc:
-							obj->modify_angle( mov_angles::yaw, speed );
-							break;
-						default:
-							//CRAP
-							break;
-						}
-					}
-				}
-				movement.second = std::max<GLfloat>( movement.second - amount, 0.0 );
-				std::cout<<movement.second<<std::endl;
-				/*
-				 * The bigger is this constant (1.0)
-				 * then more softly the object will terminate
-				 * is movement.
-				 */
-				if( movement.second < 1.0 ) {
-					movement.second = 0;
-				}
-			}
-		}
-	}
-
-	//Are there movement to perform
-	//due to tracking setup?
+	process_impl_mouse();
+	/*
+	 * Are there movement to perform
+	 * due to tracking setup?
+	 */
 	object_tracking.process_tracking();
 }
 
@@ -376,6 +284,93 @@ void object_movement_processor::process_speed_selectors( key_code_t pressed_key 
 tracking_processor &object_movement_processor::tracking()
 {
 	return object_tracking;
+}
+
+void object_movement_processor::process_impl_keyboard()
+{
+	for( int key = 0 ; key < key_status.size() ; ++key ) {
+		if( key_status[ key ] == key_status_t::pressed ) {
+			/*
+			 * the key 'key' is pressed, check whether anybody
+			 * has registered a movable_object to perform
+			 * a movement if this key is pressed.
+			 */
+			auto it = keyb_mapping.find( key );
+			if( it != keyb_mapping.end() ) {
+				/*
+				 * For each registered object, perform the
+				 * proper movement
+				 */
+				trigger_proper_movement(it->second, 1.0);
+			}
+		}
+	}
+}
+
+void object_movement_processor::process_impl_mouse()
+{
+	for( auto& movement : mouse_status ) {
+		if( movement.second != 0 ) {
+			GLfloat amount = movement.second / 50;
+			//Is anybody registered for this movement?
+			if( mouse_mapping[ movement.first ].empty() ) {
+				movement.second = 0;//Nope? Clean..
+			} else {
+				trigger_proper_movement( mouse_mapping[ movement.first ], amount );
+
+				movement.second = std::max<GLfloat>( movement.second - amount, 0.0 );
+				/*
+				 * The bigger is this constant (1.0)
+				 * then more softly the object will terminate
+				 * is movement.
+				 */
+				if( movement.second < 1.0 ) {
+					movement.second = 0;
+				}
+			}
+		}
+	}
+}
+
+void object_movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
+													GLfloat speed_amount)
+{
+	for( auto& movable : dir_map ) {
+		mov_obj_ptr obj = movable.first;
+		movement_mapping& mov_setup = obj->get_movement_setup();
+		for( auto& dir : movable.second ) {
+			auto sp_setup = mov_setup[ dir ];
+			GLfloat speed = sp_setup.speed[ sp_setup.current_speed ] * speed_amount;
+			switch( dir ) {
+			case mov_direction::left:
+			case mov_direction::right:
+			case mov_direction::top:
+			case mov_direction::down:
+			case mov_direction::forward:
+			case mov_direction::backward:
+				obj->move(dir, speed);
+				break;
+			case mov_direction::yaw_dec:
+				speed *= -1;
+			case mov_direction::yaw_inc:
+				obj->modify_angle(mov_angles::yaw, speed);
+				break;
+			case mov_direction::pitch_dec:
+				speed *= -1;
+			case mov_direction::pitch_inc:
+				obj->modify_angle(mov_angles::pitch, speed);
+				break;
+			case mov_direction::roll_dec:
+				speed *= -1;
+			case mov_direction::roll_inc:
+				obj->modify_angle(mov_angles::roll, speed);
+				break;
+			default:
+				ERR("trigger_proper_movement: Unrecognize movement direction");
+				break;
+			}
+		}
+	}
 }
 
 //////////////////////////////////////

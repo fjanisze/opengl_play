@@ -274,6 +274,9 @@ private:
 	std::map<mouse_movement_types,obj_dir_map> mouse_mapping;
 	GLdouble last_mouse_x_position,
 			last_mouse_y_position;
+	void process_impl_keyboard();
+	void process_impl_mouse();
+	void trigger_proper_movement(obj_dir_map& dir_map,GLfloat speed_amount);
 	/*
 	 * For each possible mouse movement indicate
 	 * how much the mouse moved from the previous
