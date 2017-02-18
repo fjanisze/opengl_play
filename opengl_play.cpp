@@ -132,14 +132,14 @@ void opengl_ui::init_text()
 	fps_info = std::make_shared<text_renderer::renderable_text>();
 	fps_info->set_position(glm::fvec2(10,7));
 	fps_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-	fps_info->set_scale(0.3f);
+	fps_info->set_scale(0.4f);
 	fps_info->set_text("0 fps");
 	fps_info->set_window_size(win_h,win_w);
 
 	camera_info = std::make_shared<text_renderer::renderable_text>();
 	camera_info->set_position(glm::fvec2(win_h - 300,7));
 	camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-	camera_info->set_scale(0.3f);
+	camera_info->set_scale(0.4f);
 	camera_info->set_text(" -- ");
 	camera_info->set_window_size(win_h,win_w);
 }
@@ -241,13 +241,13 @@ void opengl_ui::enter_main_loop()
 	//Create some random cubes
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> dist(-50000,50000);
+	std::uniform_int_distribution<> dist(-100000,100000);
 
-	for( int i{ 0 } ; i < 100000 ; ++i ) {
+	for( int i{ 0 } ; i < 1000000 ; ++i ) {
 		glm::vec3 pos = {
-			dist(gen) % 10000,
-			dist(gen) % 10000,
-			dist(gen) % 10000
+			dist(gen) % 5000,
+			dist(gen) % 5000,
+			dist(gen) % 5000
 		};
 		object->add_object(pos,glm::vec3(1.0),1.5);
 	}
@@ -259,22 +259,22 @@ void opengl_ui::enter_main_loop()
 	/*
 	 * Create some random lights, distant stars..
 	 */
-	for( int i{ 0 }; i < 10 ; ++i ) {
+	for( int i{ 0 }; i < 15 ; ++i ) {
 		glm::vec3 pos{ dist(gen), dist(gen), dist(gen) };
 		GLfloat len = glm::length( pos );
 		GLfloat x_angle = glm::acos( pos.x / len ),
 				y_angle = glm::acos( pos.y / len ),
 				z_angle = glm::acos( pos.z / len );
-		pos = glm::vec3( glm::cos(x_angle) * std::min(5000, dist(gen)),
-						 glm::cos(y_angle) * std::min(5000, dist(gen)),
-						 glm::cos(z_angle) * std::min(5000, dist(gen)));
+		pos = glm::vec3( glm::cos(x_angle) * std::min(50000, dist(gen)),
+						 glm::cos(y_angle) * std::min(50000, dist(gen)),
+						 glm::cos(z_angle) * std::min(50000, dist(gen)));
 		//A little of random coloring (almost white colors)
 		glm::vec3 color = glm::abs( glm::normalize( pos ) );
 		color.r /= 10;
-		color.b /= 7;
+		color.b /= 4;
 		color.g /= 40;
 		color = glm::vec3(1.0) - color;
-		GLfloat strength = std::max( 7, dist(gen) % 100 );
+		GLfloat strength = std::max( 5, dist(gen) % 100 );
 		lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
 			pos,
 			color,
@@ -301,10 +301,12 @@ void opengl_ui::enter_main_loop()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7, 1.3 , 3.0, 20.0} } },
+		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7, 1.3 , 3.0, 20.0, 50.0} } },
 		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
-		{ GLFW_KEY_D, { movable::mov_direction::roll_inc, { 0.3 } } },
-		{ GLFW_KEY_A, { movable::mov_direction::roll_dec, { 0.3 } } },
+		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
+		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
+		{ GLFW_KEY_Q, { movable::mov_direction::roll_dec, { 0.7 } } },
+		{ GLFW_KEY_E, { movable::mov_direction::roll_inc, { 0.7 } } },
 	};
 
 	//Speed selectors for this model
@@ -312,7 +314,8 @@ void opengl_ui::enter_main_loop()
 		{ GLFW_KEY_1, mov_direction::forward, 0 },
 		{ GLFW_KEY_2, mov_direction::forward, 1 },
 		{ GLFW_KEY_3, mov_direction::forward, 2 },
-		{ GLFW_KEY_4, mov_direction::forward, 3 }
+		{ GLFW_KEY_4, mov_direction::forward, 3 },
+		{ GLFW_KEY_5, mov_direction::forward, 4 }
 	};
 
 	movable::mouse_mapping_vec model_mouse = {
@@ -331,7 +334,7 @@ void opengl_ui::enter_main_loop()
 	camera->set_target( model );
 	camera->setup_following_options(
 				new_option<GLfloat>( camera_opt::max_target_distance, 30),
-				new_option<GLfloat>( camera_opt::camera_tilt, -20)
+				new_option<GLfloat>( camera_opt::camera_tilt, -15)
 				);
 
 	//Create a spot light and attach it to the model
@@ -340,8 +343,8 @@ void opengl_ui::enter_main_loop()
 		glm::vec3(1.0,1.0,0.7),
 		100,
 		model->get_position(),
-		20,
-		30);
+		15,
+		22);
 	model_light->attach_to_object( model );
 
 	LOG2("Entering main loop!");

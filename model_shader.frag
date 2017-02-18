@@ -79,7 +79,7 @@ void main()
 	{
 	    float dist = length( light_pos - frag_pos );
 	    light_dir = normalize( light_pos );
-	    attenuation = min( light_strength / sqrt(dist), 2.0 );
+	    attenuation = min( light_strength / sqrt(dist), 1 );
 	}
 	else if( light_type == 2 || light_type == 3) //Spot light or flashlight
 	{
@@ -95,7 +95,7 @@ void main()
 	    float intensity = clamp((theta - out_cutoff_angle) / epsilon,
 	                            0.0,1.0);
 	    if( light_type == 2 )
-		attenuation = 1.0 + dist * 0.40;
+		attenuation = 1.0 + dist * 0.20;
 	    else
 		attenuation = 1.0 + sqrt( dist );
 	    attenuation = min( light_strength * intensity / attenuation, 2.5 );
