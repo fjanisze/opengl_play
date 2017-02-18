@@ -53,6 +53,12 @@ private:
 class my_model;
 using model_ptr = std::shared_ptr<my_model>;
 
+//Nice way for passing this option
+enum class z_axis {
+	revert,
+	normal
+};
+
 /*
  * Responsible for loading models and creating
  * all the meshes data structure which then are
@@ -66,7 +72,8 @@ class my_model : public lights::object_lighting,
 public:
 	using mesh_ptr = std::unique_ptr<my_mesh>;
 	my_model(shaders::my_small_shaders* shad,
-		const std::string& model_path);
+		const std::string& model_path,
+		z_axis revert_z);
 
 	void set_transformations(glm::mat4 view,glm::mat4 projection) override;
 	void prepare_for_render() override;
@@ -74,8 +81,9 @@ public:
 	void clean_after_render() override;
 
 	static model_ptr create(shaders::my_small_shaders* shader,
-					const std::string& path) {
-		return std::make_shared< my_model >( shader, path );
+					const std::string& path,
+					z_axis revert_z = z_axis::normal) {
+		return std::make_shared< my_model >( shader, path , revert_z );
 	}
 
 private:
@@ -104,6 +112,8 @@ private:
 	std::vector<mesh_ptr> meshes;
 	glm::mat4 projection_matrix,
 			view_matrix;
+	//For models which are 'reverted'
+	bool revert_z_axis;
 };
 
 }

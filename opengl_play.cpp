@@ -306,7 +306,9 @@ void opengl_ui::enter_main_loop()
 		throw std::runtime_error("Failed to create the model_shader.");
 	}
 
-	models::model_ptr model = models::my_model::create(&model_shader,"../models/Enterprise/USSEnterprise.obj");
+	models::model_ptr model = models::my_model::create(&model_shader,
+									"../models/Prometheus_NX_59650/prometheus.obj",
+									models::z_axis::revert);
 
 	//Let our model be movable
 	//Register the camera as movable object

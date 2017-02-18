@@ -108,10 +108,12 @@ void my_mesh::render()
 /////////////////////////////////////
 
 my_model::my_model(shaders::my_small_shaders *shad,
-				const std::string &model_path) :
+				const std::string &model_path,
+				z_axis revert_z) :
 	lights::object_lighting(shad),
 	shader{ shad },
-	model_path{ model_path }
+	model_path{ model_path },
+	revert_z_axis{ revert_z == z_axis::revert }
 {
 	LOG1("Creating a new my_model. Model path: ",
 		 model_path.c_str());
@@ -209,12 +211,12 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 		// Positions
 		vertex.coordinate.x = mesh->mVertices[i].x;
 		vertex.coordinate.y = mesh->mVertices[i].y;
-		vertex.coordinate.z = mesh->mVertices[i].z;
+		vertex.coordinate.z = (revert_z_axis ? -1 : 1 ) * mesh->mVertices[i].z;
 		// Normals
 		if( mesh->mNormals ) {
 			vertex.normal.x = mesh->mNormals[i].x;
 			vertex.normal.y = mesh->mNormals[i].y;
-			vertex.normal.z = mesh->mNormals[i].z;
+			vertex.normal.z = (revert_z_axis ? -1 : 1 ) * mesh->mNormals[i].z;
 		}
 		// Texture Coordinates
 		if(mesh->mTextureCoords[0]) // Does the mesh contain texture coordinates?
