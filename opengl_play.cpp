@@ -282,18 +282,6 @@ void opengl_ui::enter_main_loop()
 		dir_lights.push_back( dir_light );
 	}
 
-	//Register the camera as movable object
-	movable::key_mapping_vec camera_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::top, 0.5} },
-		{ GLFW_KEY_A, { movable::mov_direction::left, 0.5} },
-		{ GLFW_KEY_D, { movable::mov_direction::right, 0.5} },
-		{ GLFW_KEY_S, { movable::mov_direction::down, 0.5} },
-		{ GLFW_KEY_Q, { movable::mov_direction::rot_roll, -0.5} },
-		{ GLFW_KEY_E, { movable::mov_direction::rot_roll, 0.5} },
-	};
-
-	//movement_processor.register_movable_object(camera,camera_keys);
-
 	/* Load the model */
 	shaders::my_small_shaders model_shader;
 	model_shader.load_vertex_shader(
@@ -307,29 +295,36 @@ void opengl_ui::enter_main_loop()
 	}
 
 	models::model_ptr model = models::my_model::create(&model_shader,
-									"../models/Prometheus_NX_59650/prometheus.obj",
-									models::z_axis::revert);
+									"../models/Enterprise/USSEnterprise.obj"
+									);
 
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::forward, 0.7} },
-		{ GLFW_KEY_S, { movable::mov_direction::backward, 0.3} },
-		{ GLFW_KEY_D, { movable::mov_direction::rot_roll, 0.3} },
-		{ GLFW_KEY_A, { movable::mov_direction::rot_roll, -0.3} },
+		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7 } } },
+		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
+		{ GLFW_KEY_D, { movable::mov_direction::roll_inc, { 0.3 } } },
+		{ GLFW_KEY_A, { movable::mov_direction::roll_dec, { 0.3 } } },
+	};
+
+	//Speed selectors for this model
+	movable::speed_selector model_speed_mapping = {
+		{ GLFW_KEY_LEFT_SHIFT, mov_direction::forward, 1 }
 	};
 
 	movable::mouse_mapping_vec model_mouse = {
-		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::rot_pitch, 0.2} },
-		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::rot_pitch, -0.2} },
-		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::rot_yaw, -0.2} },
-		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::rot_yaw, 0.2} },
+		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::pitch_inc, { 0.2 } } },
+		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::pitch_dec, { 0.2 } } },
+		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::yaw_inc, { 0.2 } } },
+		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::yaw_dec, { 0.2 } } },
 
 	};
 
 	movement_processor.register_movable_object(model,model_mouse);
 	movement_processor.register_movable_object(model,model_keys);
-	//movement_processor.tracking().new_tracking(model,camera,30.0);
+
+	movement_processor.register_speed_selectors(model,model_speed_mapping);
+
 	camera->set_target( model );
 	camera->setup_following_options(
 				new_option<GLfloat>( camera_opt::max_target_distance, 30),

@@ -141,6 +141,11 @@ glm::mat4 movable_object::get_model_matrix()
 	return model;
 }
 
+movement_mapping &movable_object::get_movement_setup()
+{
+	return movement_setup;
+}
+
 //////////////////////////////////////
 /// object_movement_processor implementation
 /////////////////////////////////////
@@ -159,19 +164,19 @@ void object_movement_processor::mouse_input(GLdouble new_x,
 {
 	static bool first_input{ true };
 	if( false == first_input ) {
-		GLdouble x_delta = new_x - last_mouse_x_position,
+		GLdouble x_delta = last_mouse_x_position - new_x,
 				y_delta = last_mouse_y_position - new_y;
 
 		if( x_delta > 0 ) {
 			mouse_status[ mouse_movement_types::yaw_increase ] += x_delta;
 		} else if( x_delta < 0 ){
-			mouse_status[ mouse_movement_types::yaw_decrease ] -= x_delta;
+			mouse_status[ mouse_movement_types::yaw_decrease ] += -x_delta;
 		}
 
 		if( y_delta > 0 ) {
 			mouse_status[ mouse_movement_types::pitch_increse ] += y_delta;
 		} else if( y_delta < 0 ){
-			mouse_status[ mouse_movement_types::pitch_decrease ] -= y_delta;
+			mouse_status[ mouse_movement_types::pitch_decrease ] += -y_delta;
 		}
 	} else {
 		first_input = false;
@@ -193,6 +198,7 @@ void object_movement_processor::keyboard_input(int key,
 	}
 	if( action == GLFW_PRESS || action == GLFW_REPEAT ) {
 		key_status[ key ] = key_status_t::pressed;
+		process_speed_selectors( key );
 	} else if( action == GLFW_RELEASE ) {
 		key_status[ key ] = key_status_t::not_pressed;
 	}
@@ -218,24 +224,33 @@ void object_movement_processor::process_movements()
 				 */
 				for( auto& movable : it->second ) {
 					mov_obj_ptr obj = movable.first;
+					movement_mapping& mov_setup = obj->get_movement_setup();
 					for( auto& dir : movable.second ) {
-						switch( dir.direction ) {
+						auto sp_setup = mov_setup[ dir ];
+						GLfloat speed = sp_setup.speed[ sp_setup.current_speed ];
+						switch( dir ) {
 						case mov_direction::left:
 						case mov_direction::right:
 						case mov_direction::top:
 						case mov_direction::down:
 						case mov_direction::forward:
 						case mov_direction::backward:
-							obj->move(dir.direction, dir.speed);
+							obj->move(dir, speed);
 							break;
-						case mov_direction::rot_yaw:
-							obj->modify_angle(mov_angles::yaw, dir.speed);
+						case mov_direction::yaw_dec:
+							speed *= -1;
+						case mov_direction::yaw_inc:
+							obj->modify_angle(mov_angles::yaw, speed);
 							break;
-						case mov_direction::rot_pitch:
-							obj->modify_angle(mov_angles::pitch, dir.speed);
+						case mov_direction::pitch_dec:
+							speed *= -1;
+						case mov_direction::pitch_inc:
+							obj->modify_angle(mov_angles::pitch, speed);
 							break;
-						case mov_direction::rot_roll:
-							obj->modify_angle(mov_angles::roll, dir.speed);
+						case mov_direction::roll_dec:
+							speed *= -1;
+						case mov_direction::roll_inc:
+							obj->modify_angle(mov_angles::roll, speed);
 							break;
 						default:
 							ERR("process_movement: Unrecognize movement direction");
@@ -252,16 +267,44 @@ void object_movement_processor::process_movements()
 	for( auto& movement : mouse_status ) {
 		if( movement.second != 0 ) {
 			GLfloat amount = movement.second / 50;
-			for( auto& dir_map : mouse_mapping[ movement.first ] ) {
+			//Is anybody registered for this movement?
+			if( mouse_mapping[ movement.first ].empty() ) {
+				movement.second = 0;//Nope? Clean..
+			} else {
+				for( auto& dir_map : mouse_mapping[ movement.first ] ) {
+					mov_obj_ptr obj = dir_map.first;
+					movement_mapping& mov_setup = obj->get_movement_setup();
+					for( auto dir : dir_map.second ) {
+						auto sp_setup = mov_setup[ dir ];
+						GLfloat speed = sp_setup.speed[ sp_setup.current_speed ] * amount;
+						switch( dir ) {
+						case mov_direction::pitch_dec:
+							speed *= -1;
+						case mov_direction::pitch_inc:
+							obj->modify_angle( mov_angles::pitch, speed );
+							break;
+						case mov_direction::yaw_dec:
+							speed *= -1;
+						case mov_direction::yaw_inc:
+							obj->modify_angle( mov_angles::yaw, speed );
+							break;
+						default:
+							//CRAP
+							break;
+						}
+					}
+				}
+				movement.second = std::max<GLfloat>( movement.second - amount, 0.0 );
+				std::cout<<movement.second<<std::endl;
 				/*
-				 * For all the registered object, trigger the movement
+				 * The bigger is this constant (1.0)
+				 * then more softly the object will terminate
+				 * is movement.
 				 */
-				for( auto& dir : dir_map.second ) {
-					dir_map.first->modify_angle( to_mov_angles( movement.first ) ,
-									amount * dir.speed );
+				if( movement.second < 1.0 ) {
+					movement.second = 0;
 				}
 			}
-			movement.second = std::max<GLfloat>( movement.second - amount, 0.0);
 		}
 	}
 
@@ -271,20 +314,24 @@ void object_movement_processor::process_movements()
 }
 
 void object_movement_processor::register_movable_object(mov_obj_ptr obj,
-									key_mapping_vec key_mapping)
+									const key_mapping_vec& key_mapping)
 {
+	movement_mapping& mov_setup = obj->get_movement_setup();
 	for( auto& key : key_mapping )
 	{
-		keyb_mapping[ key.first ][ obj ].push_back( key.second );
+		mov_setup[ key.second.direction ] = key.second;
+		keyb_mapping[ key.first ][ obj ].push_back( key.second.direction );
 	}
 }
 
 void object_movement_processor::register_movable_object(mov_obj_ptr obj,
-									mouse_mapping_vec mapping)
+									const mouse_mapping_vec &mapping)
 {
+	movement_mapping& mov_setup = obj->get_movement_setup();
 	for( auto& mouse_mov : mapping )
 	{
-		mouse_mapping[ mouse_mov.first ][ obj ].push_back( mouse_mov.second );
+		mov_setup[ mouse_mov.second.direction ] = mouse_mov.second;
+		mouse_mapping[ mouse_mov.first ][ obj ].push_back( mouse_mov.second.direction );
 	}
 }
 
@@ -294,6 +341,37 @@ void object_movement_processor::unregister_movable_object(mov_obj_ptr obj)
 		elem.second.erase(obj);
 	}
 }
+
+void object_movement_processor::register_speed_selectors(mov_obj_ptr obj,
+									const speed_selector &selector)
+{
+	for( auto& elem : selector ) {
+		speed_selectors[ elem.key ][ obj ].push_back( selector );
+	}
+}
+
+/*
+ * Verify whether the pressed key is not
+ * a trigger for a speed selection. If that's the case,
+ * the modify the current selector accordingly
+ */
+void object_movement_processor::process_speed_selectors( key_code_t pressed_key )
+{
+	/*
+	 * Anybody registered a selector for this key?
+	 */
+/*	auto it = speed_selectors.find( pressed_key );
+	if( it != speed_selectors.end() ) {
+		//Ok, pick the selector for each object
+		for( auto& objects : it->second ) {
+			mov_obj_ptr obj = objects.first;
+			for( auto& sel : objects.second ) {
+				auto key_map = keyb_mapping.find( sel.key );
+			}
+		}
+	}*/
+}
+
 
 tracking_processor &object_movement_processor::tracking()
 {

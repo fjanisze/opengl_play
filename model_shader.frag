@@ -79,7 +79,7 @@ void main()
 	{
 	    float dist = length( light_pos - frag_pos );
 	    light_dir = normalize( light_pos );
-	    attenuation = min( light_strength / sqrt(dist), 2.5);
+	    attenuation = min( light_strength / sqrt(dist), 2.0 );
 	}
 	else if( light_type == 2 || light_type == 3) //Spot light or flashlight
 	{

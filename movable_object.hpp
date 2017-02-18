@@ -8,6 +8,10 @@
 namespace movable
 {
 
+using key_code_t = int;
+using scan_code_t = int;
+using act_code_t = int;
+
 class movable_object;
 using mov_obj_ptr = std::shared_ptr<movable_object>;
 
@@ -30,10 +34,55 @@ enum class mov_direction
 	down,
 	forward,
 	backward,
-	rot_yaw,
-	rot_pitch,
-	rot_roll
+	yaw_inc,  //6
+	yaw_dec,  //7
+	pitch_inc,//8
+	pitch_dec,//9
+	roll_inc, //10
+	roll_dec  //11
 };
+
+constexpr
+mov_angles to_mov_angle( const mov_direction dir ) {
+	mov_angles ret{ mov_angles::pitch };
+	switch( dir ) {
+	case mov_direction::yaw_dec:
+	case mov_direction::yaw_inc:
+		ret = mov_angles::yaw;
+		break;
+	case mov_direction::roll_inc:
+	case mov_direction::roll_dec:
+		ret = mov_angles::roll;
+	default:
+		//CRAP!
+		break;
+	}
+	return ret;
+}
+
+/*
+ * direction_details is used to
+ * determine the direction and the
+ * intensity of the movement towards
+ * that direction
+ */
+struct direction_details
+{
+	mov_direction direction;
+	/*
+	 * There might be different speed values,
+	 * for example a faster speed might be
+	 * enabled by pressing some button combination.
+	 * (Default speed is always index 0!)
+	 */
+	std::vector<GLfloat> speed;
+	std::size_t current_speed{ 0 };
+};
+
+//Mapping for the keyboard
+using mov_key_mapping = std::pair<key_code_t,direction_details>;
+using key_mapping_vec = std::vector<mov_key_mapping>;
+using movement_mapping = std::unordered_map< mov_direction, direction_details >;
 
 
 /*
@@ -51,6 +100,8 @@ protected:
 			current_pitch,
 			current_roll,
 			current_scale;
+
+	movement_mapping movement_setup;
 public:
 	movable_object();
 	virtual void set_position(const glm::vec3& position);
@@ -72,11 +123,8 @@ public:
 	 */
 	virtual bool move(mov_direction direction, GLfloat amount);
 	virtual glm::mat4 get_model_matrix();
+	movement_mapping& get_movement_setup();
 };
-
-using key_code_t = int;
-using scan_code_t = int;
-using act_code_t = int;
 
 /*
  * This class implements the logic
@@ -122,20 +170,16 @@ private:
 };
 
 /*
- * direction_details is used to
- * determine the direction and the
- * intensity of the movement towards
- * that direction
+ * For selecting the current speed from the speed vector
+ * in direction_details
  */
-struct direction_details
-{
+struct speed_sel_mapping {
+	key_code_t    key;
 	mov_direction direction;
-	GLfloat speed;
+	std::size_t	  idx;
 };
 
-//Mapping for the keyboard
-using mov_key_mapping = std::pair<key_code_t,direction_details>;
-using key_mapping_vec = std::vector<mov_key_mapping>;
+using speed_selector = std::vector< speed_sel_mapping >;
 
 /*
  * For mapping mouse movements into object
@@ -201,10 +245,16 @@ public:
 	 * positioning of the movable_object
 	 */
 	void register_movable_object(mov_obj_ptr obj,
-						key_mapping_vec key_mapping);
+						const key_mapping_vec& key_mapping);
 	void register_movable_object(mov_obj_ptr obj,
-						mouse_mapping_vec mapping);
+						const mouse_mapping_vec& mapping);
 	void unregister_movable_object(mov_obj_ptr obj);
+	/*
+	 * If multiple speeds are possible, provide
+	 * the proper mappint throughout this function
+	 */
+	void register_speed_selectors(mov_obj_ptr obj,
+						const speed_selector& selector);
 
 	tracking_processor& tracking();
 private:
@@ -217,9 +267,9 @@ private:
 	//Store the known value of the keys
 	std::vector<key_status_t> key_status;
 	//Registered mappings
-	using dir_vector = std::vector<direction_details>;
-	using obj_dir_map = std::map<mov_obj_ptr, dir_vector>;
+	using obj_dir_map = std::map<mov_obj_ptr, std::vector<mov_direction>>;
 	std::map<key_code_t,obj_dir_map> keyb_mapping;
+
 	//Registered mapping for the mouse movements
 	std::map<mouse_movement_types,obj_dir_map> mouse_mapping;
 	GLdouble last_mouse_x_position,
@@ -230,6 +280,9 @@ private:
 	 * processed position (0 if no movements)
 	 */
 	std::unordered_map<mouse_movement_types,GLfloat> mouse_status;
+	using obj_speed_sel = std::map<mov_obj_ptr,std::vector<speed_selector>>;
+	std::map<key_code_t,obj_speed_sel> speed_selectors;
+	void process_speed_selectors( key_code_t pressed_key );
 	//To enable object tracking
 	tracking_processor object_tracking;
 };
