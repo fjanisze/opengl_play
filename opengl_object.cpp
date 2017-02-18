@@ -1,4 +1,5 @@
 #include <opengl_object.hpp>
+#include <algorithm>
 
 namespace opengl_play
 {
@@ -135,11 +136,6 @@ void little_object::update_vertex_data()
 
 }
 
-bool little_object::any_object_selected()
-{
-	return sel_obj_it != objects.end();
-}
-
 void little_object::limit_render_distance(movable::mov_obj_ptr target,
 								GLfloat radius)
 {
@@ -147,152 +143,48 @@ void little_object::limit_render_distance(movable::mov_obj_ptr target,
 	render_radius = radius;
 }
 
-glm::vec3 little_object::get_object_position()
+void little_object::set_transformations(glm::mat4 v, glm::mat4 p)
 {
-	if( any_object_selected() ) {
-		glm::vec4 pos = {1.0,1.0,1.0,1.0};
-		pos  = sel_obj_it->second.model * pos;
-		return glm::vec3{pos.x,pos.y,pos.z};
-	}
-}
-
-void little_object::modify_view(glm::mat4 new_view)
-{
-	for( auto& object:objects ) {
-		object.second.view = new_view;
-	}
-}
-
-std::set<int> little_object::get_all_objects()
-{
-	std::set<int> ids;
-	for(auto& elem:objects) {
-		ids.insert(elem.first);
-	}
-	return ids;
+	view = v;
+	projection = p;
 }
 
 void little_object::apply_transformations(decltype(objects)::value_type& elem)
 {
-	elem.second.model = glm::scale( elem.second.model,
-									glm::vec3(elem.second.scale,
-											  elem.second.scale,
-											  elem.second.scale) );
+	elem.model = glm::scale( elem.model,
+							glm::vec3(elem.scale,
+									  elem.scale,
+									  elem.scale) );
 	GLint model_loc = glGetUniformLocation(obj_shader,"model");
 	GLint view_loc = glGetUniformLocation(obj_shader,"view");
 	GLint projection_loc = glGetUniformLocation(obj_shader,"projection");
 
-	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(elem.second.model));
-	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(elem.second.view));
-	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(elem.second.projection));
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(elem.model));
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
 void little_object::apply_position(decltype(objects)::value_type& elem)
 {
 	glm::mat4 model;
-	elem.second.model = glm::translate(
+	elem.model = glm::translate(
 				model,
-				elem.second.position);
+				elem.position);
 }
 
-void little_object::object_rotation(rotation_axis axis,
-								   GLfloat amount)
-{
-	if( any_object_selected() ) {
-		static glm::vec3 rot_axis_defs[3]{
-			glm::vec3(1.0,0.0,0.0),
-			glm::vec3(0.0,1.0,0.0),
-			glm::vec3(0.0,0.0,1.0),
-		};
-		sel_obj_it->second.model = glm::rotate(
-					sel_obj_it->second.model,
-					amount,
-					rot_axis_defs[static_cast<int>(axis)]);
-	} else {
-		WARN1("image_rotation: Select a valid object first!");
-	}
-}
-
-void little_object::move(mov_direction dir, GLfloat amount)
-{
-	if( any_object_selected() ) {
-		glm::vec4 translation_vector;
-
-		switch(dir) {
-		case mov_direction::down:
-			amount *= -1;
-		case mov_direction::top:
-			translation_vector.y = amount;
-			break;
-		case mov_direction::right:
-			amount *= -1;
-		case mov_direction::left:
-			translation_vector.x = amount;
-			break;
-		}
-
-		sel_obj_it->second.model = glm::translate(
-						sel_obj_it->second.model,
-						glm::vec3(translation_vector.x,
-								  translation_vector.y,
-								  translation_vector.z));
-	} else {
-		WARN1("move: Select a valid object first!");
-	}
-}
-
-void little_object::scale(GLfloat amount)
-{
-	if( any_object_selected() ) {
-		sel_obj_it->second.scale = amount;
-	} else {
-		WARN1("scale: Select a valid object first!");
-	}
-}
-
-void little_object::set_transformations(glm::mat4 view,
-										glm::mat4 projection)
-{
-	for(auto& object:objects) {
-		object.second.view = view;
-		object.second.projection = projection;
-	}
-}
-
-int little_object::add_object(const glm::vec3 &coordinates,
+void little_object::add_object(const glm::vec3 &coordinates,
 							  const glm::vec3& color,
 							  GLfloat scale)
 {
-	int id = next_object_id++;
 	object_data data;
 	data.position = coordinates;
 	data.color = color;
 	data.scale = scale;
-	objects.insert({id, data});
-	return id;
-}
-
-bool little_object::select_object(int id)
-{
-	auto it = objects.find(id);
-	if( it != objects.end() ) {
-		selected_object = id;
-		sel_obj_it = it;
-		return true;
-	}
-	return false;
-}
-
-bool little_object::release_current_object()
-{
-	selected_object = 0;
-	sel_obj_it = objects.end();
+	objects.push_back(data);
 }
 
 little_object::little_object() :
 	lights::object_lighting(&obj_shader),
-	selected_object{0},
-	next_object_id{1},
 	render_radius{ -1 } //No limits
 {
 	LOG1("little_object::little_object(): Construction.");
@@ -408,13 +300,13 @@ void little_object::render_with_radius(glm::vec3 origin)
 {
 	glBindVertexArray(VAO);
 	for(auto& object : objects) {
-		if( glm::distance( origin, object.second.position ) > render_radius ) {
+		if( glm::distance( origin, object.position ) > render_radius ) {
 			continue;
 		}
 		apply_position(object);
 		apply_transformations(object);
 
-		apply_object_color(object.second.color);
+		apply_object_color(object.color);
 
 		glDrawArrays(GL_TRIANGLES,0,36);
 	}
@@ -429,7 +321,7 @@ void little_object::render_all()
 		apply_position(object);
 		apply_transformations(object);
 
-		apply_object_color(object.second.color);
+		apply_object_color(object.color);
 
 		glDrawArrays(GL_TRIANGLES,0,36);
 	}

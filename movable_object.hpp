@@ -283,7 +283,7 @@ private:
 	 * processed position (0 if no movements)
 	 */
 	std::unordered_map<mouse_movement_types,GLfloat> mouse_status;
-	using obj_speed_sel = std::map<mov_obj_ptr,std::vector<speed_selector>>;
+	using obj_speed_sel = std::map<mov_obj_ptr,speed_selector>;
 	std::map<key_code_t,obj_speed_sel> speed_selectors;
 	void process_speed_selectors( key_code_t pressed_key );
 	//To enable object tracking

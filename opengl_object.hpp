@@ -64,10 +64,8 @@ public:
 	void move(mov_direction dir, GLfloat amount);
 	glm::vec3 get_object_position();
 	void scale(GLfloat amount);
-	void set_transformations(glm::mat4 view,glm::mat4 projection);
-	int add_object(const glm::vec3& coordinates,const glm::vec3& color,GLfloat scale);
-	bool select_object(int id);
-	bool release_current_object();
+	void set_transformations(glm::mat4 v,glm::mat4 p);
+	void add_object(const glm::vec3& coordinates,const glm::vec3& color,GLfloat scale);
 	void modify_view(glm::mat4 new_view);
 	std::set<int> get_all_objects();
 private:
@@ -82,17 +80,17 @@ private:
 	texture_info load_texture(const std::string& filename,
 							  GLint wrapping_method = GL_REPEAT);
 	void update_vertex_data();
-	std::map<int,object_data> objects;
+	std::vector<object_data> objects;
 	movable::mov_obj_ptr render_radius_origin;
 	GLfloat render_radius;
 	int next_object_id;
 	decltype(objects)::iterator sel_obj_it;
-	int selected_object;
-	bool any_object_selected();
 	void apply_transformations(decltype(objects)::value_type& elem);
 	void apply_position(decltype(objects)::value_type& elem);
 	void render_with_radius(glm::vec3 origin);
 	void render_all();
+	glm::mat4 view,
+			projection;
 };
 
 using little_object_ptr = std::shared_ptr<little_object>;

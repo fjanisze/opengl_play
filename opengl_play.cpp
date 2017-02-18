@@ -245,9 +245,9 @@ void opengl_ui::enter_main_loop()
 
 	for( int i{ 0 } ; i < 100000 ; ++i ) {
 		glm::vec3 pos = {
-			dist(gen) % 5000,
-			dist(gen) % 5000,
-			dist(gen) % 5000
+			dist(gen) % 10000,
+			dist(gen) % 10000,
+			dist(gen) % 10000
 		};
 		object->add_object(pos,glm::vec3(1.0),1.5);
 	}
@@ -301,7 +301,7 @@ void opengl_ui::enter_main_loop()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7 } } },
+		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7, 1.3 , 3.0, 20.0} } },
 		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
 		{ GLFW_KEY_D, { movable::mov_direction::roll_inc, { 0.3 } } },
 		{ GLFW_KEY_A, { movable::mov_direction::roll_dec, { 0.3 } } },
@@ -309,7 +309,10 @@ void opengl_ui::enter_main_loop()
 
 	//Speed selectors for this model
 	movable::speed_selector model_speed_mapping = {
-		{ GLFW_KEY_LEFT_SHIFT, mov_direction::forward, 1 }
+		{ GLFW_KEY_1, mov_direction::forward, 0 },
+		{ GLFW_KEY_2, mov_direction::forward, 1 },
+		{ GLFW_KEY_3, mov_direction::forward, 2 },
+		{ GLFW_KEY_4, mov_direction::forward, 3 }
 	};
 
 	movable::mouse_mapping_vec model_mouse = {

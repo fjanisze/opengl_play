@@ -253,8 +253,9 @@ void object_movement_processor::unregister_movable_object(mov_obj_ptr obj)
 void object_movement_processor::register_speed_selectors(mov_obj_ptr obj,
 									const speed_selector &selector)
 {
-	for( auto& elem : selector ) {
-		speed_selectors[ elem.key ][ obj ].push_back( selector );
+	for( auto& elem : selector )
+	{
+		speed_selectors[ elem.key ][ obj ].push_back( elem );
 	}
 }
 
@@ -268,16 +269,32 @@ void object_movement_processor::process_speed_selectors( key_code_t pressed_key 
 	/*
 	 * Anybody registered a selector for this key?
 	 */
-/*	auto it = speed_selectors.find( pressed_key );
+	auto it = speed_selectors.find( pressed_key );
 	if( it != speed_selectors.end() ) {
-		//Ok, pick the selector for each object
+		/*
+		 * Ok, pick the selector for each object
+		 * which is registered to trigger speed changes
+		 * for this key
+		 */
 		for( auto& objects : it->second ) {
 			mov_obj_ptr obj = objects.first;
+			movement_mapping& mov_setup = obj->get_movement_setup();
+			/*
+			 * Any speed selector corresponding to the
+			 * key 'pressed_key'?
+			 */
 			for( auto& sel : objects.second ) {
-				auto key_map = keyb_mapping.find( sel.key );
+				if( sel.key == pressed_key ) {
+					//Ok, trigger the speed change
+					if( mov_setup[ sel.direction ].speed.size() < sel.idx ) {
+						ERR("Unable to change speed, selector with idx: ",sel.idx," is invalid!");
+					} else {
+						mov_setup[ sel.direction ].current_speed = sel.idx;
+					}
+				}
 			}
 		}
-	}*/
+	}
 }
 
 
