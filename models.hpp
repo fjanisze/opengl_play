@@ -67,12 +67,12 @@ enum class z_axis {
 class my_model : public lights::object_lighting,
 		public renderable::renderable_object,
 		public movable::movable_object
-	//std::enable_shared_from_this< my_model >
 {
 public:
 	using mesh_ptr = std::unique_ptr<my_mesh>;
 	my_model(shaders::my_small_shaders* shad,
 		const std::string& model_path,
+		const glm::vec3& def_object_color,
 		z_axis revert_z);
 
 	void set_transformations(glm::mat4 view,glm::mat4 projection) override;
@@ -82,8 +82,9 @@ public:
 
 	static model_ptr create(shaders::my_small_shaders* shader,
 					const std::string& path,
+					const glm::vec3& color = glm::vec3(0.0),
 					z_axis revert_z = z_axis::normal) {
-		return std::make_shared< my_model >( shader, path , revert_z );
+		return std::make_shared< my_model >( shader, path , color, revert_z );
 	}
 
 private:
@@ -114,6 +115,7 @@ private:
 			view_matrix;
 	//For models which are 'reverted'
 	bool revert_z_axis;
+	glm::vec3 object_color;
 };
 
 }

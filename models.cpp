@@ -109,10 +109,12 @@ void my_mesh::render()
 
 my_model::my_model(shaders::my_small_shaders *shad,
 				const std::string &model_path,
+				const glm::vec3 &def_object_color,
 				z_axis revert_z) :
 	lights::object_lighting(shad),
 	shader{ shad },
 	model_path{ model_path },
+	object_color{ def_object_color },
 	revert_z_axis{ revert_z == z_axis::revert }
 {
 	LOG1("Creating a new my_model. Model path: ",
@@ -141,6 +143,8 @@ void my_model::prepare_for_render()
 	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
 	calculate_lighting();
+
+	apply_object_color(object_color);
 }
 
 void my_model::render()

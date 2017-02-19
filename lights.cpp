@@ -32,13 +32,6 @@ void object_lighting::calculate_lighting()
 
 	for(auto & light : all_lights) {
 		auto light_data = light->get_light_data();
-		//Debug stuff..
-/*		if( light->light_type() == type_of_light::Directional_Light )
-		{
-			for(auto e:light_data)
-				std::cout<<e<<",";
-			std::cout<<std::endl;
-		}*/
 		for( auto& entry : light_data ) {
 			light_data_buffer[ current_idx++ ] = entry;
 			if( current_idx >= 1024 ) {
@@ -228,12 +221,12 @@ point_light::point_light(glm::vec3 position,
 	LOG1("Constructor: point_light");
 	init_render_buffers();
 
-	add_renderable(this);
+	//add_renderable(this);
 }
 
 point_light::~point_light()
 {
-	remove_renderable( this );
+	//remove_renderable( this );
 }
 
 void point_light::set_transformations(glm::mat4 v,

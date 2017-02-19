@@ -396,7 +396,8 @@ void object_movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
 
 bool tracking_processor::new_tracking(mov_obj_ptr target,
 							mov_obj_ptr object,
-							GLfloat distance_threashold)
+							GLfloat distance_threashold,
+							bool smooth_tracking)
 {
 	LOG1("new_tracking: New tracking setup!");
 	if( tracking_data.find( object ) != tracking_data.end() ){
@@ -411,6 +412,7 @@ bool tracking_processor::new_tracking(mov_obj_ptr target,
 		target_pos,
 		object_pos,
 		distance_threashold,
+		smooth_tracking
 	};
 	auto ret = tracking_data.insert({ object, new_track });
 	return ret.second;
@@ -425,7 +427,9 @@ void tracking_processor::process_tracking()
 		//We shall follow the target which is getting too far
 		if( current_distance > entry.second.distance_threshold ) {
 			glm::vec3 dir_vector = target_pos - object_pos;
-			dir_vector /= 100;
+			if( entry.second.smooth_tracking ) {
+				dir_vector /= 100;
+			}
 			object_pos = object_pos + dir_vector;
 			entry.second.object->set_position( object_pos );
 		}

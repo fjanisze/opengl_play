@@ -75,7 +75,8 @@ void little_object::init_vertices()
 texture_info little_object::load_texture(const std::string &filename,
 								GLint wrapping_method)
 {
-	LOG1("Creating the texture for little_object");
+	LOG1("Creating the texture for little_object, :",
+		 filename.c_str());
 	texture_info TEX;
 	//Load the texture image
 	byte_t* image = SOIL_load_image(filename.c_str(),
@@ -232,9 +233,9 @@ little_object::little_object() :
 	glBindVertexArray(0);
 
 	textures.insert(std::make_pair("specular",
-								   load_texture("../textures/container2_specular.png")));
+								   load_texture("../textures/borg_cube_specular.png")));
 	textures.insert(std::make_pair("container",
-								   load_texture("../textures/container2.png")));
+								   load_texture("../textures/borg_cube.png")));
 
 	check_for_errors();
 	add_renderable(this);

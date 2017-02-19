@@ -143,7 +143,8 @@ public:
 	 */
 	bool new_tracking(mov_obj_ptr target,
 					mov_obj_ptr object,
-					GLfloat distance_threashold);
+					GLfloat distance_threashold,
+					bool smooth_tracking = true);
 	/*
 	 * Shall be called at every frame to update
 	 * the position of the objects which are
@@ -164,6 +165,7 @@ private:
 				last_object_position;
 		GLfloat distance_threshold,
 				last_recorded_distance;
+		bool smooth_tracking;
 		tracking_info() = default;
 	};
 	std::unordered_map<mov_obj_ptr,tracking_info> tracking_data;

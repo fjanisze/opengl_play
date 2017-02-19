@@ -1,5 +1,6 @@
 #include "opengl_play.hpp"
 #include <models.hpp>
+#include <iomanip>
 
 namespace opengl_play
 {
@@ -221,7 +222,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
-						0.1f, 1000.0f);
+						0.1f, 20000.0f);
 
 	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
 		{{50,0,0},{1.0,0.0,0.0}},
@@ -241,15 +242,16 @@ void opengl_ui::enter_main_loop()
 	//Create some random cubes
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> dist(-100000,100000);
+	std::uniform_int_distribution<> dist(-50000,50000);
 
 	for( int i{ 0 } ; i < 1000000 ; ++i ) {
 		glm::vec3 pos = {
-			dist(gen) % 5000,
-			dist(gen) % 5000,
-			dist(gen) % 5000
+			dist(gen),
+			dist(gen),
+			dist(gen)
 		};
-		object->add_object(pos,glm::vec3(1.0),1.5);
+		GLfloat size = 1 + dist(gen) % 10;
+		object->add_object(pos,glm::vec3(0.12,0.33,0.40),size);
 	}
 
 	object->limit_render_distance(camera, 1000);
@@ -270,11 +272,16 @@ void opengl_ui::enter_main_loop()
 						 glm::cos(z_angle) * std::min(50000, dist(gen)));
 		//A little of random coloring (almost white colors)
 		glm::vec3 color = glm::abs( glm::normalize( pos ) );
-		color.r /= 10;
-		color.b /= 4;
+		color.r /= 5;
+		color.b /= 10;
 		color.g /= 40;
 		color = glm::vec3(1.0) - color;
-		GLfloat strength = std::max( 5, dist(gen) % 100 );
+		GLfloat dist_from_zero = glm::distance( glm::vec3(0.0,0.0,0.0), pos);
+		GLfloat strength{ 0 };
+		if( dist_from_zero == 50000 )
+			strength = 5;
+		else
+			strength = std::max<GLfloat>( std::sqrt(std::sqrt( dist_from_zero) ), dist(gen) % 200 );
 		lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
 			pos,
 			color,
@@ -295,8 +302,15 @@ void opengl_ui::enter_main_loop()
 	}
 
 	models::model_ptr model = models::my_model::create(&model_shader,
-									"../models/Enterprise/USSEnterprise.obj"
-									);
+									"../models/Prometheus_NX_59650/prometheus.obj",
+									glm::vec3(0.9,1.0,0.8),
+									models::z_axis::revert);
+	lights::generic_light_ptr model_illumination = lights::light_factory<lights::point_light>::create(
+				glm::vec3(0.0),glm::vec3(1.0),2);
+	/*models::model_ptr model = models::my_model::create(&model_shader,
+										"../models/Enterprise/USSEnterprise.obj",
+										glm::vec3(0.9,1.0,0.8)
+										);*/
 
 	//Let our model be movable
 	//Register the camera as movable object
@@ -328,6 +342,7 @@ void opengl_ui::enter_main_loop()
 
 	movement_processor.register_movable_object(model,model_mouse);
 	movement_processor.register_movable_object(model,model_keys);
+	movement_processor.tracking().new_tracking(model,model_illumination,0,false);
 
 	movement_processor.register_speed_selectors(model,model_speed_mapping);
 
@@ -341,7 +356,7 @@ void opengl_ui::enter_main_loop()
 	lights::generic_light_ptr model_light = lights::light_factory<lights::spot_light>::create(
 		model->get_position(),
 		glm::vec3(1.0,1.0,0.7),
-		100,
+		200,
 		model->get_position(),
 		15,
 		22);
@@ -365,7 +380,7 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
-		glClearColor(0.0,0.0,0.0,1.0);
+		glClearColor(0.0,0.02,0.002,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/*
@@ -382,9 +397,11 @@ void opengl_ui::enter_main_loop()
 		auto pos = camera->get_position();
 
 		std::stringstream ss;
-		ss << "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll<<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
+		ss <<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
+		   <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 		//Distance from the camera target
-		ss << ", target distance: "<<camera->get_dist_from_target();
+		ss << ", center distance: "<<glm::distance(glm::vec3(0.0,0.0,0.0),
+												   model->get_position());
 		camera_info->set_text(ss.str());
 		camera_info->render_text();
 
