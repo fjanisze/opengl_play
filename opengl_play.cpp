@@ -189,7 +189,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({10.0,20.0,-30.0},{0.0,0.0,0.0});
+	camera = my_camera::create_camera({0.0,20.0,1599980.0},{0.0,0.0,1600000.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -242,7 +242,7 @@ void opengl_ui::enter_main_loop()
 	//Create some random cubes
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> dist(-50000,50000);
+	std::uniform_int_distribution<> dist(-500000,500000);
 
 	for( int i{ 0 } ; i < 1000000 ; ++i ) {
 		glm::vec3 pos = {
@@ -250,11 +250,11 @@ void opengl_ui::enter_main_loop()
 			dist(gen),
 			dist(gen)
 		};
-		GLfloat size = 1 + dist(gen) % 10;
+		GLfloat size = 1 + dist(gen) % 1000;
 		object->add_object(pos,glm::vec3(0.12,0.33,0.40),size);
 	}
 
-	object->limit_render_distance(camera, 1000);
+	object->limit_render_distance(camera, 20000);
 
 	std::vector<lights::generic_light_ptr> dir_lights;
 
@@ -315,7 +315,7 @@ void opengl_ui::enter_main_loop()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7, 1.3 , 3.0, 20.0, 50.0} } },
+		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7, 1.3 , 3.0, 20.0, 150.0} } },
 		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
 		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
 		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
@@ -362,6 +362,8 @@ void opengl_ui::enter_main_loop()
 		22);
 	model_light->attach_to_object( model );
 
+	model->set_position(glm::vec3(0.0,0.0,1600000.0));
+
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
 	{
@@ -380,7 +382,7 @@ void opengl_ui::enter_main_loop()
 			current_fps = 0;
 		}
 
-		glClearColor(0.0,0.02,0.002,1.0);
+		glClearColor(0.0,0.2,0.02,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/*
@@ -391,9 +393,9 @@ void opengl_ui::enter_main_loop()
 
 		fps_info->render_text();
 
-		auto yaw = model->get_yaw(),
-			pitch = model->get_pitch(),
-			roll = model->get_roll();
+		auto yaw = camera->get_yaw(),
+			pitch = camera->get_pitch(),
+			roll = camera->get_roll();
 		auto pos = camera->get_position();
 
 		std::stringstream ss;

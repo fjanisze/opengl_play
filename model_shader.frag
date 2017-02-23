@@ -117,7 +117,7 @@ void main()
 	specular *= (vec3(texture(loaded_texture_specular_map1,texture_coords)) * .5 * attenuation);
 	spec_res += specular;
     }
-    final_object_color = ( diffuse_res + spec_res ) * object_color;
+    final_object_color = ( diffuse_res /*+ spec_res*/ ) * object_color;
     //Final color
     color = vec4( final_object_color ,1.0 );
 }
