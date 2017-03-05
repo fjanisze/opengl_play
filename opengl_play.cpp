@@ -189,7 +189,8 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({0.0,20.0,1599980.0},{0.0,0.0,1600000.0});
+	camera = my_camera::create_camera({0.0,20.0,-30.0},{0.0,0.0,0.0});
+	//camera = my_camera::create_camera({0.0,20.0,99950.0},{0.0,0.0,100000.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -222,7 +223,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
-						0.1f, 20000.0f);
+						10.0f, 20000.0f);
 
 	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
 		{{50,0,0},{1.0,0.0,0.0}},
@@ -305,6 +306,8 @@ void opengl_ui::enter_main_loop()
 									"../models/Prometheus_NX_59650/prometheus.obj",
 									glm::vec3(0.9,1.0,0.8),
 									models::z_axis::revert);
+	//model->set_position(glm::vec3(0.0,0.0,100000));
+
 	lights::generic_light_ptr model_illumination = lights::light_factory<lights::point_light>::create(
 				glm::vec3(0.0),glm::vec3(1.0),2);
 	/*models::model_ptr model = models::my_model::create(&model_shader,
@@ -361,8 +364,6 @@ void opengl_ui::enter_main_loop()
 		15,
 		22);
 	model_light->attach_to_object( model );
-
-	model->set_position(glm::vec3(0.0,0.0,1600000.0));
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
