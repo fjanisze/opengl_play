@@ -72,9 +72,6 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 	GLdouble x_delta = (x - last_mouse_x) * 0.1,
 			y_delta = (last_mouse_y - y) * 0.1;
 
-	//camera->modify_angle(movable::mov_angles::yaw,x_delta);
-	//camera->modify_angle(movable::mov_angles::pitch,y_delta);
-
 	last_mouse_x = x;
 	last_mouse_y = y;
 	movement_processor.mouse_input(x, y);
@@ -102,6 +99,44 @@ void opengl_ui::ui_keyboard_press(GLint button,
 
 void opengl_ui::evaluate_key_status()
 {
+}
+
+void opengl_ui::setup_scene()
+{
+	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
+		{{50,0,0},{1.0,0.0,0.0}},
+		{{-50,0,0},{1.0,0.0,0.0}},
+		{{0,50,0},{0.0,0.0,1.0}},
+		{{0,-50,0},{0.0,0.0,1.0}},
+		{{0,0,50},{0.0,1.0,0.0}},
+		{{0,0,-50},{0.0,1.0,0.0}},
+		{{50,50,50},{0.0,1.0,1.0}},
+		{{-50,-50,-50},{0.0,1.0,1.0}}
+	};
+
+	for(auto& elem : line_endpoints) {
+		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
+	}
+
+	//Let our model be movable
+	//Register the camera as movable object
+	movable::key_mapping_vec camera_keys = {
+		{ GLFW_KEY_W, { movable::mov_direction::top, { 0.7 } } },
+		{ GLFW_KEY_S, { movable::mov_direction::down, { 0.3 } } },
+		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
+		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
+	};
+
+	movable::mouse_mapping_vec camera_mouse = {
+		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::pitch_inc, { 0.05 } } },
+		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::pitch_dec, { 0.05 } } },
+		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::yaw_dec, { 0.05 } } },
+		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::yaw_inc, { 0.05 } } },
+	};
+
+
+	movement_processor.register_movable_object(camera,camera_keys);
+	movement_processor.register_movable_object(camera,camera_mouse);
 }
 
 
@@ -189,8 +224,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({0.0,20.0,-30.0},{0.0,0.0,0.0});
-	//camera = my_camera::create_camera({0.0,20.0,99950.0},{0.0,0.0,100000.0});
+	camera = my_camera::create_camera({10.0,10.0,10.0},{0.0,0.0,0.0});
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
@@ -210,11 +244,12 @@ void opengl_ui::prepare_for_main_loop()
 
 void opengl_ui::enter_main_loop()
 {
+	setup_scene();
 	check_for_errors();
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST | GL_STENCIL_TEST);
 	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	auto ref_time = std::chrono::system_clock::now();
@@ -225,145 +260,6 @@ void opengl_ui::enter_main_loop()
 						(GLfloat)win_w / (GLfloat)win_h,
 						10.0f, 20000.0f);
 
-	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
-		{{50,0,0},{1.0,0.0,0.0}},
-		{{-50,0,0},{1.0,0.0,0.0}},
-		{{0,50,0},{0.0,0.0,1.0}},
-		{{0,-50,0},{0.0,0.0,1.0}},
-		{{0,0,50},{0.0,1.0,0.0}},
-		{{0,0,-50},{0.0,1.0,0.0}},
-		{{50,50,50},{0.0,1.0,1.0}},
-		{{-50,-50,-50},{0.0,1.0,1.0}}
-	};
-
-	for(auto& elem : line_endpoints) {
-		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
-	}
-
-	//Create some random cubes
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> dist(-500000,500000);
-
-	for( int i{ 0 } ; i < 1000000 ; ++i ) {
-		glm::vec3 pos = {
-			dist(gen),
-			dist(gen),
-			dist(gen)
-		};
-		GLfloat size = 1 + dist(gen) % 1000;
-		object->add_object(pos,glm::vec3(0.12,0.33,0.40),size);
-	}
-
-	object->limit_render_distance(camera, 20000);
-
-	std::vector<lights::generic_light_ptr> dir_lights;
-
-	/*
-	 * Create some random lights, distant stars..
-	 */
-	for( int i{ 0 }; i < 15 ; ++i ) {
-		glm::vec3 pos{ dist(gen), dist(gen), dist(gen) };
-		GLfloat len = glm::length( pos );
-		GLfloat x_angle = glm::acos( pos.x / len ),
-				y_angle = glm::acos( pos.y / len ),
-				z_angle = glm::acos( pos.z / len );
-		pos = glm::vec3( glm::cos(x_angle) * std::min(50000, dist(gen)),
-						 glm::cos(y_angle) * std::min(50000, dist(gen)),
-						 glm::cos(z_angle) * std::min(50000, dist(gen)));
-		//A little of random coloring (almost white colors)
-		glm::vec3 color = glm::abs( glm::normalize( pos ) );
-		color.r /= 5;
-		color.b /= 10;
-		color.g /= 40;
-		color = glm::vec3(1.0) - color;
-		GLfloat dist_from_zero = glm::distance( glm::vec3(0.0,0.0,0.0), pos);
-		GLfloat strength{ 0 };
-		if( dist_from_zero == 50000 )
-			strength = 5;
-		else
-			strength = std::max<GLfloat>( std::sqrt(std::sqrt( dist_from_zero) ), dist(gen) % 200 );
-		lights::generic_light_ptr dir_light = lights::light_factory<lights::directional_light>::create(
-			pos,
-			color,
-			strength);
-		dir_lights.push_back( dir_light );
-	}
-
-	/* Load the model */
-	shaders::my_small_shaders model_shader;
-	model_shader.load_vertex_shader(
-				model_shader.read_shader_body("../model_shader.vert"));
-	model_shader.load_fragment_shader(
-				model_shader.read_shader_body("../model_shader.frag"));
-
-	if(!model_shader.create_shader_program()) {
-		ERR("Unable to create the shader program");
-		throw std::runtime_error("Failed to create the model_shader.");
-	}
-
-	models::model_ptr model = models::my_model::create(&model_shader,
-									"../models/Prometheus_NX_59650/prometheus.obj",
-									glm::vec3(0.9,1.0,0.8),
-									models::z_axis::revert);
-	//model->set_position(glm::vec3(0.0,0.0,100000));
-
-	lights::generic_light_ptr model_illumination = lights::light_factory<lights::point_light>::create(
-				glm::vec3(0.0),glm::vec3(1.0),2);
-	/*models::model_ptr model = models::my_model::create(&model_shader,
-										"../models/Enterprise/USSEnterprise.obj",
-										glm::vec3(0.9,1.0,0.8)
-										);*/
-
-	//Let our model be movable
-	//Register the camera as movable object
-	movable::key_mapping_vec model_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.7, 1.3 , 3.0, 20.0, 150.0} } },
-		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
-		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
-		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
-		{ GLFW_KEY_Q, { movable::mov_direction::roll_dec, { 0.7 } } },
-		{ GLFW_KEY_E, { movable::mov_direction::roll_inc, { 0.7 } } },
-	};
-
-	//Speed selectors for this model
-	movable::speed_selector model_speed_mapping = {
-		{ GLFW_KEY_1, mov_direction::forward, 0 },
-		{ GLFW_KEY_2, mov_direction::forward, 1 },
-		{ GLFW_KEY_3, mov_direction::forward, 2 },
-		{ GLFW_KEY_4, mov_direction::forward, 3 },
-		{ GLFW_KEY_5, mov_direction::forward, 4 }
-	};
-
-	movable::mouse_mapping_vec model_mouse = {
-		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::pitch_inc, { 0.2 } } },
-		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::pitch_dec, { 0.2 } } },
-		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::yaw_inc, { 0.2 } } },
-		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::yaw_dec, { 0.2 } } },
-
-	};
-
-	movement_processor.register_movable_object(model,model_mouse);
-	movement_processor.register_movable_object(model,model_keys);
-	movement_processor.tracking().new_tracking(model,model_illumination,0,false);
-
-	movement_processor.register_speed_selectors(model,model_speed_mapping);
-
-	camera->set_target( model );
-	camera->setup_following_options(
-				new_option<GLfloat>( camera_opt::max_target_distance, 30),
-				new_option<GLfloat>( camera_opt::camera_tilt, -15)
-				);
-
-	//Create a spot light and attach it to the model
-	lights::generic_light_ptr model_light = lights::light_factory<lights::spot_light>::create(
-		model->get_position(),
-		glm::vec3(1.0,1.0,0.7),
-		200,
-		model->get_position(),
-		15,
-		22);
-	model_light->attach_to_object( model );
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))
@@ -384,11 +280,8 @@ void opengl_ui::enter_main_loop()
 		}
 
 		glClearColor(0.0,0.2,0.02,1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		/*
-		 * TODO: Why drawing stuff behind the camera???
-		 */
 		renderable::renderable_object::render_renderables(camera->get_view(),
 											projection);
 
@@ -402,9 +295,7 @@ void opengl_ui::enter_main_loop()
 		std::stringstream ss;
 		ss <<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
 		   <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
-		//Distance from the camera target
-		ss << ", center distance: "<<glm::distance(glm::vec3(0.0,0.0,0.0),
-												   model->get_position());
+
 		camera_info->set_text(ss.str());
 		camera_info->render_text();
 

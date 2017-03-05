@@ -328,7 +328,7 @@ void object_movement_processor::process_impl_mouse()
 {
 	for( auto& movement : mouse_status ) {
 		if( movement.second != 0 ) {
-			GLfloat amount = movement.second / 50;
+			GLfloat amount = movement.second / 10;
 			//Is anybody registered for this movement?
 			if( mouse_mapping[ movement.first ].empty() ) {
 				movement.second = 0;//Nope? Clean..

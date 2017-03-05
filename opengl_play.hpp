@@ -32,27 +32,11 @@ enum class key_status_t
 
 class opengl_ui
 {
-	key_status_t  key_status[stat_key_array_size];
-	GLfloat last_mouse_x,
-			last_mouse_y;
-	GLFWwindow*   window_ctx;
-	little_object_ptr object;
-	text_renderer::rendr_text fps_info,
-						camera_info;
-	int win_h,
-	win_w;
 	void setup_callbacks();
 	void get_current_ctx_viewport();
 	void init_text();
 	void evaluate_key_status();
-	camera_obj		camera;
-
-	my_lines_ptr position_lines;
-	lights::generic_light_ptr light_1,
-							  light_2,
-							front_light;
-
-	movable::object_movement_processor movement_processor;
+	void setup_scene();
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
@@ -64,6 +48,24 @@ public:
 	void        ui_mouse_move(GLdouble x,GLdouble y);
 	void		ui_keyboard_press(GLint button,GLint scode,GLint action);
 	virtual ~opengl_ui();
+public:
+	key_status_t  key_status[stat_key_array_size];
+	GLfloat last_mouse_x,
+			last_mouse_y;
+	GLFWwindow*   window_ctx;
+	little_object_ptr object;
+	text_renderer::rendr_text fps_info,
+						camera_info;
+	int win_h,
+		win_w;
+	camera_obj		camera;
+
+	my_lines_ptr position_lines;
+	lights::generic_light_ptr light_1,
+							  light_2,
+							front_light;
+
+	movable::object_movement_processor movement_processor;
 };
 
 }
