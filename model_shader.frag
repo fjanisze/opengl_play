@@ -97,7 +97,7 @@ void main()
 	    if( light_type == 2 )
 		attenuation = 1.0 + dist * 0.20;
 	    else
-		attenuation = 1.0 + sqrt( dist );
+		attenuation = 1.0 + dist * 0.2;
 	    attenuation = min( light_strength * intensity / attenuation, 1 );
 	}
 	if( attenuation == 0 ) {
@@ -117,7 +117,7 @@ void main()
 	specular *= (vec3(texture(loaded_texture_specular_map1,texture_coords)) * .5 * attenuation);
 	spec_res += specular;
     }
-    final_object_color = ( diffuse_res /*+ spec_res*/ ) * object_color;
+    final_object_color = ( diffuse_res + spec_res ) * object_color;
     //Final color
     color = vec4( final_object_color ,1.0 );
 }

@@ -214,6 +214,9 @@ public:
 	type_of_light light_type(){
 		return type_of_light::Directional_Light;
 	}
+	std::string renderable_nice_name() {
+		return "directional_light";
+	}
 };
 
 /*
@@ -239,6 +242,9 @@ public:
 
 	type_of_light light_type(){
 		return type_of_light::Spot_light;
+	}
+	std::string renderable_nice_name() {
+		return "spot_light";
 	}
 
 	void attach_to_object( movable::mov_obj_ptr object );
@@ -272,6 +278,9 @@ public:
 
 	type_of_light light_type(){
 		return type_of_light::Flash_light;
+	}
+	std::string renderable_nice_name() {
+		return "flash_light";
 	}
 
 	const std::vector<GLfloat>& get_light_data() override;

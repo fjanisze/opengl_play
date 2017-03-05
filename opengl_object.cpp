@@ -137,6 +137,11 @@ void little_object::update_vertex_data()
 
 }
 
+std::string little_object::renderable_nice_name()
+{
+	return "little_object";
+}
+
 void little_object::limit_render_distance(movable::mov_obj_ptr target,
 								GLfloat radius)
 {

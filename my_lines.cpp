@@ -19,7 +19,7 @@ my_static_lines::my_static_lines()
 	glGenVertexArrays(1,&VAO);
 	glGenBuffers(1,&VBO);
 
-	add_renderable(this);
+	add_renderable(this, 1);
 }
 
 my_static_lines::~my_static_lines()
@@ -101,6 +101,11 @@ void my_static_lines::render()
 void my_static_lines::clean_after_render()
 {
 
+}
+
+std::string my_static_lines::renderable_nice_name()
+{
+	return "static_line";
 }
 
 }

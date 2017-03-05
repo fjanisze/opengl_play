@@ -8,6 +8,7 @@
 #include "lights.hpp"
 #include <movable_object.hpp>
 #include <random>
+#include <models.hpp>
 
 namespace opengl_play
 {
@@ -61,9 +62,10 @@ public:
 	camera_obj		camera;
 
 	my_lines_ptr position_lines;
+	shaders::my_small_shaders model_shader;
+	models::model_ptr terrain;
 	lights::generic_light_ptr light_1,
-							  light_2,
-							front_light;
+							flash_light;
 
 	movable::object_movement_processor movement_processor;
 };

@@ -1,5 +1,4 @@
 #include "opengl_play.hpp"
-#include <models.hpp>
 #include <iomanip>
 
 namespace opengl_play
@@ -100,45 +99,6 @@ void opengl_ui::ui_keyboard_press(GLint button,
 void opengl_ui::evaluate_key_status()
 {
 }
-
-void opengl_ui::setup_scene()
-{
-	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
-		{{50,0,0},{1.0,0.0,0.0}},
-		{{-50,0,0},{1.0,0.0,0.0}},
-		{{0,50,0},{0.0,0.0,1.0}},
-		{{0,-50,0},{0.0,0.0,1.0}},
-		{{0,0,50},{0.0,1.0,0.0}},
-		{{0,0,-50},{0.0,1.0,0.0}},
-		{{50,50,50},{0.0,1.0,1.0}},
-		{{-50,-50,-50},{0.0,1.0,1.0}}
-	};
-
-	for(auto& elem : line_endpoints) {
-		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
-	}
-
-	//Let our model be movable
-	//Register the camera as movable object
-	movable::key_mapping_vec camera_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::top, { 0.7 } } },
-		{ GLFW_KEY_S, { movable::mov_direction::down, { 0.3 } } },
-		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
-		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
-	};
-
-	movable::mouse_mapping_vec camera_mouse = {
-		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::pitch_inc, { 0.05 } } },
-		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::pitch_dec, { 0.05 } } },
-		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::yaw_dec, { 0.05 } } },
-		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::yaw_inc, { 0.05 } } },
-	};
-
-
-	movement_processor.register_movable_object(camera,camera_keys);
-	movement_processor.register_movable_object(camera,camera_mouse);
-}
-
 
 void opengl_ui::setup_callbacks()
 {
@@ -242,6 +202,70 @@ void opengl_ui::prepare_for_main_loop()
 	get_current_ctx_viewport();
 }
 
+void opengl_ui::setup_scene()
+{
+	const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
+		{{50,0,0},{1.0,0.0,0.0}},
+		{{-50,0,0},{1.0,0.0,0.0}},
+		{{0,50,0},{0.0,0.0,1.0}},
+		{{0,-50,0},{0.0,0.0,1.0}},
+		{{0,0,50},{0.0,1.0,0.0}},
+		{{0,0,-50},{0.0,1.0,0.0}},
+		{{50,50,50},{0.0,1.0,1.0}},
+		{{-50,-50,-50},{0.0,1.0,1.0}}
+	};
+
+	for(auto& elem : line_endpoints) {
+		position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
+	}
+
+	//Let our model be movable
+	//Register the camera as movable object
+	movable::key_mapping_vec camera_keys = {
+		{ GLFW_KEY_W, { movable::mov_direction::top, { 0.7 } } },
+		{ GLFW_KEY_S, { movable::mov_direction::down, { 0.3 } } },
+		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
+		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
+	};
+
+	movable::mouse_mapping_vec camera_mouse = {
+		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::pitch_inc, { 0.05 } } },
+		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::pitch_dec, { 0.05 } } },
+		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::yaw_dec, { 0.05 } } },
+		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::yaw_inc, { 0.05 } } },
+	};
+
+
+	movement_processor.register_movable_object(camera,camera_keys);
+	movement_processor.register_movable_object(camera,camera_mouse);
+
+	model_shader.load_fragment_shader(model_shader.read_shader_body(
+									"../model_shader.frag"));
+	model_shader.load_vertex_shader(model_shader.read_shader_body(
+									"../model_shader.vert"));
+	if( !model_shader.create_shader_program() ) {
+		ERR("Unable to create the model shader!");
+		throw std::runtime_error("Shader creation failure");
+	}
+
+	terrain = models::my_model::create(&model_shader,
+									   "../models/Grass/grass.obj",
+									   glm::vec3(1.0,1.0,1.0f));
+
+	light_1 = lights::light_factory<lights::directional_light>::create(
+				glm::vec3(10,100,10),
+				glm::vec3(0.8,1.0,1.0),
+				4);
+
+	flash_light = lights::light_factory<lights::flash_light>::create(
+				camera,
+				glm::vec3(1.0f),
+				3,
+				12.5f,
+				18.5f);
+}
+
+
 void opengl_ui::enter_main_loop()
 {
 	setup_scene();
@@ -249,7 +273,7 @@ void opengl_ui::enter_main_loop()
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST | GL_STENCIL_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	auto ref_time = std::chrono::system_clock::now();
@@ -258,7 +282,7 @@ void opengl_ui::enter_main_loop()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
-						10.0f, 20000.0f);
+						1.0f, 1000.0f);
 
 
 	LOG2("Entering main loop!");
@@ -280,7 +304,7 @@ void opengl_ui::enter_main_loop()
 		}
 
 		glClearColor(0.0,0.2,0.02,1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderable::renderable_object::render_renderables(camera->get_view(),
 											projection);

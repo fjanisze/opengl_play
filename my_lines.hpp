@@ -37,6 +37,7 @@ public:
 	void prepare_for_render();
 	void render();
 	void clean_after_render();
+	std::string renderable_nice_name();
 };
 
 }
