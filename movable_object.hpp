@@ -191,7 +191,9 @@ enum class mouse_movement_types {
 	pitch_increse,
 	pitch_decrease,
 	yaw_increase,
-	yaw_decrease
+	yaw_decrease,
+	wheel_up,
+	wheel_down
 };
 
 /*
@@ -210,6 +212,11 @@ mov_angles to_mov_angles( const mouse_movement_types& mov )
 //Mapping for the mouse
 using mov_mouse_mapping = std::pair<mouse_movement_types,direction_details>;
 using mouse_mapping_vec = std::vector<mov_mouse_mapping>;
+
+enum class mouse_input_type {
+	mouse_movement,
+	mouse_wheel
+};
 
 /*
  * This class process the keyboard and mouse
@@ -234,7 +241,8 @@ public:
 	 * might be moved by mouse inputs, for example
 	 * the pitch or yaw might be changed.
 	 */
-	void mouse_input(GLdouble new_x,GLdouble new_y);
+	void mouse_input(GLdouble new_x,GLdouble new_y,
+			mouse_input_type type = mouse_input_type::mouse_movement);
 	/*
 	 * Function which process the movements,
 	 * needs to be called once for every frame

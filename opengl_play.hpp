@@ -47,14 +47,14 @@ public:
 								int new_win_w);
 	void		ui_mouse_click(GLint button,GLint action);
 	void        ui_mouse_move(GLdouble x,GLdouble y);
+	void		ui_wheel_move(GLdouble x,GLdouble y);
 	void		ui_keyboard_press(GLint button,GLint scode,GLint action);
 	virtual ~opengl_ui();
 public:
 	key_status_t  key_status[stat_key_array_size];
-	GLfloat last_mouse_x,
-			last_mouse_y;
 	GLFWwindow*   window_ctx;
 	little_object_ptr object;
+	GLFWcursor*   cursor;
 	text_renderer::rendr_text fps_info,
 						camera_info;
 	int win_h,

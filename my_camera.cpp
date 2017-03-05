@@ -47,6 +47,12 @@ bool my_camera::move(mov_direction direction, GLfloat amount)
 	case mov_direction::down:
 		current_position -= cam_front * amount;
 		break;
+	case mov_direction::forward:
+		current_position -= glm::cross( cam_right, cam_up ) * amount;
+		break;
+	case mov_direction::backward:
+		current_position += glm::cross( cam_right, cam_up ) * amount;
+		break;
 	default:
 		ERR("my_camera::move: Unknow direction, ",
 			static_cast<int>(direction));

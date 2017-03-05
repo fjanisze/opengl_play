@@ -160,29 +160,39 @@ object_movement_processor::object_movement_processor() :
 }
 
 void object_movement_processor::mouse_input(GLdouble new_x,
-								GLdouble new_y)
+								GLdouble new_y,
+								mouse_input_type type)
 {
-	static bool first_input{ true };
-	if( false == first_input ) {
-		GLdouble x_delta = last_mouse_x_position - new_x,
-				y_delta = last_mouse_y_position - new_y;
-
-		if( x_delta > 0 ) {
-			mouse_status[ mouse_movement_types::yaw_increase ] += x_delta;
-		} else if( x_delta < 0 ){
-			mouse_status[ mouse_movement_types::yaw_decrease ] += -x_delta;
-		}
-
-		if( y_delta > 0 ) {
-			mouse_status[ mouse_movement_types::pitch_increse ] += y_delta;
-		} else if( y_delta < 0 ){
-			mouse_status[ mouse_movement_types::pitch_decrease ] += -y_delta;
+	if( type == mouse_input_type::mouse_wheel ) {
+		//Not supporting that much movements.
+		if( new_y > 0 ) {
+			mouse_status[ mouse_movement_types::wheel_up ] = 100;
+		} else {
+			mouse_status[ mouse_movement_types::wheel_down ] = 100;
 		}
 	} else {
-		first_input = false;
+		static bool first_input{ true };
+		if( false == first_input ) {
+			GLdouble x_delta = last_mouse_x_position - new_x,
+					y_delta = last_mouse_y_position - new_y;
+
+			if( x_delta > 0 ) {
+				mouse_status[ mouse_movement_types::yaw_increase ] += x_delta;
+			} else if( x_delta < 0 ){
+				mouse_status[ mouse_movement_types::yaw_decrease ] += -x_delta;
+			}
+
+			if( y_delta > 0 ) {
+				mouse_status[ mouse_movement_types::pitch_increse ] += y_delta;
+			} else if( y_delta < 0 ){
+				mouse_status[ mouse_movement_types::pitch_decrease ] += -y_delta;
+			}
+		} else {
+			first_input = false;
+		}
+		last_mouse_x_position = new_x;
+		last_mouse_y_position = new_y;
 	}
-	last_mouse_x_position = new_x;
-	last_mouse_y_position = new_y;
 }
 
 void object_movement_processor::keyboard_input(int key,

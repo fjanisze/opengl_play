@@ -18,6 +18,13 @@ void mouse_click_callback(GLFWwindow *ctx,
 	ui_instance->ui_mouse_click(button,action);
 }
 
+void mouse_wheel_callback(GLFWwindow* ctx,
+						  double x,
+						  double y)
+{
+	ui_instance->ui_wheel_move(x,y);
+}
+
 void cursor_pos_callback(GLFWwindow *ctx,
 						 double x,
 						 double y)
@@ -62,18 +69,13 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
-	static bool first_move = true;
-	if(first_move) {
-		last_mouse_x = x;
-		last_mouse_y = y;
-		first_move = false;
-	}
-	GLdouble x_delta = (x - last_mouse_x) * 0.1,
-			y_delta = (last_mouse_y - y) * 0.1;
-
-	last_mouse_x = x;
-	last_mouse_y = y;
 	movement_processor.mouse_input(x, y);
+}
+
+void opengl_ui::ui_wheel_move(GLdouble x, GLdouble y)
+{
+	movement_processor.mouse_input(x, y,
+				movable::mouse_input_type::mouse_wheel);
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -105,6 +107,8 @@ void opengl_ui::setup_callbacks()
 
 	glfwSetMouseButtonCallback(window_ctx,
 							   mouse_click_callback);
+	glfwSetScrollCallback(window_ctx,
+						  mouse_wheel_callback);
 	glfwSetCursorPosCallback(window_ctx,
 							 cursor_pos_callback);
 	glfwSetWindowSizeCallback(window_ctx,
@@ -222,19 +226,16 @@ void opengl_ui::setup_scene()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::top, { 0.7 } } },
-		{ GLFW_KEY_S, { movable::mov_direction::down, { 0.3 } } },
+		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.3 } } },
+		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
 		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
 		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
 	};
 
 	movable::mouse_mapping_vec camera_mouse = {
-		{ movable::mouse_movement_types::pitch_increse, { movable::mov_direction::pitch_inc, { 0.05 } } },
-		{ movable::mouse_movement_types::pitch_decrease, { movable::mov_direction::pitch_dec, { 0.05 } } },
-		{ movable::mouse_movement_types::yaw_increase, { movable::mov_direction::yaw_dec, { 0.05 } } },
-		{ movable::mouse_movement_types::yaw_decrease, { movable::mov_direction::yaw_inc, { 0.05 } } },
+		{ movable::mouse_movement_types::wheel_up, { movable::mov_direction::top, { 0.05 } } },
+		{ movable::mouse_movement_types::wheel_down, { movable::mov_direction::down, { 0.05 } } },
 	};
-
 
 	movement_processor.register_movable_object(camera,camera_keys);
 	movement_processor.register_movable_object(camera,camera_mouse);
