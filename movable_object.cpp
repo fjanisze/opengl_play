@@ -97,6 +97,7 @@ void movable_object::modify_angle(mov_angles angle,
 	}
 }
 
+
 bool movable_object::move(mov_direction direction,
 						GLfloat amount)
 {

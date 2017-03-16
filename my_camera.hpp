@@ -27,6 +27,15 @@ enum class camera_opt {
 };
 
 /*
+ * Available camera working modes
+ */
+
+enum class camera_mode {
+	space_mode, //Angles and vectors updated according to position and orientation
+	eagle_mode  //The camera will not update the UP vector, forcing movements parallel to x/z
+};
+
+/*
  * Common place for storing all the camera
  * options, with the functions to enable them
  */
@@ -72,17 +81,24 @@ public:
 	void setup_following_options(CUR_OPT&& opt, OPT&&...remaining);
 	glm::vec3 get_camera_front();
 	static camera_obj create_camera(glm::vec3 pos,glm::vec3 target);
+	/*
+	 * When set the camera will maintain a fixed
+	 * UP vector, in this way the camera
+	 * will emulate the eye of an eagle flying
+	 * over the terrain surface.
+	 */
+	bool eagle_mode(bool is_set = true);
 private:
 	void update_angles();
 private:
 	glm::vec3 cam_front,
-			cam_dir,
 			cam_right,
 			cam_up;
 	glm::mat4 cam_view;
 	movable::mov_obj_ptr target_to_follow;
 	target_following_options follow_opt;
 	void evaluate_camera_options();
+	camera_mode mode;
 };
 
 template<typename CUR_OPT,typename...OPT>

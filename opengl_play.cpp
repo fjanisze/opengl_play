@@ -53,7 +53,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 	if( button == GLFW_MOUSE_BUTTON_LEFT &&
 		action == GLFW_PRESS ) {
 		//Create a new light (The positioning do not work properly)
-		glm::vec3 light_pos = camera->get_position();
+/*		glm::vec3 light_pos = camera->get_position();
 
 		LOG1("Creating a new light at pos: ",
 			 light_pos.x,"/",light_pos.y,"/",light_pos.z);
@@ -63,7 +63,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 					6.0);
 		if( nullptr == light ) {
 			WARN1("Unable to create a new light!");
-		}
+		}*/
 	}
 }
 
@@ -189,9 +189,20 @@ opengl_ui::opengl_ui(int win_width,
 	init_text();
 
 	camera = my_camera::create_camera({10.0,10.0,10.0},{0.0,0.0,0.0});
+	camera->eagle_mode();
 
 	for(auto& elem:key_status)
 		elem = key_status_t::not_pressed;
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	//Enable the mouse cursor
+	cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+	glfwSetCursor(window_ctx, cursor);
+	glfwSetInputMode(window_ctx,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -230,7 +241,11 @@ void opengl_ui::setup_scene()
 		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
 		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
 		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
+		{ GLFW_KEY_Q, { movable::mov_direction::yaw_dec, { 0.7 } } },
+		{ GLFW_KEY_E, { movable::mov_direction::yaw_inc, { 0.7 } } },
 	};
+
+
 
 	movable::mouse_mapping_vec camera_mouse = {
 		{ movable::mouse_movement_types::wheel_up, { movable::mov_direction::top, { 0.05 } } },
@@ -249,33 +264,54 @@ void opengl_ui::setup_scene()
 		throw std::runtime_error("Shader creation failure");
 	}
 
-	terrain = models::my_model::create(&model_shader,
+/*	terrain = models::my_model::create(&model_shader,
 									   "../models/Grass/grass.obj",
-									   glm::vec3(1.0,1.0,1.0f));
+									   glm::vec3(1.0,1.0,1.0f));*/
+
+	game_terrain = terrains::terrains::create(&model_shader);
+	game_terrain->load_terrain("../models/Grass/grass.obj",
+							   glm::vec3(1.0),
+							   1);
+
+	game_terrain->load_terrain("../models/Mountain/mountain.obj",
+							   glm::vec3(1.0),
+							   2);
+
+	terrains::terrain_map_t terrain_map = {
+		{1,1,1,1,1,1},
+		{1,1,1,2,1,1},
+		{1,2,2,2,1,1},
+		{1,1,2,1,2,1},
+		{1,1,1,1,1,1}
+	};
+
+	game_terrain->load_terrain_map( terrain_map,
+									2,
+									glm::vec2(1,1) );
+
 
 	light_1 = lights::light_factory<lights::directional_light>::create(
-				glm::vec3(10,100,10),
+				glm::vec3(0,30,0),
 				glm::vec3(0.8,1.0,1.0),
-				4);
+				10);
 
-	flash_light = lights::light_factory<lights::flash_light>::create(
+	light_2 = lights::light_factory<lights::directional_light>::create(
+				glm::vec3(100,50,0),
+				glm::vec3(0.8,0.7,0.7),
+				5);
+
+/*	flash_light = lights::light_factory<lights::flash_light>::create(
 				camera,
 				glm::vec3(1.0f),
 				3,
 				12.5f,
-				18.5f);
+				18.5f);*/
 }
-
 
 void opengl_ui::enter_main_loop()
 {
 	setup_scene();
 	check_for_errors();
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
-	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
@@ -346,8 +382,11 @@ void opengl_ui::update_viewport(int new_win_h,
 
 opengl_ui::~opengl_ui()
 {
-	if(window_ctx!=nullptr){
+	if( nullptr != window_ctx ){
 		glfwTerminate();
+	}
+	if( nullptr != cursor) {
+		glfwDestroyCursor(cursor);
 	}
 }
 

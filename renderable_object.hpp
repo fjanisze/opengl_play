@@ -40,7 +40,7 @@ public:
 					std::size_t priority = 5);
 	static bool remove_renderable(renderable_object* obj);
 
-	virtual void set_transformations(glm::mat4 view,glm::mat4 projection) {}
+	virtual void set_transformations(glm::mat4 view,glm::mat4 projection);
 	virtual void prepare_for_render() {}
 	virtual void render() {}
 	virtual void clean_after_render() {}
@@ -50,6 +50,9 @@ public:
 	virtual void rotate_object(GLfloat yaw) {}
 private:
 	static std::map<std::size_t,rendr_class> renderables;
+protected:
+	glm::mat4 projection_matrix;
+	glm::mat4 view_matrix;
 };
 
 }

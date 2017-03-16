@@ -13,11 +13,9 @@ namespace models
 /// my_mesh implementation
 /////////////////////////////////////
 
-my_mesh::my_mesh(shaders::my_small_shaders *shad,
-			vertices_ptr vertx,
+my_mesh::my_mesh(vertices_ptr vertx,
 			indices_ptr indx,
 			textures_ptr texts) :
-	shader{ shad },
 	vertices{ std::move( vertx ) },
 	indices{ std::move( indx ) },
 	textures{ std::move( texts ) }
@@ -66,7 +64,7 @@ void my_mesh::setup_mesh()
 	glBindVertexArray(0);
 }
 
-void my_mesh::render()
+void my_mesh::render(shaders::my_small_shaders* shader)
 {
 	glBindVertexArray(VAO);
 	GLuint current_unit = 0;
@@ -97,71 +95,27 @@ void my_mesh::render()
 		glBindTexture(GL_TEXTURE_2D, current_tex.id);
 		++current_unit;
 	}
-	//glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 
 	glDrawElements(GL_TRIANGLES, indices->size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
 //////////////////////////////////////
-/// my_model implementation
+/// model_loader and my_model implementation
 /////////////////////////////////////
 
-my_model::my_model(shaders::my_small_shaders *shad,
-				const std::string &model_path,
-				const glm::vec3 &def_object_color,
-				z_axis revert_z) :
-	lights::object_lighting(shad),
-	shader{ shad },
-	model_path{ model_path },
-	object_color{ def_object_color },
-	revert_z_axis{ revert_z == z_axis::revert }
+model_loader::model_loader(const std::string &path,
+						   z_axis revert_z) :
+	model_path{ path },
+	revert_z_axis{ revert_z == z_axis::revert  }
 {
-	LOG1("Creating a new my_model. Model path: ",
-		 model_path.c_str());
-
 	load_model();
-
-	add_renderable(this);
 }
 
-void my_model::set_transformations(glm::mat4 view, glm::mat4 projection)
+bool model_loader::load_model()
 {
-	projection_matrix = projection;
-	view_matrix = view;
-}
-
-void my_model::prepare_for_render()
-{
-	shader->use_shaders();
-	GLint model_loc = glGetUniformLocation(*shader,"model");
-	GLint view_loc = glGetUniformLocation(*shader,"view");
-	GLint projection_loc = glGetUniformLocation(*shader,"projection");
-
-	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
-
-	calculate_lighting();
-
-	apply_object_color(object_color);
-}
-
-void my_model::render()
-{
-	for( auto& mesh : meshes ) {
-		mesh->render();
-	}
-}
-
-void my_model::clean_after_render()
-{
-
-}
-
-bool my_model::load_model()
-{
-	LOG1("my_model::load_model: Loading ",
+	LOG1("model_loader::load_model: Loading ",
 		 model_path.c_str());
 	Assimp::Importer import;
 	const aiScene* scene = import.ReadFile(model_path,
@@ -180,8 +134,13 @@ bool my_model::load_model()
 	return true;
 }
 
+std::vector<mesh_ptr> &model_loader::get_mesh()
+{
+	return meshes;
+}
 
-void my_model::process_model(aiNode *node,
+
+void model_loader::process_model(aiNode *node,
 					const aiScene *scene)
 {
 	LOG1("Processing loaded model, ",
@@ -201,7 +160,7 @@ void my_model::process_model(aiNode *node,
 	}
 }
 
-my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
+mesh_ptr model_loader::process_mesh(aiMesh *mesh,
 										  const aiScene *scene)
 {
 	my_mesh::vertices_ptr vertices = std::make_unique<std::vector<vertex_t>>();
@@ -260,14 +219,13 @@ my_model::mesh_ptr my_model::process_mesh(aiMesh *mesh,
 		textures = std::move( diffuse_maps );
 	}
 	// Return a mesh object created from the extracted mesh data
-	return std::make_unique<my_mesh>(shader,
-									 std::forward<my_mesh::vertices_ptr>( vertices ),
+	return std::make_unique<my_mesh>(std::forward<my_mesh::vertices_ptr>( vertices ),
 									 std::forward<my_mesh::indices_ptr>( indices ),
 									 std::forward<my_mesh::textures_ptr>( textures ) );
 	return nullptr;
 }
 
-my_mesh::textures_ptr my_model::process_texture(const aiMaterial *material,
+my_mesh::textures_ptr model_loader::process_texture(const aiMaterial *material,
 									aiTextureType type)
 {
 	my_mesh::textures_ptr textures = std::make_unique<std::vector<texture_t>>();
@@ -285,6 +243,51 @@ my_mesh::textures_ptr my_model::process_texture(const aiMaterial *material,
 		textures->push_back(texture);
 	}
 	return std::move( textures );
+}
+
+my_model::my_model(shaders::my_small_shaders *shad,
+				const std::string &model_path,
+				const glm::vec3 &def_object_color,
+				z_axis revert_z) :
+	model_loader( model_path, revert_z ),
+	lights::object_lighting(shad),
+	shader{ shad },
+	object_color{ def_object_color }
+{
+	LOG1("Creating a new my_model. Model path: ",
+		 model_path.c_str());
+
+	load_model();
+
+	add_renderable(this);
+}
+
+void my_model::prepare_for_render()
+{
+	shader->use_shaders();
+	GLint model_loc = glGetUniformLocation(*shader,"model");
+	GLint view_loc = glGetUniformLocation(*shader,"view");
+	GLint projection_loc = glGetUniformLocation(*shader,"projection");
+
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+
+	calculate_lighting();
+
+	apply_object_color(object_color);
+}
+
+void my_model::render()
+{
+	for( auto& mesh : get_mesh() ) {
+		mesh->render(shader);
+	}
+}
+
+void my_model::clean_after_render()
+{
+
 }
 
 }

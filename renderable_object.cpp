@@ -43,6 +43,12 @@ bool renderable_object::remove_renderable(renderable_object *object)
 	return false;
 }
 
+void renderable_object::set_transformations(glm::mat4 view,glm::mat4 projection)
+{
+	projection_matrix = projection;
+	view_matrix = view;
+}
+
 std::string renderable_object::renderable_nice_name()
 {
 	return "not provided";

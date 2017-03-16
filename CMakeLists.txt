@@ -3,11 +3,14 @@ cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
+SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -ggdb")
+
 #########################################################
 # C++1y
 #########################################################
 
-SET(COMPILER_OPT_LVL "-O2")
+#SET(COMPILER_OPT_LVL "-O2")
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++1z" COMPILER_SUPPORTS_CXX1Z)

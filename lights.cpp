@@ -13,7 +13,7 @@ object_lighting::object_lighting(shaders::my_small_shaders * shader) :
 	 * Hardcoded size! This allow to support
 	 * something like 128 lights!
 	 */
-	light_data_buffer.resize( 1024 );
+	light_data_buffer.resize( 1024 ); //TODO, there should be one buffer for ALL, not many copies with identical data (see calculate_lighting)
 }
 
 /*

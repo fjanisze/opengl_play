@@ -1,3 +1,6 @@
+#ifndef TEXTURES_HPP
+#define TEXTURES_HPP
+
 #include <headers.hpp>
 #include <assimp/scene.h>
 
@@ -44,3 +47,5 @@ constexpr texture_type map_texture_type(const aiTextureType type) {
 texture_t load_texture(const std::string &filename, GLint wrapping_method = GL_REPEAT);
 
 }
+
+#endif

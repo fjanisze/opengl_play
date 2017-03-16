@@ -61,14 +61,10 @@ public:
 	 * selected 'target' (camera?)
 	 */
 	void limit_render_distance(movable::mov_obj_ptr target,GLfloat radius);
-	void object_rotation(rotation_axis axis, GLfloat amount);
-	void move(mov_direction dir, GLfloat amount);
-	glm::vec3 get_object_position();
 	void scale(GLfloat amount);
 	void set_transformations(glm::mat4 v,glm::mat4 p);
 	void add_object(const glm::vec3& coordinates,const glm::vec3& color,GLfloat scale);
 	void modify_view(glm::mat4 new_view);
-	std::set<int> get_all_objects();
 private:
 	GLuint VAO,VBO;
 	std::map<std::string,texture_info> textures;

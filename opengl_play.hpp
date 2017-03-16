@@ -9,6 +9,7 @@
 #include <movable_object.hpp>
 #include <random>
 #include <models.hpp>
+#include <terrains.hpp>
 
 namespace opengl_play
 {
@@ -57,14 +58,17 @@ public:
 	GLFWcursor*   cursor;
 	text_renderer::rendr_text fps_info,
 						camera_info;
+
 	int win_h,
 		win_w;
 	camera_obj		camera;
 
 	my_lines_ptr position_lines;
 	shaders::my_small_shaders model_shader;
+	terrains::terrains_ptr game_terrain;
 	models::model_ptr terrain;
 	lights::generic_light_ptr light_1,
+							  light_2,
 							flash_light;
 
 	movable::object_movement_processor movement_processor;

@@ -14,9 +14,21 @@ camera_obj my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
 	return std::make_shared<my_camera>(pos,target);
 }
 
+bool my_camera::eagle_mode(bool is_set)
+{
+	bool old = ( mode == camera_mode::eagle_mode );
+	if( is_set ) {
+		mode = camera_mode::eagle_mode;
+	} else {
+		mode = camera_mode::space_mode;
+	}
+	return old;
+}
+
 my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 	cam_front( glm::normalize( target - position ) ),
-	target_to_follow{ nullptr }
+	target_to_follow{ nullptr },
+	mode{ camera_mode::space_mode }
 {
 	set_position( position );
 	cam_up = glm::vec3( 0.0, 1.0, 0.0 );//Point upward
@@ -106,7 +118,10 @@ void my_camera::modify_angle(mov_angles angle,GLfloat amount)
 											   glm::vec3(cos(glm::radians(current_roll)),
 														 sin(glm::radians(current_roll)),
 														 0.0) ));
-		cam_up = glm::normalize( glm::cross( cam_right, cam_front ) );
+
+		if( mode == camera_mode::space_mode ) {
+			cam_up = glm::normalize( glm::cross( cam_right, cam_front ) );
+		}
 		update_cam_view();
 	}
 }
