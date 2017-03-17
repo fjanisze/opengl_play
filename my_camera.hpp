@@ -100,8 +100,12 @@ private:
 	target_following_options follow_opt;
 	void evaluate_camera_options();
 	camera_mode mode;
+	/*
+	 * The angle between the camera
+	 * direction and X, required to perform
+	 * rotations around the target
+	 */
 	GLfloat rotation_angle;
-	GLfloat rotation_pv_dist;
 };
 
 template<typename CUR_OPT,typename...OPT>

@@ -25,6 +25,9 @@ my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 
 	update_angles();
 	update_cam_view();
+
+	//Will be initialized when needed.
+	rotation_angle = -1;
 }
 
 
@@ -41,27 +44,54 @@ bool my_camera::eagle_mode(bool is_set)
 
 void my_camera::rotate_around(GLfloat amount)
 {
-	std::cout<<amount<<std::endl;
 	if( amount == 0 ) {
 		WARN1("rotate_around with argument 0 make no sense!");
 		return;
 	}
+	/*
+	 * Calculate the target position, it is
+	 * the point at Y=0 in the direction where
+	 * the camera is looking at: cam_front
+	 */
 	glm::vec3 cam_pos = get_position();
 	glm::vec3 target = cam_pos;
 	while( target.y > 0 ) {
 		target += cam_front * 0.01f;
 	}
-	target.y = 0;
+	target.y = 0;//Make sure is 0 and not some small number
+	//When rotating the distance do not change
 	GLfloat distance = glm::distance( glm::vec3(cam_pos.x,0.0,cam_pos.z),
 									  target );
+
+	//Eventually set the initial rotation angle
+	if( rotation_angle < 0 ) {
+		glm::vec3 deltas = glm::vec3(cam_pos.x,0.0,cam_pos.z) - target;
+		rotation_angle = glm::degrees( std::acos( deltas.x / distance ) );
+		LOG1("Initial value of the rotation angle ",
+			 rotation_angle);
+	}
+	//Make sure that 0<rotation_angle<360
 	rotation_angle += amount;
-	if( rotation_angle >= 359.99 ) rotation_angle = 0.01;
+	if( rotation_angle >= 359.99 ) {
+		rotation_angle = 0.01;
+	}
+	if( rotation_angle <= 0 ) {
+		rotation_angle = 359.99;
+	}
+	/*
+	 * Calculate the new position on the base
+	 * of the amount of rotation
+	 */
 	GLfloat angle = glm::radians( rotation_angle );
 	glm::vec3 new_pos(
 				target.x + cos( angle ) * distance,
 				cam_pos.y,
 				target.z + sin( angle ) * distance
 				);
+	/*
+	 * Update camera vectors to make sure
+	 * we point in the right direction
+	*/
 	cam_front = glm::normalize( target - new_pos );
 	cam_right = glm::normalize( glm::cross( cam_front, cam_up ) );
 	set_position( new_pos );
