@@ -39,7 +39,9 @@ enum class mov_direction
 	pitch_inc,//8
 	pitch_dec,//9
 	roll_inc, //10
-	roll_dec  //11
+	roll_dec,  //11
+	rotate_left, //Rotate around a given target
+	rotate_right
 };
 
 constexpr
@@ -122,6 +124,7 @@ public:
 	 * to the position the function return true
 	 */
 	virtual bool move(mov_direction direction, GLfloat amount);
+	virtual void rotate_around(GLfloat amount);
 	virtual glm::mat4 get_model_matrix();
 	movement_mapping& get_movement_setup();
 };

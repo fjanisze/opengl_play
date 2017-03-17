@@ -88,6 +88,7 @@ public:
 	 * over the terrain surface.
 	 */
 	bool eagle_mode(bool is_set = true);
+	void rotate_around(GLfloat amount) override;
 private:
 	void update_angles();
 private:
@@ -99,6 +100,8 @@ private:
 	target_following_options follow_opt;
 	void evaluate_camera_options();
 	camera_mode mode;
+	GLfloat rotation_angle;
+	GLfloat rotation_pv_dist;
 };
 
 template<typename CUR_OPT,typename...OPT>

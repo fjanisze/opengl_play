@@ -14,17 +14,6 @@ camera_obj my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
 	return std::make_shared<my_camera>(pos,target);
 }
 
-bool my_camera::eagle_mode(bool is_set)
-{
-	bool old = ( mode == camera_mode::eagle_mode );
-	if( is_set ) {
-		mode = camera_mode::eagle_mode;
-	} else {
-		mode = camera_mode::space_mode;
-	}
-	return old;
-}
-
 my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 	cam_front( glm::normalize( target - position ) ),
 	target_to_follow{ nullptr },
@@ -36,6 +25,47 @@ my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 
 	update_angles();
 	update_cam_view();
+}
+
+
+bool my_camera::eagle_mode(bool is_set)
+{
+	bool old = ( mode == camera_mode::eagle_mode );
+	if( is_set ) {
+		mode = camera_mode::eagle_mode;
+	} else {
+		mode = camera_mode::space_mode;
+	}
+	return old;
+}
+
+void my_camera::rotate_around(GLfloat amount)
+{
+	std::cout<<amount<<std::endl;
+	if( amount == 0 ) {
+		WARN1("rotate_around with argument 0 make no sense!");
+		return;
+	}
+	glm::vec3 cam_pos = get_position();
+	glm::vec3 target = cam_pos;
+	while( target.y > 0 ) {
+		target += cam_front * 0.01f;
+	}
+	target.y = 0;
+	GLfloat distance = glm::distance( glm::vec3(cam_pos.x,0.0,cam_pos.z),
+									  target );
+	rotation_angle += amount;
+	if( rotation_angle >= 359.99 ) rotation_angle = 0.01;
+	GLfloat angle = glm::radians( rotation_angle );
+	glm::vec3 new_pos(
+				target.x + cos( angle ) * distance,
+				cam_pos.y,
+				target.z + sin( angle ) * distance
+				);
+	cam_front = glm::normalize( target - new_pos );
+	cam_right = glm::normalize( glm::cross( cam_front, cam_up ) );
+	set_position( new_pos );
+	update_angles();
 }
 
 void my_camera::update_cam_view()

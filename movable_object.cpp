@@ -137,6 +137,11 @@ bool movable_object::move(mov_direction direction,
 	return ret;
 }
 
+void movable_object::rotate_around(GLfloat amount)
+{
+	ERR("NOT IMPLEMENTED");
+}
+
 glm::mat4 movable_object::get_model_matrix()
 {
 	return model;
@@ -392,6 +397,11 @@ void object_movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
 				speed *= -1;
 			case mov_direction::roll_inc:
 				obj->modify_angle(mov_angles::roll, speed);
+				break;
+			case mov_direction::rotate_right:
+				speed *= -1;
+			case mov_direction::rotate_left:
+				obj->rotate_around( speed );
 				break;
 			default:
 				ERR("trigger_proper_movement: Unrecognize movement direction");

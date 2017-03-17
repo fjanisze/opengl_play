@@ -241,8 +241,8 @@ void opengl_ui::setup_scene()
 		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
 		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
 		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
-		{ GLFW_KEY_Q, { movable::mov_direction::yaw_dec, { 0.7 } } },
-		{ GLFW_KEY_E, { movable::mov_direction::yaw_inc, { 0.7 } } },
+		{ GLFW_KEY_Q, { movable::mov_direction::rotate_left, { 0.3 } } },
+		{ GLFW_KEY_E, { movable::mov_direction::rotate_right, { 0.3 } } },
 	};
 
 
@@ -329,7 +329,6 @@ void opengl_ui::enter_main_loop()
 		glfwPollEvents();
 		evaluate_key_status();
 		movement_processor.process_movements();
-		camera->follow_target();
 
 		auto current_time = std::chrono::system_clock::now();
 		if(std::chrono::duration_cast<
