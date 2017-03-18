@@ -32,6 +32,12 @@ void cursor_pos_callback(GLFWwindow *ctx,
 	ui_instance->ui_mouse_move(x,y);
 }
 
+void mouse_cursor_enter_window(GLFWwindow* ctx,
+							   int state)
+{
+	ui_instance->ui_mouse_enter_window(state);
+}
+
 void window_resize_callback(GLFWwindow *ctx,
 							int width,
 							int height)
@@ -47,6 +53,7 @@ void keyboard_press_callback(GLFWwindow* ctx,
 {
 	ui_instance->ui_keyboard_press(key,scode,action);
 }
+
 
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
@@ -67,9 +74,56 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 	}
 }
 
+glm::vec3 opengl_ui::get3dPoint(glm::vec2 point)
+{
+	//From viewport to Normalized Device Coordinates
+	double x = ( 2.0f * point.x ) / win_w - 1.0f;
+	double y = 1.0 - ( 2.0 * point.y ) / win_h;
+	double z = -1;
+	glm::vec4 ray_clip( x, y, z, 1.0 );
+
+	//Eye space (camera is origin)
+	glm::vec4 ray_eye = glm::inverse( projection ) * ray_clip;
+	//Manual un-project of the xy coords.
+	ray_eye.z = -1.0;
+	ray_eye.w = 0.0;
+
+	//World coordinates
+	glm::vec4 world_coord = glm::normalize( glm::inverse( camera->get_view() ) * ray_eye );
+	return glm::vec3( world_coord.x, world_coord.y, world_coord.z );
+}
+
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
 	movement_processor.mouse_input(x, y);
+	/*
+	 * Add a line poiting from the mouse cursor
+	 * position in the direction of the current
+	 * front view
+	 */
+	glm::vec3 point = get3dPoint({x,y});
+	//DUMP_VEC3("pos:",point);
+	game_terrain->check_for_hits({ point.x, point.z});
+	/*if( mouse_line_idx == position_lines->get_invalid_id() ) {
+
+		mouse_line_idx = position_lines->add_line(
+					camera->get_position(),
+					glm::vec3(0.0),
+					glm::vec3(1.0));
+	} else {
+		position_lines->modify_line_endpoints( mouse_line_idx,
+											   camera->get_position(),
+											   glm::vec3(0.0));
+	}*/
+}
+
+void opengl_ui::ui_mouse_enter_window(int state)
+{
+	if( GLFW_TRUE == state ) {
+		LOG2("Cursor enter the window!");
+	} else {
+		LOG2("Cursor exit the window!");
+	}
 }
 
 void opengl_ui::ui_wheel_move(GLdouble x, GLdouble y)
@@ -111,6 +165,8 @@ void opengl_ui::setup_callbacks()
 						  mouse_wheel_callback);
 	glfwSetCursorPosCallback(window_ctx,
 							 cursor_pos_callback);
+	glfwSetCursorEnterCallback(window_ctx,
+							   mouse_cursor_enter_window);
 	glfwSetWindowSizeCallback(window_ctx,
 							  window_resize_callback);
 	glfwSetKeyCallback(window_ctx,
@@ -184,11 +240,12 @@ opengl_ui::opengl_ui(int win_width,
 	}
 
 	object = std::make_shared<little_object>();
-	position_lines = std::make_shared<my_static_lines>();
+	position_lines = std::make_shared<my_simple_lines>();
+	mouse_line_idx = position_lines->get_invalid_id();
 
 	init_text();
 
-	camera = my_camera::create_camera({10.0,10.0,10.0},{0.0,0.0,0.0});
+	camera = my_camera::create_camera({-5.0,-10.0,10},{0.0,0.0,0.0});
 	camera->eagle_mode();
 
 	for(auto& elem:key_status)
@@ -197,7 +254,6 @@ opengl_ui::opengl_ui(int win_width,
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	glfwSetInputMode(window_ctx, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//Enable the mouse cursor
 	cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
@@ -237,19 +293,18 @@ void opengl_ui::setup_scene()
 	//Let our model be movable
 	//Register the camera as movable object
 	movable::key_mapping_vec camera_keys = {
-		{ GLFW_KEY_W, { movable::mov_direction::forward, { 0.3 } } },
-		{ GLFW_KEY_S, { movable::mov_direction::backward, { 0.3 } } },
+		{ GLFW_KEY_W, { movable::mov_direction::top, { 0.5 } } },
+		{ GLFW_KEY_S, { movable::mov_direction::down, { 0.5 } } },
 		{ GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
 		{ GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
-		{ GLFW_KEY_Q, { movable::mov_direction::rotate_left, { 1.0 } } },
-		{ GLFW_KEY_E, { movable::mov_direction::rotate_right, { 1.0 } } },
+		{ GLFW_KEY_Q, { movable::mov_direction::rotate_left, { 2.0 } } },
+		{ GLFW_KEY_E, { movable::mov_direction::rotate_right, { 2.0 } } },
 	};
 
 
-
 	movable::mouse_mapping_vec camera_mouse = {
-		{ movable::mouse_movement_types::wheel_up, { movable::mov_direction::top, { 0.05 } } },
-		{ movable::mouse_movement_types::wheel_down, { movable::mov_direction::down, { 0.05 } } },
+		{ movable::mouse_movement_types::wheel_up, { movable::mov_direction::forward, { 0.05 } } },
+		{ movable::mouse_movement_types::wheel_down, { movable::mov_direction::backward, { 0.05 } } },
 	};
 
 	movement_processor.register_movable_object(camera,camera_keys);
@@ -291,14 +346,14 @@ void opengl_ui::setup_scene()
 
 
 	light_1 = lights::light_factory<lights::directional_light>::create(
-				glm::vec3(0,30,0),
-				glm::vec3(0.8,1.0,1.0),
+				glm::vec3(30,30,30),
+				glm::vec3(0.9,0.8,0.7),
 				10);
 
 	light_2 = lights::light_factory<lights::directional_light>::create(
-				glm::vec3(100,50,0),
+				glm::vec3(-10,100,-10),
 				glm::vec3(0.8,0.7,0.7),
-				5);
+				4);
 
 /*	flash_light = lights::light_factory<lights::flash_light>::create(
 				camera,
@@ -316,11 +371,9 @@ void opengl_ui::enter_main_loop()
 	auto ref_time = std::chrono::system_clock::now();
 	int  current_fps = 0;
 
-	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f),
 						(GLfloat)win_w / (GLfloat)win_h,
 						1.0f, 1000.0f);
-
 
 	LOG2("Entering main loop!");
 	while(!glfwWindowShouldClose(window_ctx))

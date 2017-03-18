@@ -14,7 +14,7 @@ movable_object::movable_object() :
 	current_position{ glm::vec3() },
 	current_yaw{ 0 },
 	current_pitch{ 0 },
-	current_roll{ 90 },
+	current_roll{ /* 90 */ 0 },
 	current_scale{ 1.0 }
 {
 
@@ -383,9 +383,9 @@ void object_movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
 			case mov_direction::backward:
 				obj->move(dir, speed);
 				break;
-			case mov_direction::yaw_dec:
-				speed *= -1;
 			case mov_direction::yaw_inc:
+				speed *= -1;
+			case mov_direction::yaw_dec:
 				obj->modify_angle(mov_angles::yaw, speed);
 				break;
 			case mov_direction::pitch_dec:

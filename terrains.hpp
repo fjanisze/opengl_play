@@ -69,6 +69,9 @@ public:
 	static terrains_ptr create(shaders::my_small_shaders* shader) {
 		return std::make_shared<terrains>(shader);
 	}
+
+	/* TESTCODE */
+	void check_for_hits(const glm::vec2& point);
 private:
 	shaders::my_small_shaders* shader;
 	std::unordered_map<long,models::model_loader_ptr> terrain_container;

@@ -3,7 +3,8 @@
 namespace opengl_play
 {
 
-my_static_lines::my_static_lines()
+my_simple_lines::my_simple_lines() :
+	next_line_id{ 1 }
 {
 	LOG1("my_lines::my_lines(): Construction");
 	shaders.load_vertex_shader(
@@ -22,13 +23,13 @@ my_static_lines::my_static_lines()
 	add_renderable(this, 1);
 }
 
-my_static_lines::~my_static_lines()
+my_simple_lines::~my_simple_lines()
 {
 	glDeleteVertexArrays(1,&VAO);
 	glDeleteBuffers(1,&VBO);
 }
 
-int my_static_lines::add_line(glm::vec3 from, glm::vec3 to,
+int my_simple_lines::add_line(glm::vec3 from, glm::vec3 to,
 					glm::vec3 color)
 {
 	single_line new_line = {
@@ -38,18 +39,22 @@ int my_static_lines::add_line(glm::vec3 from, glm::vec3 to,
 		{color.r,color.b,color.g}
 	};
 	lines.push_back(new_line);
+	line_data_idx[ next_line_id ] = lines.size() - 1;
 	update_buffers();
-	return lines.size();
+	LOG2("Line with ID: ",next_line_id," idx:",
+		 line_data_idx[ next_line_id ],
+		 " added. Amount of lines: ", lines.size());
+	return next_line_id++;
 }
 
-void my_static_lines::set_transformations(glm::mat4 v,
+void my_simple_lines::set_transformations(glm::mat4 v,
 								glm::mat4 p)
 {
 	view = v;
 	projection = p;
 }
 
-void my_static_lines::update_buffers()
+void my_simple_lines::update_buffers()
 {
 	glBindVertexArray(VAO);
 
@@ -72,12 +77,12 @@ void my_static_lines::update_buffers()
 	glBindVertexArray(0);
 }
 
-void my_static_lines::modify_view(glm::mat4 new_view)
+void my_simple_lines::modify_view(glm::mat4 new_view)
 {
 	view = new_view;
 }
 
-void my_static_lines::prepare_for_render()
+void my_simple_lines::prepare_for_render()
 {
 	shaders.use_shaders();
 	GLint view_loc = glGetUniformLocation(shaders,"view");
@@ -91,21 +96,54 @@ void my_static_lines::prepare_for_render()
 
 }
 
-void my_static_lines::render()
+void my_simple_lines::render()
 {
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_LINES,0,lines.size() * 2);
 	glBindVertexArray(0);
 }
 
-void my_static_lines::clean_after_render()
+void my_simple_lines::clean_after_render()
 {
 
 }
 
-std::string my_static_lines::renderable_nice_name()
+std::string my_simple_lines::renderable_nice_name()
 {
 	return "static_line";
+}
+
+const single_line * const my_simple_lines::get_line_info(int id) const
+{
+	auto it = line_data_idx.find( id );
+	if( it == line_data_idx.end() ) {
+		return nullptr;
+	}
+	return (lines.data() + it->second);
+}
+
+bool my_simple_lines::modify_line_endpoints(int id,
+							const glm::vec3 &origin,
+							const glm::vec3 &end)
+{
+	auto it = line_data_idx.find( id );
+	if( it == line_data_idx.end() ) {
+		return false;
+	}
+	int idx = line_data_idx[ it->second ];
+	lines[ idx ].from[0] = origin.x;
+	lines[ idx ].from[1] = origin.y;
+	lines[ idx ].from[2] = origin.z;
+	lines[ idx ].to[0] = end.x;
+	lines[ idx ].to[1] = end.y;
+	lines[ idx ].to[2] = end.z;
+	update_buffers();
+	return true;
+}
+
+int my_simple_lines::get_invalid_id()
+{
+	return 0;
 }
 
 }

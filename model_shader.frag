@@ -112,12 +112,12 @@ void main()
 	//The specular calculations are the same for both the lights
 	vec3 view_dir = normalize( camera_pos - frag_pos );
 	vec3 reflect_dir = reflect(-light_dir, norm);
-	float spec = pow(max(dot(view_dir,reflect_dir),0.0),32);
+	float spec = pow( max( dot(view_dir,reflect_dir), 0.0), 32);
 	vec3 specular =  spec * light_color;
-	specular *= (vec3(texture(loaded_texture_specular_map1,texture_coords)) * .5 * attenuation);
+	specular *= (vec3(texture(loaded_texture_specular_map1,texture_coords)) * .3 * attenuation);
 	spec_res += specular;
     }
-    final_object_color = ( diffuse_res + spec_res ) * object_color;
+    final_object_color = ( diffuse_res + spec_res + vec3(0.05) ) * object_color;
     //Final color
     color = vec4( final_object_color ,1.0 );
 }

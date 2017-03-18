@@ -39,6 +39,8 @@ class opengl_ui
 	void init_text();
 	void evaluate_key_status();
 	void setup_scene();
+
+	glm::vec3 get3dPoint(glm::vec2 point2D);
 public:
 	opengl_ui(int win_width, int win_heigth);
 	void        prepare_for_main_loop();
@@ -48,14 +50,17 @@ public:
 								int new_win_w);
 	void		ui_mouse_click(GLint button,GLint action);
 	void        ui_mouse_move(GLdouble x,GLdouble y);
+	void		ui_mouse_enter_window(int state);
 	void		ui_wheel_move(GLdouble x,GLdouble y);
 	void		ui_keyboard_press(GLint button,GLint scode,GLint action);
 	virtual ~opengl_ui();
 public:
 	key_status_t  key_status[stat_key_array_size];
 	GLFWwindow*   window_ctx;
+	glm::mat4	  projection;
 	little_object_ptr object;
 	GLFWcursor*   cursor;
+	int			  mouse_line_idx;
 	text_renderer::rendr_text fps_info,
 						camera_info;
 

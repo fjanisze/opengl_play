@@ -9,6 +9,8 @@
 namespace opengl_play
 {
 
+glm::vec3 get_vec_3( const glm::mat4& mat );
+
 using movable::mov_angles;
 using movable::mov_direction;
 

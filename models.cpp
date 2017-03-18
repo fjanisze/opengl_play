@@ -108,7 +108,7 @@ void my_mesh::render(shaders::my_small_shaders* shader)
 model_loader::model_loader(const std::string &path,
 						   z_axis revert_z) :
 	model_path{ path },
-	revert_z_axis{ revert_z == z_axis::revert  }
+	revert_z_axis{ revert_z == z_axis::normal  }
 {
 	load_model();
 }
@@ -173,13 +173,13 @@ mesh_ptr model_loader::process_mesh(aiMesh *mesh,
 		vertex_t vertex;
 		// Positions
 		vertex.coordinate.x = mesh->mVertices[i].x;
-		vertex.coordinate.y = mesh->mVertices[i].y;
-		vertex.coordinate.z = (revert_z_axis ? -1 : 1 ) * mesh->mVertices[i].z;
+		vertex.coordinate.y = mesh->mVertices[i].z;
+		vertex.coordinate.z = -(revert_z_axis ? -1 : 1 ) * mesh->mVertices[i].y;
 		// Normals
 		if( mesh->mNormals ) {
 			vertex.normal.x = mesh->mNormals[i].x;
-			vertex.normal.y = mesh->mNormals[i].y;
-			vertex.normal.z = (revert_z_axis ? -1 : 1 ) * mesh->mNormals[i].z;
+			vertex.normal.y = mesh->mNormals[i].z;
+			vertex.normal.z = -(revert_z_axis ? -1 : 1 ) * mesh->mNormals[i].y;
 		}
 		// Texture Coordinates
 		if(mesh->mTextureCoords[0]) // Does the mesh contain texture coordinates?

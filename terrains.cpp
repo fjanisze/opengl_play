@@ -79,8 +79,8 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
 			new_lot.position = glm::vec2(x - central_lot.x, y - central_lot.y );
 			new_lot.model_matrix = glm::translate( new_lot.model_matrix,
 												   glm::vec3( new_lot.position.x * lot_size,
-															  0.0,
-															  new_lot.position.y * lot_size) );
+															  new_lot.position.y * lot_size,
+															  0.0) );
 			/*
 			 * Is the lot model available?
 			 */
@@ -131,6 +131,20 @@ void terrains::render()
 void terrains::clean_after_render()
 {
 
+}
+
+void terrains::check_for_hits(const glm::vec2 &point)
+{
+	for( auto&& lot : terrain_map )
+	{
+		glm::vec2 pos( lot.model_matrix[3].x, lot.model_matrix[3].z );
+		pos = glm::normalize( pos );
+		if( point.x > pos.x && point.x <= pos.x + 1.0f/lot_size ) {
+			if( point.y > pos.y && point.y <= pos.y + 1.0f/lot_size) {
+				std::cout<<"Selected: "<<lot.terrain_id<<": "<<lot.position.x<<","<<lot.position.y<<std::endl;
+			}
+		}
+	}
 }
 
 

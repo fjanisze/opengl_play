@@ -4,7 +4,6 @@
 namespace opengl_play
 {
 
-static
 glm::vec3 get_vec_3( const glm::mat4& mat ) {
 	return glm::vec3( mat[3].x, mat[3].y, mat[3].z);
 }
@@ -20,10 +19,11 @@ my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 	mode{ camera_mode::space_mode }
 {
 	set_position( position );
-	cam_up = glm::vec3( 0.0, 1.0, 0.0 );//Point upward
-	cam_right = glm::normalize(glm::cross(cam_front,glm::vec3(0.0,1.0,0.0)));
-
 	update_angles();
+
+	cam_up = glm::vec3( 0.0, 0.0, cos( glm::degrees( current_pitch ) ) );//Point upward
+	cam_right = glm::normalize( glm::cross( cam_front, cam_up) );
+
 	update_cam_view();
 
 	//Will be initialized when needed.
@@ -35,7 +35,21 @@ bool my_camera::eagle_mode(bool is_set)
 {
 	bool old = ( mode == camera_mode::eagle_mode );
 	if( is_set ) {
+		/*
+		 * top/down and left/right will move
+		 * over Y and X
+		 */
+		update_angles();
 		mode = camera_mode::eagle_mode;
+		cam_up = glm::vec3(
+			sin( glm::radians( current_yaw ) ), //x
+			(current_position.y < 0 ? 1 : +1 ) * cos( glm::radians( current_yaw ) ), //y
+			0.0); //z
+
+		cam_right = glm::normalize( glm::cross( cam_front,
+												glm::vec3(0.0,0.0,1.0)) );
+		cam_right.z = 0;
+		update_cam_view();
 	} else {
 		mode = camera_mode::space_mode;
 	}
@@ -50,23 +64,27 @@ void my_camera::rotate_around(GLfloat amount)
 	}
 	/*
 	 * Calculate the target position, it is
-	 * the point at Y=0 in the direction where
+	 * the point at Z=0 in the direction where
 	 * the camera is looking at: cam_front
+	 * TODO: Improve..
 	 */
 	glm::vec3 cam_pos = get_position();
 	glm::vec3 target = cam_pos;
-	while( target.y > 0 ) {
+	while( target.z > 0 ) {
 		target += cam_front * 0.01f;
 	}
-	target.y = 0;//Make sure is 0 and not some small number
+	target.z = 0;//Make sure is 0 and not some small number
 	//When rotating the distance do not change
-	GLfloat distance = glm::distance( glm::vec3(cam_pos.x,0.0,cam_pos.z),
+	GLfloat distance = glm::distance( glm::vec3(cam_pos.x,cam_pos.y,0.0),
 									  target );
 
 	//Eventually set the initial rotation angle
 	if( rotation_angle < 0 ) {
-		glm::vec3 deltas = glm::vec3(cam_pos.x,0.0,cam_pos.z) - target;
+		glm::vec3 deltas = glm::vec3(cam_pos.x,cam_pos.y,cam_pos.z) - target;
 		rotation_angle = glm::degrees( std::acos( deltas.x / distance ) );
+		if( cam_pos.y < 0 ) {
+			rotation_angle = 360 - rotation_angle;
+		}
 		LOG1("Initial value of the rotation angle ",
 			 rotation_angle);
 	}
@@ -83,17 +101,24 @@ void my_camera::rotate_around(GLfloat amount)
 	 * of the amount of rotation
 	 */
 	GLfloat angle = glm::radians( rotation_angle );
+
 	glm::vec3 new_pos(
 				target.x + cos( angle ) * distance,
-				cam_pos.y,
-				target.z + sin( angle ) * distance
+				target.y + sin( angle ) * distance,
+				cam_pos.z
 				);
 	/*
 	 * Update camera vectors to make sure
 	 * we point in the right direction
 	*/
 	cam_front = glm::normalize( target - new_pos );
-	cam_right = glm::normalize( glm::cross( cam_front, cam_up ) );
+
+	cam_up = cam_front;
+	cam_up.z = 0;
+
+	cam_right = glm::normalize( glm::cross( cam_front,
+								glm::vec3( 0.0, 0.0, 1.0 ) ) );
+
 	set_position( new_pos );
 	update_angles();
 }
@@ -114,16 +139,16 @@ bool my_camera::move(mov_direction direction, GLfloat amount)
 		current_position -= cam_right * amount;
 		break;
 	case mov_direction::top:
-		current_position += cam_front * amount;
+		current_position +=  cam_up * amount;
 		break;
 	case mov_direction::down:
-		current_position -= cam_front * amount;
+		current_position -= cam_up * amount;
 		break;
 	case mov_direction::forward:
-		current_position -= glm::cross( cam_right, cam_up ) * amount;
+		current_position += cam_front * amount;
 		break;
 	case mov_direction::backward:
-		current_position += glm::cross( cam_right, cam_up ) * amount;
+		current_position -= cam_front * amount;
 		break;
 	default:
 		ERR("my_camera::move: Unknow direction, ",
@@ -169,19 +194,18 @@ void my_camera::modify_angle(mov_angles angle,GLfloat amount)
 		if( current_pitch >= 89.99 ) current_pitch = 89.99;
 		if( current_pitch <= -89.99 ) current_pitch = -89.99;
 
-		cam_front.x += cos(glm::radians(current_pitch)) * cos(glm::radians(current_yaw));
-		cam_front.y += sin(glm::radians(current_pitch));
-		cam_front.z += cos(glm::radians(current_pitch)) * sin(glm::radians(current_yaw));
+		cam_front.x += sin( glm::radians( current_yaw ) ) * cos( glm::radians( current_pitch ) );
+		cam_front.y += cos( glm::radians( current_yaw ) ) * cos( glm::radians( current_pitch ) );
+		cam_front.z += sin( glm::radians( current_pitch ) );
 
 		cam_front = glm::normalize( cam_front );
-		cam_right = glm::normalize(glm::cross( cam_front,
-											   glm::vec3(cos(glm::radians(current_roll)),
-														 sin(glm::radians(current_roll)),
-														 0.0) ));
+
+		cam_right = glm::normalize( glm::cross( cam_front, cam_up ) );
 
 		if( mode == camera_mode::space_mode ) {
 			cam_up = glm::normalize( glm::cross( cam_right, cam_front ) );
 		}
+
 		update_cam_view();
 	}
 }
@@ -192,14 +216,9 @@ void my_camera::modify_angle(mov_angles angle,GLfloat amount)
  */
 void my_camera::update_angles()
 {
-	GLfloat temp = glm::dot( cam_front, glm::vec3(0.0,1.0,0.0) );
-	temp = glm::degrees( asin( cam_front.y ) ); //glm::degrees(acos(temp)); Alternative.
-	current_pitch = temp;
-	temp = glm::degrees( atan2( cam_front.x, cam_front.z) );
-	current_yaw = 90 - temp;
-	if( current_yaw <= 0 ){
-		current_yaw += 360;
-	}
+	current_pitch = glm::degrees( asin( cam_front.z ) );
+	current_yaw = glm::degrees( atan2( cam_front.x, cam_front.y) );
+	current_yaw = current_yaw > 0 ? current_yaw : 360 + current_yaw;
 }
 
 glm::mat4 my_camera::get_view()
