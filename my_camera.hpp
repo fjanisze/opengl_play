@@ -96,7 +96,8 @@ private:
 private:
     glm::vec3 cam_front,
             cam_right,
-            cam_up;
+            cam_up,
+            cam_forward;
     glm::mat4 cam_view;
     movable::mov_obj_ptr target_to_follow;
     target_following_options follow_opt;

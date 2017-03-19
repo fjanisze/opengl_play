@@ -59,18 +59,36 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
     if( button == GLFW_MOUSE_BUTTON_LEFT &&
         action == GLFW_PRESS ) {
-        //Create a new light (The positioning do not work properly)
-        /*		glm::vec3 light_pos = camera->get_position();
 
-        LOG1("Creating a new light at pos: ",
-             light_pos.x,"/",light_pos.y,"/",light_pos.z);
-        auto light = lights::light_factory<lights::point_light>::create(
-                    light_pos,
-                    glm::vec3(1.0,1.0,1.0),
-                    6.0);
-        if( nullptr == light ) {
-            WARN1("Unable to create a new light!");
-        }*/
+        GLdouble x,y,z = 0.0f;
+
+        glfwGetCursorPos(window_ctx,
+                         &x,&y);
+
+        glReadBuffer(GL_FRONT);
+        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+
+        auto lots = game_terrain->get_lots();
+
+        x = ( 2.0f * x ) / win_w - 1.0f;
+        y = -(( 2.0f * y ) / win_h - 1.0f);
+
+        glm::vec4 pt( x, y, -1.0f, 1.0);
+        pt = glm::inverse( projection ) * pt;
+        pt.z = -1.0;
+        pt.w = 0.0f;
+
+        pt = glm::inverse( camera->get_view() ) * pt;
+        glm::vec3 ray = glm::normalize( glm::vec3( pt ) );
+
+        DUMP_VEC3("RAY: ", ray);
+
+        glm::vec3 dest = camera->get_position() + ray * 100.0f;
+
+        position_lines->add_line(
+                    camera->get_position() ,
+                    dest,
+                    glm::vec3(1.0));
     }
 }
 
@@ -78,9 +96,8 @@ glm::vec3 opengl_ui::get3dPoint(glm::vec2 point)
 {
     //From viewport to Normalized Device Coordinates
     double x = ( 2.0f * point.x ) / win_w - 1.0f;
-    double y = 1.0 - ( 2.0 * point.y ) / win_h;
-    double z = -1;
-    glm::vec4 ray_clip( x, y, z, 1.0 );
+    double y = 1.0f - ( 2.0f * point.y ) / win_h;
+    glm::vec4 ray_clip( x, y, -1.0, 1.0 );
 
     //Eye space (camera is origin)
     glm::vec4 ray_eye = glm::inverse( projection ) * ray_clip;
@@ -89,32 +106,15 @@ glm::vec3 opengl_ui::get3dPoint(glm::vec2 point)
     ray_eye.w = 0.0;
 
     //World coordinates
-    glm::vec4 world_coord = glm::normalize( glm::inverse( camera->get_view() ) * ray_eye );
-    return glm::vec3( world_coord.x, world_coord.y, world_coord.z );
+    glm::vec4 world_coord = glm::inverse( camera->get_view() ) * ray_eye;
+    return glm::normalize( glm::vec3( world_coord.x,
+                                      world_coord.y,
+                                      world_coord.z ) );
 }
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
     movement_processor.mouse_input(x, y);
-    /*
-     * Add a line poiting from the mouse cursor
-     * position in the direction of the current
-     * front view
-     */
-    glm::vec3 point = get3dPoint({x,y});
-    //DUMP_VEC3("pos:",point);
-    game_terrain->check_for_hits({ point.x, point.z});
-    /*if( mouse_line_idx == position_lines->get_invalid_id() ) {
-
-        mouse_line_idx = position_lines->add_line(
-                    camera->get_position(),
-                    glm::vec3(0.0),
-                    glm::vec3(1.0));
-    } else {
-        position_lines->modify_line_endpoints( mouse_line_idx,
-                                               camera->get_position(),
-                                               glm::vec3(0.0));
-    }*/
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -181,6 +181,9 @@ void opengl_ui::get_current_ctx_viewport()
     glViewport(0,0,
                win_w,
                win_h);
+
+    viewport = glm::vec4(0.0,0.0,
+                         win_w,win_h);
 }
 
 void opengl_ui::init_text()
@@ -245,7 +248,7 @@ opengl_ui::opengl_ui(int win_width,
 
     init_text();
 
-    camera = my_camera::create_camera({5.0,10.0,10},{0.0,0.0,0.0});
+    camera = my_camera::create_camera({2.0,8.0,8},{0.0,0.0,0.0});
     camera->eagle_mode();
 
     for(auto& elem:key_status)
@@ -333,11 +336,11 @@ void opengl_ui::setup_scene()
                                2);
 
     terrains::terrain_map_t terrain_map = {
-        {1,1,1,1,1,1},
-        {1,1,1,2,1,1},
+        {2,1,2,2,1,1},
+        {1,1,2,2,1,1},
         {1,2,2,2,1,1},
         {1,1,2,1,2,1},
-        {1,1,1,1,1,1}
+        {2,1,1,1,1,2}
     };
 
     game_terrain->load_terrain_map( terrain_map,
@@ -373,7 +376,7 @@ void opengl_ui::enter_main_loop()
 
     projection = glm::perspective(glm::radians(45.0f),
                                   (GLfloat)win_w / (GLfloat)win_h,
-                                  1.0f, 1000.0f);
+                                  1.0f, 100.0f);
 
     LOG2("Entering main loop!");
     while(!glfwWindowShouldClose(window_ctx))
@@ -430,6 +433,9 @@ void opengl_ui::update_viewport(int new_win_h,
     glViewport(0,0,
                win_w,
                win_h);
+
+    viewport = glm::vec4(0.0,0.0,
+                         win_w,win_h);
 }
 
 opengl_ui::~opengl_ui()

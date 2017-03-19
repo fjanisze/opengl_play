@@ -133,18 +133,31 @@ void terrains::clean_after_render()
 
 }
 
-void terrains::check_for_hits(const glm::vec2 &point)
+const std::vector<terrain_lot> &terrains::get_lots() const
 {
+    return terrain_map;
+}
+
+glm::vec3 terrains::check_for_hits(const glm::vec3 &point,
+                              const glm::mat4 &proj,
+                              const glm::mat4 &view,
+                              const glm::vec4 &viewport)
+{
+    glm::vec3 res(0.0);
     for( auto&& lot : terrain_map )
     {
-        glm::vec2 pos( lot.model_matrix[3].x, lot.model_matrix[3].z );
-        pos = glm::normalize( pos );
-        if( point.x > pos.x && point.x <= pos.x + 1.0f/lot_size ) {
-            if( point.y > pos.y && point.y <= pos.y + 1.0f/lot_size) {
-                std::cout<<"Selected: "<<lot.terrain_id<<": "<<lot.position.x<<","<<lot.position.y<<std::endl;
+        res = glm::unProject(point,
+                             view,
+                             proj,
+                             viewport);
+        if( lot.position.x < res.x && lot.position.x + lot_size > res.x ) {
+            if( lot.position.y < res.y && lot.position.y + lot_size > res.y ) {
+                std::cout<<lot.position.x<<","<<lot.position.y<<std::endl;
             }
         }
+        break;
     }
+    return res;
 }
 
 

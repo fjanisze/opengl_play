@@ -25,6 +25,12 @@ my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
     cam_right = glm::normalize( glm::cross( cam_front, cam_up) );
 
     update_cam_view();
+    /*
+     * Let's move foward always in the direction
+     * of the map terrain. cam_front will change
+     * the attitude of the camera
+     */
+    cam_forward = glm::vec3(0.0,0.0,-1.0);
 
     //Will be initialized when needed.
     rotation_angle = -1;
@@ -158,10 +164,16 @@ bool my_camera::move(mov_direction direction, GLfloat amount)
         current_position -= cam_up * amount;
         break;
     case mov_direction::forward:
-        current_position += cam_front * amount;
+        if( current_position.z > 2 ) {
+            current_position += cam_forward * amount;
+            modify_angle( mov_angles::pitch, 0.15 );
+        }
         break;
     case mov_direction::backward:
-        current_position -= cam_front * amount;
+        if( current_position.z < 30 ) {
+            current_position -= cam_forward * amount;
+            modify_angle( mov_angles::pitch, -0.15 );
+        }
         break;
     default:
         ERR("my_camera::move: Unknow direction, ",

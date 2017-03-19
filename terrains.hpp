@@ -70,8 +70,13 @@ public:
         return std::make_shared<terrains>(shader);
     }
 
+    const std::vector<terrain_lot>& get_lots() const;
+
     /* TESTCODE */
-    void check_for_hits(const glm::vec2& point);
+    glm::vec3 check_for_hits(const glm::vec3 &point,
+                        const glm::mat4 &proj,
+                        const glm::mat4 &view,
+                        const glm::vec4 &viewport);
 private:
     shaders::my_small_shaders* shader;
     std::unordered_map<long,models::model_loader_ptr> terrain_container;

@@ -58,6 +58,7 @@ public:
     key_status_t  key_status[stat_key_array_size];
     GLFWwindow*   window_ctx;
     glm::mat4	  projection;
+    glm::vec4     viewport;
     little_object_ptr object;
     GLFWcursor*   cursor;
     int			  mouse_line_idx;

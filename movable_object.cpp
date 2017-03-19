@@ -172,9 +172,9 @@ void object_movement_processor::mouse_input(GLdouble new_x,
     if( type == mouse_input_type::mouse_wheel ) {
         //Not supporting that much movements.
         if( new_y > 0 ) {
-            mouse_status[ mouse_movement_types::wheel_up ] = 100;
+            mouse_status[ mouse_movement_types::wheel_up ] = 60;
         } else {
-            mouse_status[ mouse_movement_types::wheel_down ] = 100;
+            mouse_status[ mouse_movement_types::wheel_down ] = 60;
         }
     } else {
         static bool first_input{ true };
