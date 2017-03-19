@@ -70,10 +70,24 @@ void my_camera::rotate_around(GLfloat amount)
 	 */
 	glm::vec3 cam_pos = get_position();
 	glm::vec3 target = cam_pos;
-	while( target.z > 0 ) {
-		target += cam_front * 0.01f;
+	GLfloat l = 0,
+			r = 1024; //Hopefully is big enough!
+	while( l < r ) {
+		GLfloat mid = ( r + l ) / 2;
+		target = cam_pos + cam_front * mid;
+		if( glm::abs( target.z ) <= 0.00001 ) {
+			//Looks like 0 :)
+			break;
+		}
+		if( target.z > 0 ) {
+			l = mid + 0.0001;
+		} else {
+			r = mid - 0.0001;
+		}
+		++t;
 	}
-	target.z = 0;//Make sure is 0 and not some small number
+	//make sure it's zero and not some very small value :)
+	target.z = 0.0f;
 	//When rotating the distance do not change
 	GLfloat distance = glm::distance( glm::vec3(cam_pos.x,cam_pos.y,0.0),
 									  target );

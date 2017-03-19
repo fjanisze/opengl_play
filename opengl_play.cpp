@@ -245,7 +245,7 @@ opengl_ui::opengl_ui(int win_width,
 
 	init_text();
 
-	camera = my_camera::create_camera({-5.0,-10.0,10},{0.0,0.0,0.0});
+	camera = my_camera::create_camera({5.0,10.0,10},{0.0,0.0,0.0});
 	camera->eagle_mode();
 
 	for(auto& elem:key_status)
