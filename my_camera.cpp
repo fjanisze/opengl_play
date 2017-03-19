@@ -84,7 +84,6 @@ void my_camera::rotate_around(GLfloat amount)
         } else {
             r = mid - 0.0001;
         }
-        ++t;
     }
     //make sure it's zero and not some very small value :)
     target.z = 0.0f;
