@@ -60,34 +60,33 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
     if( button == GLFW_MOUSE_BUTTON_LEFT &&
         action == GLFW_PRESS ) {
 
-        GLdouble x,y,z = 0.0f;
+        GLdouble x,y = 0.0f;
 
         glfwGetCursorPos(window_ctx,
                          &x,&y);
 
-        glReadBuffer(GL_FRONT);
-        glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+        glm::vec3 ms( x, win_h - y, 0 );
 
-        auto lots = game_terrain->get_lots();
+        glm::vec3 src = glm::unProject(
+                    ms,
+                    camera->get_view(),
+                    projection,
+                    viewport);
 
-        x = ( 2.0f * x ) / win_w - 1.0f;
-        y = -(( 2.0f * y ) / win_h - 1.0f);
+        ms.z = 1;
 
-        glm::vec4 pt( x, y, -1.0f, 1.0);
-        pt = glm::inverse( projection ) * pt;
-        pt.z = -1.0;
-        pt.w = 0.0f;
+        glm::vec3 dst = glm::unProject(
+                    ms,
+                    camera->get_view(),
+                    projection,
+                    viewport);
 
-        pt = glm::inverse( camera->get_view() ) * pt;
-        glm::vec3 ray = glm::normalize( glm::vec3( pt ) );
+        glm::vec3 dir = glm::normalize( dst - src );
 
-        DUMP_VEC3("RAY: ", ray);
-
-        glm::vec3 dest = camera->get_position() + ray * 100.0f;
 
         position_lines->add_line(
-                    camera->get_position() ,
-                    dest,
+                    src,
+                    src + dir * 100.0f,
                     glm::vec3(1.0));
     }
 }
