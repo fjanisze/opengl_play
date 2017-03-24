@@ -9,6 +9,7 @@ terrains::terrains(shaders::my_small_shaders *game_shader) :
     shader{ game_shader }
 {
     LOG1("Creating terrains::terrains");
+	unselect_highlighted_lot();
 }
 
 long terrains::load_terrain(const std::string &model_filename,
@@ -93,6 +94,14 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
         }
     }
     terrain_map = std::move( new_terrain_map );
+	for( auto elem : terrain_map ) {
+		std::cout<<elem.position.x<<","<<elem.position.y<<std::endl;
+	}
+	std::cout<<"After short\n";
+	std::sort( terrain_map.begin(), terrain_map.end() );
+	for( auto elem : terrain_map ) {
+		std::cout<<elem.position.x<<","<<elem.position.y<<std::endl;
+	}
     return true;
 }
 
@@ -115,7 +124,10 @@ void terrains::render()
     glm::vec3 last_color;
     for( auto& lot : terrain_map ) {
         auto& model = terrain_container[ lot.terrain_id ];
-        auto& color = default_colors[ lot.terrain_id ];
+		auto color = default_colors[ lot.terrain_id ];
+		if( is_highlighted( lot.position ) ) {
+			color = highlight_color( color );
+		}
         if( color != last_color ) {
             //Do not update the color if not needed.
             apply_object_color( color );
@@ -138,26 +150,71 @@ const std::vector<terrain_lot> &terrains::get_lots() const
     return terrain_map;
 }
 
-glm::vec3 terrains::check_for_hits(const glm::vec3 &point,
-                              const glm::mat4 &proj,
-                              const glm::mat4 &view,
-                              const glm::vec4 &viewport)
+/*
+ * The 'dir' vector specify the proper ray cast
+ * of the mouse when moving over the terrain
+ */
+void terrains::mouse_hoover(const types::ray_t &dir )
 {
-    glm::vec3 res(0.0);
-    for( auto&& lot : terrain_map )
-    {
-        res = glm::unProject(point,
-                             view,
-                             proj,
-                             viewport);
-        if( lot.position.x < res.x && lot.position.x + lot_size > res.x ) {
-            if( lot.position.y < res.y && lot.position.y + lot_size > res.y ) {
-                std::cout<<lot.position.x<<","<<lot.position.y<<std::endl;
-            }
-        }
-        break;
-    }
-    return res;
+	unselect_highlighted_lot();
+	/*
+	 * Find the position with Z=0, we simplify thing
+	 * thing by ignoring the Z of the models
+	 */
+	glm::vec3 target = dir.first;
+	GLfloat l = 0,
+			r = 1024; //Hopefully is big enough!
+	while( l < r ) {
+		GLfloat mid = ( r + l ) / 2;
+		target = dir.first + dir.second * mid;
+		if( glm::abs( target.z ) <= 0.00001 ) {
+			//Looks like 0 :)
+			break;
+		}
+		if( target.z > 0 ) {
+			l = mid + 0.0001;
+		} else {
+			r = mid - 0.0001;
+		}
+	}
+	target.z = 0;
+	/*
+	 * There's a weird offset that we need to fix,
+	 * also the size of each lot is lot_size * lot_size
+	 */
+	target += 1.0f;
+	target /= 2.0f;
+	target = glm::floor( target );
+	select_highlighted_lot( target );
+}
+
+void terrains::unselect_highlighted_lot()
+{
+	/*
+	 * An highlighted lot should have Z equal to 0
+	 */
+	highlighted_lot.z = 1.0f;
+}
+
+void terrains::select_highlighted_lot(const glm::vec3 &lot)
+{
+	highlighted_lot = lot;
+	highlighted_lot.z = 0.0f;
+}
+
+/*
+ * Return true if 'lot' should be highlighted
+ */
+bool terrains::is_highlighted(const glm::vec2 &lot) const
+{
+	return highlighted_lot.z == 0.0f &&
+			highlighted_lot.x == lot.x &&
+			highlighted_lot.y == lot.y;
+}
+
+glm::vec3 terrains::highlight_color(const glm::vec3 &color) const
+{
+	return color * 2.0f;
 }
 
 

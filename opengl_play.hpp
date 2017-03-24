@@ -10,9 +10,11 @@
 #include <random>
 #include <models.hpp>
 #include <terrains.hpp>
+#include <types.hpp>
 
 namespace opengl_play
 {
+
 
 void mouse_click_callback(GLFWwindow* ctx,
                           int button,
@@ -39,8 +41,6 @@ class opengl_ui
     void init_text();
     void evaluate_key_status();
     void setup_scene();
-
-    glm::vec3 get3dPoint(glm::vec2 point2D);
 public:
     opengl_ui(int win_width, int win_heigth);
     void        prepare_for_main_loop();
@@ -68,14 +68,14 @@ public:
     int win_h,
     win_w;
     camera_obj		camera;
+    types::ray_t ray_cast( GLdouble x, GLdouble y );
 
     my_lines_ptr position_lines;
     shaders::my_small_shaders model_shader;
     terrains::terrains_ptr game_terrain;
-    models::model_ptr terrain;
     lights::generic_light_ptr light_1,
-    light_2,
-    flash_light;
+                            light_2,
+                            flash_light;
 
     movable::object_movement_processor movement_processor;
 };

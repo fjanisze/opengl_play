@@ -60,60 +60,13 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
     if( button == GLFW_MOUSE_BUTTON_LEFT &&
         action == GLFW_PRESS ) {
 
-        GLdouble x,y = 0.0f;
-
-        glfwGetCursorPos(window_ctx,
-                         &x,&y);
-
-        glm::vec3 ms( x, win_h - y, 0 );
-
-        glm::vec3 src = glm::unProject(
-                    ms,
-                    camera->get_view(),
-                    projection,
-                    viewport);
-
-        ms.z = 1;
-
-        glm::vec3 dst = glm::unProject(
-                    ms,
-                    camera->get_view(),
-                    projection,
-                    viewport);
-
-        glm::vec3 dir = glm::normalize( dst - src );
-
-
-        position_lines->add_line(
-                    src,
-                    src + dir * 100.0f,
-                    glm::vec3(1.0));
     }
-}
-
-glm::vec3 opengl_ui::get3dPoint(glm::vec2 point)
-{
-    //From viewport to Normalized Device Coordinates
-    double x = ( 2.0f * point.x ) / win_w - 1.0f;
-    double y = 1.0f - ( 2.0f * point.y ) / win_h;
-    glm::vec4 ray_clip( x, y, -1.0, 1.0 );
-
-    //Eye space (camera is origin)
-    glm::vec4 ray_eye = glm::inverse( projection ) * ray_clip;
-    //Manual un-project of the xy coords.
-    ray_eye.z = -1.0;
-    ray_eye.w = 0.0;
-
-    //World coordinates
-    glm::vec4 world_coord = glm::inverse( camera->get_view() ) * ray_eye;
-    return glm::normalize( glm::vec3( world_coord.x,
-                                      world_coord.y,
-                                      world_coord.z ) );
 }
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
     movement_processor.mouse_input(x, y);
+	game_terrain->mouse_hoover( ray_cast( x, y ) );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -247,7 +200,7 @@ opengl_ui::opengl_ui(int win_width,
 
     init_text();
 
-    camera = my_camera::create_camera({2.0,8.0,8},{0.0,0.0,0.0});
+    camera = my_camera::create_camera({4.0,4.0,8},{0.0,0.0,0.0});
     camera->eagle_mode();
 
     for(auto& elem:key_status)
@@ -292,7 +245,6 @@ void opengl_ui::setup_scene()
         position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
     }
 
-    //Let our model be movable
     //Register the camera as movable object
     movable::key_mapping_vec camera_keys = {
         { GLFW_KEY_W, { movable::mov_direction::top, { 0.5 } } },
@@ -321,10 +273,6 @@ void opengl_ui::setup_scene()
         throw std::runtime_error("Shader creation failure");
     }
 
-    /*	terrain = models::my_model::create(&model_shader,
-                                       "../models/Grass/grass.obj",
-                                       glm::vec3(1.0,1.0,1.0f));*/
-
     game_terrain = terrains::terrains::create(&model_shader);
     game_terrain->load_terrain("../models/Grass/grass.obj",
                                glm::vec3(1.0),
@@ -339,7 +287,8 @@ void opengl_ui::setup_scene()
         {1,1,2,2,1,1},
         {1,2,2,2,1,1},
         {1,1,2,1,2,1},
-        {2,1,1,1,1,2}
+		{2,1,1,1,1,2},
+		{2,1,1,2,1,1}
     };
 
     game_terrain->load_terrain_map( terrain_map,
@@ -356,13 +305,6 @@ void opengl_ui::setup_scene()
                 glm::vec3(-10,100,-10),
                 glm::vec3(0.8,0.7,0.7),
                 4);
-
-    /*	flash_light = lights::light_factory<lights::flash_light>::create(
-                camera,
-                glm::vec3(1.0f),
-                3,
-                12.5f,
-                18.5f);*/
 }
 
 void opengl_ui::enter_main_loop()
@@ -445,6 +387,32 @@ opengl_ui::~opengl_ui()
     if( nullptr != cursor) {
         glfwDestroyCursor(cursor);
     }
+}
+
+/*
+ * Calculate and return the vector the a ray
+ * casted from x,y.
+ */
+types::ray_t opengl_ui::ray_cast(GLdouble x, GLdouble y)
+{
+    glm::vec3 ms( x, win_h - y, 0 );
+    auto cam_view = camera->get_view();
+
+    glm::vec3 src = glm::unProject(
+                ms,
+                cam_view,
+                projection,
+                viewport);
+
+    ms.z = 1;
+
+    glm::vec3 dst = glm::unProject(
+                ms,
+                cam_view,
+                projection,
+                viewport);
+
+    return { src, glm::normalize( dst - src ) };
 }
 
 }

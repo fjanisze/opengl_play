@@ -8,7 +8,7 @@
 #include <set>
 #include <renderable_object.hpp>
 #include <lights.hpp>
-
+#include <types.hpp>
 
 namespace terrains
 {
@@ -33,6 +33,16 @@ struct terrain_lot
     long terrain_id; //Must match one of the unique loaded terrains
     glm::vec2 position;
     glm::mat4 model_matrix;
+
+	terrain_lot() = default;
+	bool operator < ( const terrain_lot& other ) {
+		if( position.x < other.position.x ) {
+			return true;
+		} else if( position.x == other.position.x ) {
+			return position.y < other.position.y;
+		}
+		return false;
+	}
 };
 using lot_map_t = vec_of_vecs< terrain_lot >;
 
@@ -71,12 +81,7 @@ public:
     }
 
     const std::vector<terrain_lot>& get_lots() const;
-
-    /* TESTCODE */
-    glm::vec3 check_for_hits(const glm::vec3 &point,
-                        const glm::mat4 &proj,
-                        const glm::mat4 &view,
-                        const glm::vec4 &viewport);
+    void mouse_hoover( const types::ray_t& dir );
 private:
     shaders::my_small_shaders* shader;
     std::unordered_map<long,models::model_loader_ptr> terrain_container;
@@ -85,6 +90,11 @@ private:
 
     GLfloat lot_size;
     std::vector<terrain_lot> terrain_map;
+	void unselect_highlighted_lot();
+	void select_highlighted_lot( const glm::vec3& lot );
+	bool is_highlighted(const glm::vec2 &lot ) const;
+	glm::vec3 highlight_color( const glm::vec3& color ) const;
+	glm::vec3 highlighted_lot;//With a little brighter color
 };
 
 }
