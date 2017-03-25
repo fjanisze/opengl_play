@@ -238,7 +238,8 @@ my_mesh::textures_ptr model_loader::process_texture(const aiMaterial *material,
         std::size_t pos = filename.find_last_of("\\/");
         if( pos != std::string::npos )
             filename = filename.substr(pos + 1);
-        texture.id = load_texture(model_directory + "/" + filename.c_str());
+        texture.id = load_texture(
+                "../models/textures/" + filename);
         texture.path = path.C_Str();
         textures->push_back(texture);
     }

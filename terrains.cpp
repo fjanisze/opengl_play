@@ -21,7 +21,7 @@ long terrains::load_terrain(const std::string &model_filename,
          ". Provided ID: ",
          terrain_id);
     models::model_loader_ptr new_model = models::model_loader::load(
-                model_filename);
+				model_filename);
     if( terrain_id < 0 ) {
         if( used_ids.empty() ) {
             terrain_id = 1;
@@ -94,14 +94,6 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
         }
     }
     terrain_map = std::move( new_terrain_map );
-	for( auto elem : terrain_map ) {
-		std::cout<<elem.position.x<<","<<elem.position.y<<std::endl;
-	}
-	std::cout<<"After short\n";
-	std::sort( terrain_map.begin(), terrain_map.end() );
-	for( auto elem : terrain_map ) {
-		std::cout<<elem.position.x<<","<<elem.position.y<<std::endl;
-	}
     return true;
 }
 
@@ -126,7 +118,7 @@ void terrains::render()
         auto& model = terrain_container[ lot.terrain_id ];
 		auto color = default_colors[ lot.terrain_id ];
 		if( is_highlighted( lot.position ) ) {
-			color = highlight_color( color );
+			color = highlight_lot_color( color );
 		}
         if( color != last_color ) {
             //Do not update the color if not needed.
@@ -183,7 +175,7 @@ void terrains::mouse_hoover(const types::ray_t &dir )
 	 * also the size of each lot is lot_size * lot_size
 	 */
 	target += 1.0f;
-	target /= 2.0f;
+	target /= lot_size;
 	target = glm::floor( target );
 	select_highlighted_lot( target );
 }
@@ -212,9 +204,9 @@ bool terrains::is_highlighted(const glm::vec2 &lot) const
 			highlighted_lot.y == lot.y;
 }
 
-glm::vec3 terrains::highlight_color(const glm::vec3 &color) const
+glm::vec3 terrains::highlight_lot_color(const glm::vec3 &color) const
 {
-	return color * 2.0f;
+	return color * 1.3f;
 }
 
 

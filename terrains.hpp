@@ -93,7 +93,7 @@ private:
 	void unselect_highlighted_lot();
 	void select_highlighted_lot( const glm::vec3& lot );
 	bool is_highlighted(const glm::vec2 &lot ) const;
-	glm::vec3 highlight_color( const glm::vec3& color ) const;
+	glm::vec3 highlight_lot_color( const glm::vec3& color ) const;
 	glm::vec3 highlighted_lot;//With a little brighter color
 };
 

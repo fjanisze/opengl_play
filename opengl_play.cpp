@@ -66,7 +66,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
     movement_processor.mouse_input(x, y);
-	game_terrain->mouse_hoover( ray_cast( x, y ) );
+    game_terrain->mouse_hoover( ray_cast( x, y ) );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -278,17 +278,26 @@ void opengl_ui::setup_scene()
                                glm::vec3(1.0),
                                1);
 
-    game_terrain->load_terrain("../models/Mountain/mountain.obj",
+    game_terrain->load_terrain("../models/Grass/grass2.obj",
                                glm::vec3(1.0),
                                2);
 
+    game_terrain->load_terrain("../models/Mountain/mountain.obj",
+                               glm::vec3(1.0),
+                               3);
+
+    game_terrain->load_terrain("../models/Forest/Forest.obj",
+                               glm::vec3(1.2),
+                               4);
+
+
     terrains::terrain_map_t terrain_map = {
-        {2,1,2,2,1,1},
-        {1,1,2,2,1,1},
-        {1,2,2,2,1,1},
-        {1,1,2,1,2,1},
-		{2,1,1,1,1,2},
-		{2,1,1,2,1,1}
+        {2,1,2,2,3,4},
+        {1,1,2,2,4,4},
+        {1,2,2,2,3,3},
+        {1,1,2,4,2,1},
+        {2,1,4,4,4,2},
+        {2,1,1,2,4,1}
     };
 
     game_terrain->load_terrain_map( terrain_map,
@@ -299,12 +308,12 @@ void opengl_ui::setup_scene()
     light_1 = lights::light_factory<lights::directional_light>::create(
                 glm::vec3(30,30,30),
                 glm::vec3(0.9,0.8,0.7),
-                10);
+                30);
 
     light_2 = lights::light_factory<lights::directional_light>::create(
                 glm::vec3(-10,100,-10),
                 glm::vec3(0.8,0.7,0.7),
-                4);
+                12);
 }
 
 void opengl_ui::enter_main_loop()
