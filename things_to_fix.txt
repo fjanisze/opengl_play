@@ -1,0 +1,6 @@
+** Camera problem **
+The UP vector (or something else) is broken, from time to time the camera movement
+became very sluggish. This seems to be more evident when the rotation mechanism is used..
+
+** Models **
+The models are way too comples.. and ugly.. fix them..
