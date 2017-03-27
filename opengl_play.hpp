@@ -54,7 +54,7 @@ public:
     void		ui_wheel_move(GLdouble x,GLdouble y);
     void		ui_keyboard_press(GLint button,GLint scode,GLint action);
     virtual ~opengl_ui();
-public:
+private:
     key_status_t  key_status[stat_key_array_size];
     GLFWwindow*   window_ctx;
     glm::mat4	  projection;
@@ -68,7 +68,12 @@ public:
     int win_h,
     win_w;
     camera_obj		camera;
+    /*
+     * Ray casting utility
+     */
     types::ray_t ray_cast( GLdouble x, GLdouble y );
+    glm::vec2    ray_z_hit_point( const types::ray_t& ray,
+                                  const GLfloat z_value );
 
     my_lines_ptr position_lines;
     shaders::my_small_shaders model_shader;

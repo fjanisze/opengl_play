@@ -21,12 +21,22 @@ void renderable_object::render_renderables(glm::mat4 view,
     }
 }
 
-void renderable_object::add_renderable(renderable_object * object,
+bool renderable_object::add_renderable(renderable_object * object,
                                        std::size_t priority)
 {
     LOG1("Adding new renderable: ",
          object->renderable_nice_name());
+    for( auto&& entry : renderables ) {
+        for( auto&& obj : entry.second.renderables ) {
+            if( obj == object ) {
+                WARN1("Failed! The object already exist, with prority ",
+                      entry.second.priority);
+                return false;
+            }
+        }
+    }
     renderables[ priority ].renderables.push_back( object );
+    return true;
 }
 
 bool renderable_object::remove_renderable(renderable_object *object)
@@ -51,7 +61,7 @@ void renderable_object::set_transformations(glm::mat4 view,glm::mat4 projection)
 
 std::string renderable_object::renderable_nice_name()
 {
-    return "not provided";
+    return "name not provided";
 }
 
 }

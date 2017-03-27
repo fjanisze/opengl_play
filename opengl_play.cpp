@@ -230,21 +230,6 @@ void opengl_ui::prepare_for_main_loop()
 
 void opengl_ui::setup_scene()
 {
-    const std::pair<glm::vec3,glm::vec3> line_endpoints[] = {
-        {{50,0,0},{1.0,0.0,0.0}},
-        {{-50,0,0},{1.0,0.0,0.0}},
-        {{0,50,0},{0.0,0.0,1.0}},
-        {{0,-50,0},{0.0,0.0,1.0}},
-        {{0,0,50},{0.0,1.0,0.0}},
-        {{0,0,-50},{0.0,1.0,0.0}},
-        {{50,50,50},{0.0,1.0,1.0}},
-        {{-50,-50,-50},{0.0,1.0,1.0}}
-    };
-
-    for(auto& elem : line_endpoints) {
-        position_lines->add_line({0.0,0.0,0.0},elem.first,elem.second);
-    }
-
     //Register the camera as movable object
     movable::key_mapping_vec camera_keys = {
         { GLFW_KEY_W, { movable::mov_direction::top, { 0.5 } } },
@@ -282,27 +267,41 @@ void opengl_ui::setup_scene()
                                glm::vec3(1.0),
                                2);
 
-    game_terrain->load_terrain("../models/Mountain/mountain.obj",
+    long mountain_id = game_terrain->load_terrain("../models/Mountain/mountain.obj",
                                glm::vec3(1.0),
                                3);
+    game_terrain->load_highres_terrain("../models/Mountain/mountain_highres.obj",
+                               mountain_id);
 
-    game_terrain->load_terrain("../models/Forest/Forest.obj",
+    long forest_id = game_terrain->load_terrain("../models/Forest/Forest.obj",
                                glm::vec3(1.2),
                                4);
 
+    game_terrain->load_highres_terrain("../models/Forest/Forest_complex.obj",
+                               forest_id);
 
-    terrains::terrain_map_t terrain_map = {
-        {2,1,2,2,3,4},
-        {1,1,2,2,4,4},
-        {1,2,2,2,3,3},
-        {1,1,2,4,2,1},
-        {2,1,4,4,4,2},
-        {2,1,1,2,4,1}
-    };
+
+    //Generate random terrain map
+    const int map_size_x{ 20 };
+    const int map_size_y{ 20 };
+
+    std::random_device rd;
+    std::mt19937_64 eng( rd() );
+    std::uniform_int_distribution<long> dist(1,4);
+
+    terrains::terrain_map_t terrain_map;
+    terrain_map.resize( map_size_y );
+    for( int y{ 0 } ; y < map_size_y ; ++y ) {
+        terrain_map[ y ].resize( map_size_x );
+        for( int x{ 0 } ; x < map_size_x ; ++x ) {
+            terrain_map[ y ][ x ] = dist( eng );
+        }
+    }
 
     game_terrain->load_terrain_map( terrain_map,
                                     2,
-                                    glm::vec2(1,1) );
+                                    glm::vec2(map_size_x / 2,
+                                              map_size_y / 2) );
 
 
     light_1 = lights::light_factory<lights::directional_light>::create(
@@ -328,6 +327,7 @@ void opengl_ui::enter_main_loop()
                                   (GLfloat)win_w / (GLfloat)win_h,
                                   1.0f, 100.0f);
 
+    glm::vec3 last_cam_pos;
     LOG2("Entering main loop!");
     while(!glfwWindowShouldClose(window_ctx))
     {
@@ -356,7 +356,7 @@ void opengl_ui::enter_main_loop()
         auto yaw = camera->get_yaw(),
                 pitch = camera->get_pitch(),
                 roll = camera->get_roll();
-        auto pos = camera->get_position();
+        glm::vec3 pos = camera->get_position();
 
         std::stringstream ss;
         ss <<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
@@ -364,6 +364,21 @@ void opengl_ui::enter_main_loop()
 
         camera_info->set_text(ss.str());
         camera_info->render_text();
+
+        /*
+         * Update the visible part of the map
+         */
+        if( last_cam_pos != pos ) {
+            types::ray_t ray = ray_cast( win_w / 2, win_h / 2 );
+            glm::vec2 center = ray_z_hit_point( ray, 0.0f );
+            /*
+             * How far the lots are visible is calculated
+             * by this simple formula. The higher is the camera (z)
+             * then much more lots we need to draw
+             */
+            game_terrain->set_view_center( center, std::max( 6.0f, pos.z / 1.4f ) );
+            last_cam_pos = pos;
+        }
 
         glfwSwapBuffers(window_ctx);
     }
@@ -424,12 +439,35 @@ types::ray_t opengl_ui::ray_cast(GLdouble x, GLdouble y)
     return { src, glm::normalize( dst - src ) };
 }
 
+glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
+                                     const GLfloat z_value)
+{
+    glm::vec3 target = ray.first;
+    GLfloat l = 0,
+            r = 1024; //Hopefully is big enough!
+    while( l < r ) {
+        GLfloat mid = ( r + l ) / 2;
+        target = ray.first + ray.second * mid;
+        if( glm::abs( target.z - z_value ) <= 0.00001 ) {
+            //Looks like 0 :)
+            break;
+        }
+        if( target.z > 0 ) {
+            l = mid + 0.0001;
+        } else {
+            r = mid - 0.0001;
+        }
+    }
+    return glm::vec2( target.x, target.y );
+}
+
 }
 
 int main()
 {
     opengl_play::opengl_ui entry(1920,1280);
     log_inst.set_thread_name("MAIN");
+    log_inst.set_logging_level( logging::severity_type::debug2 );
 
     entry.prepare_for_main_loop();
     entry.enter_main_loop();

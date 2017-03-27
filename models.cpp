@@ -20,15 +20,15 @@ my_mesh::my_mesh(vertices_ptr vertx,
     indices{ std::move( indx ) },
     textures{ std::move( texts ) }
 {
-    LOG1("Creating my_mesh, data: ",
-         vertices->size(),",",indices->size(),
-         ",",textures->size());
+    LOG1("Creating my_mesh. VRTX:",
+         vertices->size(),", IDX:",indices->size(),
+         ", TXT",textures->size());
     setup_mesh();
 }
 
 void my_mesh::setup_mesh()
 {
-    LOG1("my_mesh::setup_mesh: Setup of all the OpenGL buffers");
+    LOG3("my_mesh::setup_mesh: Setup of all the OpenGL buffers");
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -115,7 +115,7 @@ model_loader::model_loader(const std::string &path,
 
 bool model_loader::load_model()
 {
-    LOG1("model_loader::load_model: Loading ",
+    LOG3("model_loader::load_model: Loading ",
          model_path.c_str());
     Assimp::Importer import;
     const aiScene* scene = import.ReadFile(model_path,
@@ -143,7 +143,7 @@ std::vector<mesh_ptr> &model_loader::get_mesh()
 void model_loader::process_model(aiNode *node,
                                  const aiScene *scene)
 {
-    LOG1("Processing loaded model, ",
+    LOG3("Processing loaded model, ",
          model_path.c_str());
     // Process all the node's meshes (if any)
     for(GLuint i = 0; i < node->mNumMeshes; i++)
@@ -255,7 +255,7 @@ my_model::my_model(shaders::my_small_shaders *shad,
     shader{ shad },
     object_color{ def_object_color }
 {
-    LOG1("Creating a new my_model. Model path: ",
+    LOG3("Creating a new my_model. Model path: ",
          model_path.c_str());
 
     load_model();

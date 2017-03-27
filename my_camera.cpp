@@ -104,7 +104,7 @@ void my_camera::rotate_around(GLfloat amount)
         if( cam_pos.y < 0 ) {
             rotation_angle = 360 - rotation_angle;
         }
-        LOG1("Initial value of the rotation angle ",
+        LOG3("Initial value of the rotation angle ",
              rotation_angle);
     }
     //Make sure that 0<rotation_angle<360

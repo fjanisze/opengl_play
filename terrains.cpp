@@ -8,42 +8,53 @@ terrains::terrains(shaders::my_small_shaders *game_shader) :
     object_lighting( game_shader ),
     shader{ game_shader }
 {
-    LOG1("Creating terrains::terrains");
-	unselect_highlighted_lot();
+    LOG3("Creating terrains::terrains");
+    unselect_highlighted_lot();
 }
 
 long terrains::load_terrain(const std::string &model_filename,
                             const glm::vec3 &color,
                             long terrain_id)
 {
-    LOG1("Loading terrain model: ",
+    LOG3("Loading terrain model: ",
          model_filename,
          ". Provided ID: ",
          terrain_id);
     models::model_loader_ptr new_model = models::model_loader::load(
-				model_filename);
+                model_filename);
     if( terrain_id < 0 ) {
-        if( used_ids.empty() ) {
-            terrain_id = 1;
-        } else {
-            /*
-             * std::set is sorted, pick the largest
-             * one and generate a new unique ID
-             */
-            terrain_id = *used_ids.rbegin() + 1;
-        }
+        terrain_id = generate_unique_id();
     }
-    if( used_ids.insert( terrain_id ).second ) {
-        terrain_container[ terrain_id ] = new_model;
-        default_colors[ terrain_id ] = color;
-        LOG1("New terrain loaded, id: ", terrain_id,
+    if( terrain_id > 0 ) {
+        terrain_container[ terrain_id ].low_res_model = new_model;
+        terrain_container[ terrain_id ].high_res_model = new_model;
+        terrain_container[ terrain_id ].default_color = color;
+        LOG3("New terrain loaded, id: ", terrain_id,
              ". Amount of terrains: ", terrain_container.size() );
-        add_renderable( this );
     } else {
         ERR("The provided terrain ID is already in use!");
         terrain_id = -1;
     }
 
+    return terrain_id;
+}
+
+long terrains::load_highres_terrain(const std::string &model_filename,
+                                    long terrain_id)
+{
+    LOG3("Loading highres terrain model: ",
+         model_filename,
+         ". Provided ID: ",
+         terrain_id);
+    auto it = terrain_container.find( terrain_id );
+    if( it == terrain_container.end() ) {
+        ERR("Not able to find the terrain with ID: ",terrain_id,
+            ". Not possible to load the highres model..");
+        return -1;
+    }
+    models::model_loader_ptr new_model = models::model_loader::load(
+                model_filename);
+    it->second.high_res_model = new_model;
     return terrain_id;
 }
 
@@ -94,6 +105,11 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
         }
     }
     terrain_map = std::move( new_terrain_map );
+    /*
+     * We cannot add terrains as a renderable object
+     * until we have the terrain map loaded
+     */
+    add_renderable( this );
     return true;
 }
 
@@ -114,21 +130,48 @@ void terrains::render()
     GLint model_loc = glGetUniformLocation(*shader,"model");
 
     glm::vec3 last_color;
+    long mesh_cnt{ 0 };
     for( auto& lot : terrain_map ) {
+        if( false == lot.visible ) {
+            continue;
+        }
         auto& model = terrain_container[ lot.terrain_id ];
-		auto color = default_colors[ lot.terrain_id ];
-		if( is_highlighted( lot.position ) ) {
-			color = highlight_lot_color( color );
-		}
+        auto color = terrain_container[ lot.terrain_id ].default_color;
+        if( is_highlighted( lot.position ) ) {
+            color = highlight_lot_color( color );
+        }
         if( color != last_color ) {
             //Do not update the color if not needed.
             apply_object_color( color );
             last_color = color;
         }
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr( lot.model_matrix ));
-        for( auto&& mesh : model->get_mesh() ) {
-            mesh->render( shader );
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE,
+                           glm::value_ptr( lot.model_matrix ));
+
+        if( rendering_data.current_rendr_quality == rendering_quality::highres )
+        {
+            //High res
+            for( auto&& mesh : model.high_res_model->get_mesh() ) {
+                mesh->render( shader );
+                ++mesh_cnt;
+            }
         }
+        else
+        {
+            //Low res
+            for( auto&& mesh : model.low_res_model->get_mesh() ) {
+                mesh->render( shader );
+                ++mesh_cnt;
+            }
+        }
+    }
+    rendering_data.num_of_rendered_mesh = mesh_cnt;
+    if( mesh_cnt <= rendering_data.highres_shift_max_mesh ) {
+        //Let's use highres models
+        rendering_data.current_rendr_quality = rendering_quality::highres;
+    } else if( mesh_cnt >= rendering_data.lowres_shift_min_mesh ) {
+        //Let's use lowres models
+        rendering_data.current_rendr_quality = rendering_quality::lowres;
     }
 }
 
@@ -148,50 +191,77 @@ const std::vector<terrain_lot> &terrains::get_lots() const
  */
 void terrains::mouse_hoover(const types::ray_t &dir )
 {
-	unselect_highlighted_lot();
-	/*
-	 * Find the position with Z=0, we simplify thing
-	 * thing by ignoring the Z of the models
-	 */
-	glm::vec3 target = dir.first;
-	GLfloat l = 0,
-			r = 1024; //Hopefully is big enough!
-	while( l < r ) {
-		GLfloat mid = ( r + l ) / 2;
-		target = dir.first + dir.second * mid;
-		if( glm::abs( target.z ) <= 0.00001 ) {
-			//Looks like 0 :)
-			break;
-		}
-		if( target.z > 0 ) {
-			l = mid + 0.0001;
-		} else {
-			r = mid - 0.0001;
-		}
-	}
-	target.z = 0;
-	/*
-	 * There's a weird offset that we need to fix,
-	 * also the size of each lot is lot_size * lot_size
-	 */
-	target += 1.0f;
-	target /= lot_size;
-	target = glm::floor( target );
-	select_highlighted_lot( target );
+    unselect_highlighted_lot();
+    /*
+     * Find the position with Z=0, we simplify thing
+     * thing by ignoring the Z of the models
+     */
+    glm::vec3 target = dir.first;
+    GLfloat l = 0,
+            r = 1024; //Hopefully is big enough!
+    while( l < r ) {
+        GLfloat mid = ( r + l ) / 2;
+        target = dir.first + dir.second * mid;
+        if( glm::abs( target.z ) <= 0.00001 ) {
+            //Looks like 0 :)
+            break;
+        }
+        if( target.z > 0 ) {
+            l = mid + 0.0001;
+        } else {
+            r = mid - 0.0001;
+        }
+    }
+    target.z = 0;
+    /*
+     * There's a weird offset that we need to fix,
+     * also the size of each lot is lot_size * lot_size
+     */
+    target += 1.0f;
+    target /= lot_size;
+    target = glm::floor( target );
+    select_highlighted_lot( target );
+}
+
+void terrains::set_view_center(const glm::vec2 &pos,
+                               const GLfloat distance)
+{
+    LOG1("set_view_center, x:",pos.x,"/",pos.y,", dist: ",distance);
+
+    field_of_view_distance = distance * lot_size;
+    /*
+     * view_center are the coordinates of the
+     * lot at the 'center' of the eye view
+     */
+    view_center = pos;
+    view_center += 1.0f;
+    view_center /= lot_size;
+    view_center = glm::floor( view_center );
+    long visible_obj_count{ 0 };
+    //Recalculate the visible lots
+    for( auto& lot : terrain_map ) {
+        if( glm::distance( view_center, lot.position ) <= distance ){
+            lot.visible = true;
+            ++visible_obj_count;
+        } else {
+            lot.visible = false;
+        }
+    }
+    LOG1("Number of visible lots: ", visible_obj_count);
 }
 
 void terrains::unselect_highlighted_lot()
 {
-	/*
-	 * An highlighted lot should have Z equal to 0
-	 */
-	highlighted_lot.z = 1.0f;
+    /*
+     * An highlighted lot should have Z equal to 0
+     */
+    highlighted_lot.z = 1.0f;
 }
 
 void terrains::select_highlighted_lot(const glm::vec3 &lot)
 {
-	highlighted_lot = lot;
-	highlighted_lot.z = 0.0f;
+    highlighted_lot = lot;
+    highlighted_lot.z = 0.0f;
 }
 
 /*
@@ -199,14 +269,30 @@ void terrains::select_highlighted_lot(const glm::vec3 &lot)
  */
 bool terrains::is_highlighted(const glm::vec2 &lot) const
 {
-	return highlighted_lot.z == 0.0f &&
-			highlighted_lot.x == lot.x &&
-			highlighted_lot.y == lot.y;
+    return highlighted_lot.z == 0.0f &&
+            highlighted_lot.x == lot.x &&
+            highlighted_lot.y == lot.y;
 }
 
 glm::vec3 terrains::highlight_lot_color(const glm::vec3 &color) const
 {
-	return color * 1.3f;
+    return color * 1.3f;
+}
+
+long terrains::generate_unique_id()
+{
+    long terrain_id{ -1 };
+    if( used_ids.empty() ) {
+        terrain_id = 1;
+    } else {
+        /*
+         * std::set is sorted, pick the largest
+         * one and generate a new unique ID
+         */
+        terrain_id = *used_ids.rbegin() + 1;
+    }
+    //Attemp to insert the new ID
+    return used_ids.insert( terrain_id ).second ? terrain_id : -1;
 }
 
 

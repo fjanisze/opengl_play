@@ -36,7 +36,7 @@ public:
      * means higher priority, object wich higher priority
      * are rendered first
      */
-    static void add_renderable(renderable_object* obj,
+    static bool add_renderable(renderable_object* obj,
                                std::size_t priority = 5);
     static bool remove_renderable(renderable_object* obj);
 
