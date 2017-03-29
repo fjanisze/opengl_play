@@ -83,8 +83,8 @@ struct rendr_eng_data
      * meshes that could be rendered in order
      * to allow the use of highres/lowres models
      */
-    const long highres_shift_max_mesh{ 300 };
-    const long lowres_shift_min_mesh{ 500 };
+    const long highres_shift_max_mesh{ 400 };
+    const long lowres_shift_min_mesh{ 1400 };
     rendering_quality current_rendr_quality;
 
     /*
@@ -159,6 +159,7 @@ private:
      * lots should be rendered
      */
     GLfloat   field_of_view_distance;
+    void update_rendr_quality( long rendr_mesh_cnt );
 
     void unselect_highlighted_lot();
     void select_highlighted_lot( const glm::vec3& lot );

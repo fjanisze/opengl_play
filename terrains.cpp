@@ -166,13 +166,7 @@ void terrains::render()
         }
     }
     rendering_data.num_of_rendered_mesh = mesh_cnt;
-    if( mesh_cnt <= rendering_data.highres_shift_max_mesh ) {
-        //Let's use highres models
-        rendering_data.current_rendr_quality = rendering_quality::highres;
-    } else if( mesh_cnt >= rendering_data.lowres_shift_min_mesh ) {
-        //Let's use lowres models
-        rendering_data.current_rendr_quality = rendering_quality::lowres;
-    }
+    update_rendr_quality( mesh_cnt );
 }
 
 void terrains::clean_after_render()
@@ -247,7 +241,27 @@ void terrains::set_view_center(const glm::vec2 &pos,
             lot.visible = false;
         }
     }
-    LOG1("Number of visible lots: ", visible_obj_count);
+    LOG1("Number of visible lots: ",
+         visible_obj_count);
+    update_rendr_quality( visible_obj_count );
+}
+
+void terrains::update_rendr_quality(long rendr_mesh_cnt)
+{
+    rendering_quality new_quality{ rendering_data.current_rendr_quality };
+    if( rendr_mesh_cnt <= rendering_data.highres_shift_max_mesh ) {
+        //Let's use highres models
+        new_quality = rendering_quality::highres;
+    } else if( rendr_mesh_cnt >= rendering_data.lowres_shift_min_mesh ) {
+        //Let's use lowres models
+        new_quality = rendering_quality::lowres;
+    }
+    if( new_quality != rendering_data.current_rendr_quality ) {
+        rendering_data.current_rendr_quality = new_quality;
+        LOG1("Switching to ",
+             new_quality == rendering_quality::highres ? "highres" : "lowres"
+             ," model quality. Mesh count: ",rendr_mesh_cnt);
+    }
 }
 
 void terrains::unselect_highlighted_lot()

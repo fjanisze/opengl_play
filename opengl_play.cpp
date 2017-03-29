@@ -282,8 +282,8 @@ void opengl_ui::setup_scene()
 
 
     //Generate random terrain map
-    const int map_size_x{ 20 };
-    const int map_size_y{ 20 };
+    const int map_size_x{ 40 };
+    const int map_size_y{ 40 };
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );
@@ -376,7 +376,7 @@ void opengl_ui::enter_main_loop()
              * by this simple formula. The higher is the camera (z)
              * then much more lots we need to draw
              */
-            game_terrain->set_view_center( center, std::max( 6.0f, pos.z / 1.4f ) );
+            game_terrain->set_view_center( center, std::max( 2.0f, pos.z / 1.4f ) );
             last_cam_pos = pos;
         }
 
@@ -467,7 +467,7 @@ int main()
 {
     opengl_play::opengl_ui entry(1920,1280);
     log_inst.set_thread_name("MAIN");
-    log_inst.set_logging_level( logging::severity_type::debug2 );
+  //log_inst.set_logging_level( logging::severity_type::debug2 );
 
     entry.prepare_for_main_loop();
     entry.enter_main_loop();
