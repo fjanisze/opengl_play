@@ -214,6 +214,15 @@ opengl_ui::opengl_ui(int win_width,
     cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
     glfwSetCursor(window_ctx, cursor);
     glfwSetInputMode(window_ctx,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
+
+    /*
+     * Enable face culling to avoid rendering
+     * faces which are hidden behind other faces
+     * from the camera view perspective.
+     */
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -467,7 +476,7 @@ int main()
 {
     opengl_play::opengl_ui entry(1920,1280);
     log_inst.set_thread_name("MAIN");
-  //log_inst.set_logging_level( logging::severity_type::debug2 );
+    log_inst.set_logging_level( logging::severity_type::debug2 );
 
     entry.prepare_for_main_loop();
     entry.enter_main_loop();
