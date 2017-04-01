@@ -11,6 +11,7 @@
 #include <models.hpp>
 #include <terrains.hpp>
 #include <types.hpp>
+#include <map_entities.hpp>
 
 namespace opengl_play
 {
@@ -78,6 +79,7 @@ private:
     my_lines_ptr position_lines;
     shaders::my_small_shaders model_shader;
     terrains::terrains_ptr game_terrain;
+    map_entities::entity_collection_ptr game_map_entities;
     lights::generic_light_ptr light_1,
                             light_2,
                             flash_light;

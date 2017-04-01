@@ -28,7 +28,7 @@ my_mesh::my_mesh(vertices_ptr vertx,
 
 void my_mesh::setup_mesh()
 {
-    LOG3("my_mesh::setup_mesh: Setup of all the OpenGL buffers");
+    LOG3("Setup of all the OpenGL buffers");
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -110,12 +110,11 @@ model_loader::model_loader(const std::string &path,
     model_path{ path },
     revert_z_axis{ revert_z == z_axis::normal  }
 {
-    load_model();
 }
 
 bool model_loader::load_model()
 {
-    LOG3("model_loader::load_model: Loading ",
+    LOG3("Loading: ",
          model_path.c_str());
     Assimp::Importer import;
     const aiScene* scene = import.ReadFile(model_path,

@@ -89,10 +89,8 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
             terrain_lot new_lot;
             new_lot.terrain_id = map[ y ][ x ];
             new_lot.position = glm::vec2(x - central_lot.x, y - central_lot.y );
-            new_lot.model_matrix = glm::translate( new_lot.model_matrix,
-                                                   glm::vec3( new_lot.position.x * lot_size,
-                                                              new_lot.position.y * lot_size,
-                                                              0.0) );
+            new_lot.model_matrix = get_lot_model_matrix( new_lot.position );
+
             /*
              * Is the lot model available?
              */
@@ -220,8 +218,6 @@ void terrains::mouse_hoover(const types::ray_t &dir )
 void terrains::set_view_center(const glm::vec2 &pos,
                                const GLfloat distance)
 {
-    LOG1("set_view_center, x:",pos.x,"/",pos.y,", dist: ",distance);
-
     field_of_view_distance = distance * lot_size;
     /*
      * view_center are the coordinates of the
@@ -241,9 +237,16 @@ void terrains::set_view_center(const glm::vec2 &pos,
             lot.visible = false;
         }
     }
-    LOG1("Number of visible lots: ",
-         visible_obj_count);
     update_rendr_quality( visible_obj_count );
+}
+
+glm::mat4 terrains::get_lot_model_matrix(const glm::vec2 &pos) const
+{
+    glm::mat4 model;
+    return glm::translate( model,
+                           glm::vec3( pos.x * lot_size,
+                                      pos.y * lot_size,
+                                      0.0) );
 }
 
 void terrains::update_rendr_quality(long rendr_mesh_cnt)

@@ -145,6 +145,11 @@ public:
      */
     void set_view_center( const glm::vec2& pos,
                           const GLfloat distance );
+    /*
+     * Return the model matrix for the lot
+     * at position pos
+     */
+    glm::mat4 get_lot_model_matrix( const glm::vec2& pos ) const;
 private:
     shaders::my_small_shaders* shader;
     std::unordered_map<long,lot_models> terrain_container;

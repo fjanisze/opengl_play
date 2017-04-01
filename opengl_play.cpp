@@ -227,7 +227,7 @@ opengl_ui::opengl_ui(int win_width,
 
 void opengl_ui::prepare_for_main_loop()
 {
-    LOG3("opengl_ui, preparing the remaining environment.");
+    LOG3("Preparing the remaining environment.");
     check_for_errors();
     //Save the instance pointer
     ui_instance = this;
@@ -268,6 +268,13 @@ void opengl_ui::setup_scene()
     }
 
     game_terrain = terrains::terrains::create(&model_shader);
+
+    game_map_entities = map_entities::entities_collection::create(
+                &model_shader,
+                std::bind( &terrains::terrains::get_lot_model_matrix,
+                           game_terrain,
+                           std::placeholders::_1 ));
+
     game_terrain->load_terrain("../models/Grass/grass.obj",
                                glm::vec3(1.0),
                                1);
@@ -476,7 +483,7 @@ int main()
 {
     opengl_play::opengl_ui entry(1920,1280);
     log_inst.set_thread_name("MAIN");
-    log_inst.set_logging_level( logging::severity_type::debug2 );
+    //log_inst.set_logging_level( logging::severity_type::debug2 );
 
     entry.prepare_for_main_loop();
     entry.enter_main_loop();

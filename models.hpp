@@ -96,9 +96,12 @@ public:
     std::vector<mesh_ptr>& get_mesh();
     static model_loader_ptr load(const std::string& path,
                                  z_axis revert_z = z_axis::normal) {
-        return std::make_shared<model_loader>( path, revert_z );
+        auto model = std::make_shared<model_loader>( path, revert_z );
+        if( false == model->load_model() ) {
+            return nullptr;
+        }
+        return model;
     }
-
 private:
     std::string model_path,
     model_directory;

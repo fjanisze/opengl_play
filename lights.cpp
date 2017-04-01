@@ -86,7 +86,7 @@ void object_lighting::apply_object_color(const glm::vec3 &color)
 
 void generic_light::init_render_buffers() throw (std::runtime_error)
 {
-    LOG1("init_render_buffers");
+    LOG1("Initializing buffers");
 
     cube_vrtx = std::make_unique<GLfloat[]>(36 * 3);
     std::copy(model_vertices::cube_vertices,
@@ -218,7 +218,7 @@ point_light::point_light(glm::vec3 position,
                          GLfloat strength) :
     generic_light(position,color,strength)
 {
-    LOG1("Constructor: point_light");
+    LOG1("New point_light");
     init_render_buffers();
 
     //add_renderable(this);
