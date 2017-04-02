@@ -90,7 +90,7 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
             new_lot.terrain_id = map[ y ][ x ];
             new_lot.position = glm::vec2(x - central_lot.x, y - central_lot.y );
             new_lot.model_matrix = get_lot_model_matrix( new_lot.position );
-
+            new_lot.height = terrain_container[ new_lot.terrain_id ].low_res_model->get_model_height();
             /*
              * Is the lot model available?
              */
@@ -247,6 +247,22 @@ glm::mat4 terrains::get_lot_model_matrix(const glm::vec2 &pos) const
                            glm::vec3( pos.x * lot_size,
                                       pos.y * lot_size,
                                       0.0) );
+}
+
+glm::mat4 terrains::get_lot_top_model_matrix(const glm::vec2 &pos) const
+{
+    glm::mat4 model = get_lot_model_matrix( pos );
+    GLfloat height{ 0 };
+    for( auto& elem : terrain_map ) {
+        if( elem.position == pos ) {
+            height = elem.height;
+            break;
+        }
+    }
+    return glm::translate( model,
+                           glm::vec3(0.0,
+                                     0.0,
+                                     height));
 }
 
 void terrains::update_rendr_quality(long rendr_mesh_cnt)

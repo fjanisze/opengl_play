@@ -108,7 +108,8 @@ void my_mesh::render(shaders::my_small_shaders* shader)
 model_loader::model_loader(const std::string &path,
                            z_axis revert_z) :
     model_path{ path },
-    revert_z_axis{ revert_z == z_axis::normal  }
+    revert_z_axis{ revert_z == z_axis::normal  },
+    model_height{ 0 }
 {
 }
 
@@ -138,6 +139,11 @@ std::vector<mesh_ptr> &model_loader::get_mesh()
     return meshes;
 }
 
+GLfloat model_loader::get_model_height()
+{
+    return model_height;
+}
+
 
 void model_loader::process_model(aiNode *node,
                                  const aiScene *scene)
@@ -153,6 +159,7 @@ void model_loader::process_model(aiNode *node,
         meshes.push_back( std::forward<mesh_ptr>( new_mesh ) );
     }
     // Then do the same for each of its children
+    LOG3("Processing childs: ", node->mNumChildren);
     for(GLuint i = 0; i < node->mNumChildren; i++)
     {
         process_model(node->mChildren[i], scene);
@@ -174,6 +181,7 @@ mesh_ptr model_loader::process_mesh(aiMesh *mesh,
         vertex.coordinate.x = mesh->mVertices[i].x;
         vertex.coordinate.y = mesh->mVertices[i].z;
         vertex.coordinate.z = -(revert_z_axis ? -1 : 1 ) * mesh->mVertices[i].y;
+        model_height = std::max( model_height, vertex.coordinate.z );
         // Normals
         if( mesh->mNormals ) {
             vertex.normal.x = mesh->mNormals[i].x;

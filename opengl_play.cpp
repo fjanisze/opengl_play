@@ -272,7 +272,7 @@ void opengl_ui::setup_scene()
 
     game_map_entities = map_entities::entities_collection::create(
                                 &model_shader,
-                                std::bind( &terrains::terrains::get_lot_model_matrix,
+                                std::bind( &terrains::terrains::get_lot_top_model_matrix,
                                            game_terrain,
                                            std::placeholders::_1 ));
 

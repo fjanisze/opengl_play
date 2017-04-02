@@ -46,8 +46,8 @@ private:
     void setup_mesh();
 private:
     GLuint VAO,VBO,EBO;
-    vertices_ptr  vertices;
-    indices_ptr   indices; //For EBO
+    vertices_ptr vertices;
+    indices_ptr  indices; //For EBO
     textures_ptr textures;
 };
 
@@ -94,6 +94,7 @@ public:
     model_loader(const std::string& path, z_axis revert_z);
     bool load_model();
     std::vector<mesh_ptr>& get_mesh();
+    GLfloat get_model_height();
     static model_loader_ptr load(const std::string& path,
                                  z_axis revert_z = z_axis::normal) {
         auto model = std::make_shared<model_loader>( path, revert_z );
@@ -103,9 +104,10 @@ public:
         return model;
     }
 private:
-    std::string model_path,
-    model_directory;
+    std::string model_path;
+    std::string model_directory;
     std::vector<mesh_ptr> meshes;
+    GLfloat model_height;
     //For models which are 'reverted'
     bool revert_z_axis;
 };
