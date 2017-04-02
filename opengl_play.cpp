@@ -59,14 +59,21 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
     if( button == GLFW_MOUSE_BUTTON_LEFT &&
         action == GLFW_PRESS ) {
-
+        glm::vec2 pos = game_terrain->get_lot_position(
+                    ray_cast( mouse_x_pos,
+                              mouse_y_pos) );
+        if( game_terrain->is_a_valid_position( pos ) ) {
+            game_map_entities->add_entity( my_car, pos );
+        }
     }
 }
 
 void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
+    mouse_x_pos = x;
+    mouse_y_pos = y;
     movement_processor.mouse_input(x, y);
-    game_terrain->mouse_hoover( ray_cast( x, y ) );
+    game_terrain->mouse_hover( ray_cast( x, y ) );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -276,7 +283,7 @@ void opengl_ui::setup_scene()
                                            game_terrain,
                                            std::placeholders::_1 ));
 
-    map_entities::model_id my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
+    my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
                                    glm::vec3(1.0),
                                    "Poldek");
 
@@ -320,7 +327,7 @@ void opengl_ui::setup_scene()
     }
 
     //Add the car
-    game_map_entities->add_entity( my_car, glm::vec2( 1.0, 1.0 ) );
+    //game_map_entities->add_entity( my_car, glm::vec2( 1.0, 1.0 ) );
 
     game_terrain->load_terrain_map( terrain_map,
                                     2,
@@ -400,7 +407,8 @@ void opengl_ui::enter_main_loop()
              * by this simple formula. The higher is the camera (z)
              * then much more lots we need to draw
              */
-            game_terrain->set_view_center( center, std::max( 4.0f, pos.z / 1.2f ) );
+            game_terrain->set_view_center( center, std::max( 4.0f,
+                                                             std::max(pos.z,6.0f) / 1.2f ) );
             last_cam_pos = pos;
         }
 

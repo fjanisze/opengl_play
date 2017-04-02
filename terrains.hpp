@@ -135,8 +135,7 @@ public:
         return std::make_shared<terrains>(shader);
     }
 
-    const std::vector<terrain_lot>& get_lots() const;
-    void mouse_hoover( const types::ray_t& dir );
+    void mouse_hover( const types::ray_t& dir );
     /*
      * This is where the camera is pointing, the center of
      * the view field. The idea is to draw only a certain
@@ -155,6 +154,13 @@ public:
      * for the height.
      */
     glm::mat4 get_lot_top_model_matrix( const glm::vec2& pos ) const;
+    /*
+     * Return the corresponding lot position
+     * for the given ray or (inf,inf) if not
+     * existing any lot for that position
+     */
+    glm::vec2 get_lot_position( const types::ray_t &dir ) const;
+    bool is_a_valid_position( const glm::vec2& pos ) const;
 private:
     shaders::my_small_shaders* shader;
     std::unordered_map<long,lot_models> terrain_container;
@@ -162,8 +168,15 @@ private:
     std::set< long > used_ids; //To make sure that all the Ids's are unique.
 
     GLfloat lot_size;
-    std::vector<terrain_lot> terrain_map;
+    GLfloat get_position_idx( const glm::vec2& pos ) const;
+    //std::vector<terrain_lot> terrain_map;
+    std::unordered_map< long, terrain_lot > terrain_map;
     glm::vec2 view_center;
+    /*
+     * The origins lot is the lot from which
+     * the coordinate numbering starts
+     */
+    glm::vec2 origins_lot;
     /*
      * This variable specify how far from the view_center
      * lots should be rendered
@@ -172,10 +185,10 @@ private:
     void update_rendr_quality( long rendr_mesh_cnt );
 
     void unselect_highlighted_lot();
-    void select_highlighted_lot( const glm::vec3& lot );
+    void select_highlighted_lot(const glm::vec2 &lot );
     bool is_highlighted(const glm::vec2 &lot ) const;
     glm::vec3 highlight_lot_color( const glm::vec3& color ) const;
-    glm::vec3 highlighted_lot;//With a little brighter color
+    glm::vec2 highlighted_lot;//With a little brighter color
 
     rendr_eng_data rendering_data;
     long generate_unique_id();

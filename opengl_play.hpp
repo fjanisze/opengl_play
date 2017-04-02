@@ -83,6 +83,9 @@ private:
     lights::generic_light_ptr light_1,
                             light_2,
                             flash_light;
+    map_entities::model_id my_car;
+    GLfloat mouse_x_pos;
+    GLfloat mouse_y_pos;
 
     movable::object_movement_processor movement_processor;
 };

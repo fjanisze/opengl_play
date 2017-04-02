@@ -71,6 +71,7 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
         return false;
     }
     this->lot_size = lot_size;
+    origins_lot = central_lot;
     /*
      * Process the provided terrain map and
      * generate the proper internal reppresentation
@@ -99,10 +100,15 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
                 WARN1("The model for the terrain ID: ",
                       new_lot.terrain_id," is not loaded..");
             }
-            new_terrain_map.push_back( new_lot );
+            long lot_idx = get_position_idx( new_lot.position );
+            if( terrain_map.find( lot_idx ) != terrain_map.end() ) {
+                ERR("Attempt to add twice a lot at the same idx: ",
+                    lot_idx, " number of loaded lots: ", terrain_map.size() );
+            } else {
+                terrain_map[ get_position_idx( new_lot.position ) ] = new_lot;
+            }
         }
     }
-    terrain_map = std::move( new_terrain_map );
     /*
      * We cannot add terrains as a renderable object
      * until we have the terrain map loaded
@@ -129,7 +135,8 @@ void terrains::render()
 
     glm::vec3 last_color;
     long mesh_cnt{ 0 };
-    for( auto& lot : terrain_map ) {
+    for( auto& entry : terrain_map ) {
+        terrain_lot& lot = entry.second;
         if( false == lot.visible ) {
             continue;
         }
@@ -172,46 +179,14 @@ void terrains::clean_after_render()
 
 }
 
-const std::vector<terrain_lot> &terrains::get_lots() const
-{
-    return terrain_map;
-}
-
 /*
  * The 'dir' vector specify the proper ray cast
  * of the mouse when moving over the terrain
  */
-void terrains::mouse_hoover(const types::ray_t &dir )
+void terrains::mouse_hover( const types::ray_t &dir )
 {
     unselect_highlighted_lot();
-    /*
-     * Find the position with Z=0, we simplify thing
-     * thing by ignoring the Z of the models
-     */
-    glm::vec3 target = dir.first;
-    GLfloat l = 0,
-            r = 1024; //Hopefully is big enough!
-    while( l < r ) {
-        GLfloat mid = ( r + l ) / 2;
-        target = dir.first + dir.second * mid;
-        if( glm::abs( target.z ) <= 0.00001 ) {
-            //Looks like 0 :)
-            break;
-        }
-        if( target.z > 0 ) {
-            l = mid + 0.0001;
-        } else {
-            r = mid - 0.0001;
-        }
-    }
-    target.z = 0;
-    /*
-     * There's a weird offset that we need to fix,
-     * also the size of each lot is lot_size * lot_size
-     */
-    target += 1.0f;
-    target /= lot_size;
-    target = glm::floor( target );
+    glm::vec2 target = get_lot_position( dir );
     select_highlighted_lot( target );
 }
 
@@ -229,7 +204,8 @@ void terrains::set_view_center(const glm::vec2 &pos,
     view_center = glm::floor( view_center );
     long visible_obj_count{ 0 };
     //Recalculate the visible lots
-    for( auto& lot : terrain_map ) {
+    for( auto& entry : terrain_map ) {
+        terrain_lot& lot = entry.second;
         if( glm::distance( view_center, lot.position ) <= distance ){
             lot.visible = true;
             ++visible_obj_count;
@@ -253,16 +229,71 @@ glm::mat4 terrains::get_lot_top_model_matrix(const glm::vec2 &pos) const
 {
     glm::mat4 model = get_lot_model_matrix( pos );
     GLfloat height{ 0 };
-    for( auto& elem : terrain_map ) {
-        if( elem.position == pos ) {
-            height = elem.height;
-            break;
-        }
+    auto it = terrain_map.find( get_position_idx( pos ) );
+    if( it == terrain_map.end() ) {
+        ERR("Not able to find the terrain lot at position ", pos);
+        return {};
     }
     return glm::translate( model,
                            glm::vec3(0.0,
                                      0.0,
-                                     height));
+                                     it->second.height));
+}
+
+glm::vec2 terrains::get_lot_position( const types::ray_t &dir ) const
+{
+    /*
+     * Find the position with Z=0, we simplify thing
+     * thing by ignoring the Z of the models
+     */
+    glm::vec3 position = dir.first;
+    GLfloat l = 0,
+            r = 1024; //Hopefully is big enough!
+    while( l < r ) {
+        GLfloat mid = ( r + l ) / 2;
+        position = dir.first + dir.second * mid;
+        if( glm::abs( position.z ) <= 0.00001 ) {
+            //Looks like 0 :)
+            break;
+        }
+        if( position.z > 0 ) {
+            l = mid + 0.0001;
+        } else {
+            r = mid - 0.0001;
+        }
+    }
+    position.z = 0;
+    /*
+     * There's a weird offset that we need to fix,
+     * also the size of each lot is lot_size * lot_size
+     */
+    position += 1.0f;
+    position /= lot_size;
+    position = glm::floor( position );
+    glm::vec2 lot_position( position.x, position.y );
+    if( false == is_a_valid_position( lot_position ) ) {
+        //Not lots at this position, set to inf,inf
+        lot_position.x = std::numeric_limits<GLfloat>::max();
+        lot_position.y = std::numeric_limits<GLfloat>::max();
+    }
+    return lot_position;
+}
+
+bool terrains::is_a_valid_position(const glm::vec2 &pos) const
+{
+    return terrain_map.find( get_position_idx( pos ) ) != terrain_map.end();
+}
+
+GLfloat terrains::get_position_idx(const glm::vec2 &pos) const
+{
+    /*
+     * Cantor Pairing function.
+     * Make sure to not calculate the index
+     * using negative values
+     */
+    const GLfloat x = pos.x + origins_lot.x + 1;
+    const GLfloat y = pos.y + origins_lot.y + 1;
+    return (1.0f/2.0f) * ( x + y ) * ( x + y + 1) + y;
 }
 
 void terrains::update_rendr_quality(long rendr_mesh_cnt)
@@ -285,16 +316,13 @@ void terrains::update_rendr_quality(long rendr_mesh_cnt)
 
 void terrains::unselect_highlighted_lot()
 {
-    /*
-     * An highlighted lot should have Z equal to 0
-     */
-    highlighted_lot.z = 1.0f;
+    highlighted_lot.x = std::numeric_limits<GLfloat>::max();
+    highlighted_lot.y = std::numeric_limits<GLfloat>::max();
 }
 
-void terrains::select_highlighted_lot(const glm::vec3 &lot)
+void terrains::select_highlighted_lot(const glm::vec2 &lot)
 {
     highlighted_lot = lot;
-    highlighted_lot.z = 0.0f;
 }
 
 /*
@@ -302,8 +330,7 @@ void terrains::select_highlighted_lot(const glm::vec3 &lot)
  */
 bool terrains::is_highlighted(const glm::vec2 &lot) const
 {
-    return highlighted_lot.z == 0.0f &&
-            highlighted_lot.x == lot.x &&
+    return highlighted_lot.x == lot.x &&
             highlighted_lot.y == lot.y;
 }
 
