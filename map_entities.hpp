@@ -61,7 +61,8 @@ public:
     map_entity_data( model_id new_id,
                      const std::string& name,
                      models::model_loader_ptr model ,
-                     const glm::vec3 &color );
+                     const glm::vec3 &color ,
+                     const glm::vec2& origin);
     /*
      * Add one more of those entities on the map,
      * it might be everything: unit, building..
@@ -92,6 +93,7 @@ private:
      */
     std::string pretty_name;
 
+    glm::vec2   coord_origin;
     glm::vec3   default_color;
     models::model_loader_ptr model_ptr;
 
@@ -139,6 +141,7 @@ public:
     model_id load_entity( const std::string& model_path,
                           const glm::vec3& default_color,
                           const std::string& pretty_name );
+    void set_coord_origin( const glm::vec2& origin );
     /*
      * Add an instance of the model
      * on the map
@@ -156,6 +159,7 @@ private:
     entity_matrix_func get_entity_model_matrix;
     std::unordered_map< model_id, map_entity_data_ptr > entities;
     model_id new_entity_id();
+    glm::vec2 coord_origin;
 
     /*
      * Rendering functions

@@ -6,11 +6,13 @@ namespace map_entities
 map_entity_data::map_entity_data(model_id new_id,
                                  const std::string &name,
                                  models::model_loader_ptr model,
-                                 const glm::vec3& color ) :
+                                 const glm::vec3& color,
+                                 const glm::vec2& origin) :
     pretty_name{ name },
     id{ new_id },
     default_color{ color },
-    model_ptr{ model }
+    model_ptr{ model },
+    coord_origin{ origin }
 {
     LOG3("New entity: ",name,", model ID: ",id);
 }
@@ -61,7 +63,9 @@ long map_entity_data::get_position_idx(const glm::vec2 &pos) const
     /*
      * Using the Cantor Pairing Function
      */
-    return ( 1.0f / 2.0f ) * ( pos.x + pos. y) * ( pos.x + pos.y + 1 ) + pos.y;
+    GLfloat x = pos.x + coord_origin.x + 5;
+    GLfloat y = pos.y + coord_origin.y + 5;
+    return ( 1.0f / 2.0f ) * ( x + y ) * ( x + y + 1 ) + y;
 }
 
 
@@ -69,7 +73,8 @@ entities_collection::entities_collection(shaders::my_small_shaders *game_shader,
                                          entity_matrix_func lot_pos_generator) :
     shader{ game_shader },
     get_entity_model_matrix{ lot_pos_generator },
-    object_lighting( game_shader )
+    object_lighting( game_shader ),
+    coord_origin{ glm::vec2(0.0f) }
 {
     LOG3("Creating new entity collection");
 }
@@ -92,12 +97,19 @@ model_id entities_collection::load_entity(const std::string &model_path,
     map_entity_data_ptr new_entity = map_entity_data::create( new_model_id,
                                     pretty_name,
                                     new_model,
-                                    default_color );
+                                    default_color,
+                                    coord_origin);
 
     entities.insert( std::make_pair( new_model_id, new_entity ) );
     LOG3("Entity ",pretty_name," loaded, assigned ID: ", new_model_id);
     add_renderable( this );
     return new_model_id;
+}
+
+void entities_collection::set_coord_origin(const glm::vec2 &origin)
+{
+    LOG3("Setting coordinate origin at ", origin);
+    coord_origin = origin;
 }
 
 entity_id entities_collection::add_entity(model_id id,
@@ -139,12 +151,6 @@ void entities_collection::render()
         {
             entity.second.model_matrix = get_entity_model_matrix(
                         entity.second.position );
-            /*
-             * There might be already something there,
-             * get the Z component and update the
-             * model matrix accordingly
-             */
-
             glUniformMatrix4fv(model_loc, 1, GL_FALSE,
                                glm::value_ptr( entity.second.model_matrix ));
             //Render all the model meshes

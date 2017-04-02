@@ -161,6 +161,7 @@ public:
      */
     glm::vec2 get_lot_position( const types::ray_t &dir ) const;
     bool is_a_valid_position( const glm::vec2& pos ) const;
+    glm::vec2 get_coord_origin() const;
 private:
     shaders::my_small_shaders* shader;
     std::unordered_map<long,lot_models> terrain_container;

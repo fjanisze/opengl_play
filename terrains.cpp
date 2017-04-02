@@ -284,6 +284,11 @@ bool terrains::is_a_valid_position(const glm::vec2 &pos) const
     return terrain_map.find( get_position_idx( pos ) ) != terrain_map.end();
 }
 
+glm::vec2 terrains::get_coord_origin() const
+{
+    return origins_lot;
+}
+
 GLfloat terrains::get_position_idx(const glm::vec2 &pos) const
 {
     /*
@@ -291,8 +296,8 @@ GLfloat terrains::get_position_idx(const glm::vec2 &pos) const
      * Make sure to not calculate the index
      * using negative values
      */
-    const GLfloat x = pos.x + origins_lot.x + 1;
-    const GLfloat y = pos.y + origins_lot.y + 1;
+    const GLfloat x = pos.x + origins_lot.x + 5;
+    const GLfloat y = pos.y + origins_lot.y + 5;
     return (1.0f/2.0f) * ( x + y ) * ( x + y + 1) + y;
 }
 

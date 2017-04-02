@@ -333,6 +333,7 @@ void opengl_ui::setup_scene()
                                     2,
                                     glm::vec2(map_size_x / 2,
                                               map_size_y / 2) );
+    game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
 
 
     light_1 = lights::light_factory<lights::directional_light>::create(
