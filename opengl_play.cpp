@@ -219,10 +219,11 @@ opengl_ui::opengl_ui(int win_width,
      * Enable face culling to avoid rendering
      * faces which are hidden behind other faces
      * from the camera view perspective.
+     * (WHEN ENABLED THE TEXT IS NOT RENDERED.. TODO)
      */
-    glEnable(GL_CULL_FACE);
+/*   glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
+    glFrontFace(GL_CW);*/
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -270,10 +271,14 @@ void opengl_ui::setup_scene()
     game_terrain = terrains::terrains::create(&model_shader);
 
     game_map_entities = map_entities::entities_collection::create(
-                &model_shader,
-                std::bind( &terrains::terrains::get_lot_model_matrix,
-                           game_terrain,
-                           std::placeholders::_1 ));
+                                &model_shader,
+                                std::bind( &terrains::terrains::get_lot_model_matrix,
+                                           game_terrain,
+                                           std::placeholders::_1 ));
+
+    map_entities::model_id my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
+                                   glm::vec3(1.0),
+                                   "Poldek");
 
     game_terrain->load_terrain("../models/Grass/grass.obj",
                                glm::vec3(1.0),
@@ -313,6 +318,9 @@ void opengl_ui::setup_scene()
             terrain_map[ y ][ x ] = dist( eng );
         }
     }
+
+    //Add the car
+    game_map_entities->add_entity( my_car, glm::vec2( 1.0, 1.0 ) );
 
     game_terrain->load_terrain_map( terrain_map,
                                     2,
@@ -392,7 +400,7 @@ void opengl_ui::enter_main_loop()
              * by this simple formula. The higher is the camera (z)
              * then much more lots we need to draw
              */
-            game_terrain->set_view_center( center, std::max( 2.0f, pos.z / 1.4f ) );
+            game_terrain->set_view_center( center, std::max( 4.0f, pos.z / 1.2f ) );
             last_cam_pos = pos;
         }
 

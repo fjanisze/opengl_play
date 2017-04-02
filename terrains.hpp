@@ -97,6 +97,10 @@ struct rendr_eng_data
     { }
 };
 
+/*
+ * Handle the game map, which is a matrix of lots
+ * of differnet kinds.
+ */
 class terrains : public lights::object_lighting,
         public renderable::renderable_object
 {
@@ -124,12 +128,6 @@ public:
     bool load_terrain_map(const terrain_map_t& map,
                           GLfloat lot_size, //Each lot is a square: lot_size X lot_size
                           glm::vec2 central_lot); //Position of the lot at the center (0,0)
-    /*
-     * Rendering functions
-     */
-    void prepare_for_render() override;
-    void render() override;
-    void clean_after_render() override;
 
     //Factory
     static terrains_ptr create(shaders::my_small_shaders* shader) {
@@ -174,6 +172,13 @@ private:
 
     rendr_eng_data rendering_data;
     long generate_unique_id();
+
+    /*
+     * Rendering functions
+     */
+    void prepare_for_render() override;
+    void render() override;
+    void clean_after_render() override;
 };
 
 }

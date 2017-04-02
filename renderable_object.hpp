@@ -44,10 +44,10 @@ public:
     virtual void prepare_for_render() {}
     virtual void render() {}
     virtual void clean_after_render() {}
-    virtual ~renderable_object() {}
     virtual std::string renderable_nice_name();
 
     virtual void rotate_object(GLfloat yaw) {}
+    virtual ~renderable_object() {}
 private:
     static std::map<std::size_t,rendr_class> renderables;
 protected:

@@ -7,6 +7,7 @@
 #include <vector>
 #include <logger/log.hpp>
 #include <functional>
+#include <unordered_map>
 #include <renderable_object.hpp>
 #include <lights.hpp>
 
@@ -14,7 +15,7 @@ namespace map_entities
 {
 
 using model_id = long;
-using unit_id = long;
+using entity_id = long;
 constexpr long invalid_id{ -1 };
 
 /*
@@ -33,9 +34,14 @@ struct map_entity
      * when there are multiple units of that type
      * in the game.
      */
-    unit_id   entity_id;
     glm::vec2 position;
     glm::mat4 model_matrix;
+
+    /*
+     * On the same position they might be multiple
+     * entities of this kind.
+     */
+    std::vector< entity_id > entities;
 
     map_entity() = default;
 };
@@ -43,6 +49,7 @@ struct map_entity
 class map_entity_data;
 using map_entity_data_ptr = std::shared_ptr< map_entity_data >;
 
+using entities_data_container = std::unordered_map< long, map_entity >;
 /*
  * Each loaded entity (model) has
  * its own map_entity object
@@ -51,28 +58,32 @@ class map_entity_data
 {
 public:
     map_entity_data() = default;
-    map_entity_data(model_id new_id,
-                    const std::string& name,
-                    models::model_loader_ptr model ,
-                    const glm::vec3 &color);
+    map_entity_data( model_id new_id,
+                     const std::string& name,
+                     models::model_loader_ptr model ,
+                     const glm::vec3 &color );
     /*
      * Add one more of those entities on the map,
      * it might be everything: unit, building..
      */
-    unit_id add_entity( const glm::vec2& position );
+    entity_id add_at_location( const glm::vec2& position );
+    entities_data_container& get_data();
+    models::model_loader_ptr& get_model();
+    glm::vec3& get_color();
 
     template< typename...Args >
     static map_entity_data_ptr create(Args&&...args) {
         return std::make_shared< map_entity_data >(
                     std::forward< Args >( args )... );
     }
-
+    void render();
 private:
     /*
      * The model ID is unique for the specific
      * entity model (model_loader)
      */
-    model_id    id;
+    model_id id;
+    entity_id new_entity_id();
     /*
      * The pretty name is something that can
      * be rendered to the user, like an entity
@@ -87,7 +98,12 @@ private:
     /*
      * Store all the instance of the model
      */
-    std::vector< map_entity > entities;
+    entities_data_container entities;
+    /*
+     * This is a pairing function from
+     * pos.x/pos.y -> n
+     */
+    long get_position_idx( const glm::vec2& pos ) const;
 };
 
 /*
@@ -123,17 +139,31 @@ public:
     model_id load_entity( const std::string& model_path,
                           const glm::vec3& default_color,
                           const std::string& pretty_name );
+    /*
+     * Add an instance of the model
+     * on the map
+     */
+    entity_id add_entity( model_id id, const glm::vec2& position );
 
     static entity_collection_ptr create( shaders::my_small_shaders* shad,
                                          entity_matrix_func model_mtrc_gen ) {
         LOG3("Creating new entity_collection, shader ptr: ", shad);
         return std::make_shared< entities_collection >( shad, model_mtrc_gen );
     }
+    ~entities_collection() {}
 private:
     shaders::my_small_shaders* shader;
-    entity_matrix_func get_entity_pos;
-    std::map< model_id, map_entity_data_ptr > entities;
+    entity_matrix_func get_entity_model_matrix;
+    std::unordered_map< model_id, map_entity_data_ptr > entities;
     model_id new_entity_id();
+
+    /*
+     * Rendering functions
+     */
+    void prepare_for_render() override;
+    void render() override;
+    void clean_after_render() override;
+    std::string renderable_nice_name() override;
 };
 
 } //map_entities

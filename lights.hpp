@@ -125,21 +125,6 @@ struct light_factory
 class generic_light : public renderable::renderable_object,
         public movable::movable_object
 {
-protected:
-    GLuint VAO,VBO;
-    shaders::my_small_shaders light_shader;
-    std::unique_ptr<GLfloat[]> cube_vrtx;
-    glm::vec3 light_color;
-    GLfloat   color_strength;
-    glm::mat4 view,projection;
-    std::vector<GLfloat> light_data;
-    virtual void init_render_buffers() throw (std::runtime_error);
-    /*
-     * Certain light data like position, color &c
-     * are commong whithin all the lights,
-     * this function fill those common information
-     */
-    std::size_t fill_common_light_data();
 public:
     generic_light();
     generic_light(glm::vec3 position,
@@ -172,6 +157,21 @@ public:
      * will cast the light in front of this object (+Z)
      */
     virtual void attach_to_object( movable::mov_obj_ptr object );
+protected:
+    GLuint VAO,VBO;
+    shaders::my_small_shaders light_shader;
+    std::unique_ptr<GLfloat[]> cube_vrtx;
+    glm::vec3 light_color;
+    GLfloat   color_strength;
+    glm::mat4 view,projection;
+    std::vector<GLfloat> light_data;
+    virtual void init_render_buffers() throw (std::runtime_error);
+    /*
+     * Certain light data like position, color &c
+     * are commong whithin all the lights,
+     * this function fill those common information
+     */
+    std::size_t fill_common_light_data();
 };
 
 /*
@@ -188,13 +188,13 @@ public:
     type_of_light light_type() {
         return type_of_light::Point_Light;
     }
+    void rotate_object(GLfloat yaw);
     ~point_light();
+private:
     void set_transformations(glm::mat4 v, glm::mat4 p);
     void prepare_for_render();
     void render();
     void clean_after_render();
-
-    void rotate_object(GLfloat yaw);
 };
 
 /*
@@ -214,6 +214,7 @@ public:
     type_of_light light_type(){
         return type_of_light::Directional_Light;
     }
+private:
     std::string renderable_nice_name() {
         return "directional_light";
     }
@@ -243,9 +244,6 @@ public:
     type_of_light light_type(){
         return type_of_light::Spot_light;
     }
-    std::string renderable_nice_name() {
-        return "spot_light";
-    }
 
     void attach_to_object( movable::mov_obj_ptr object );
 
@@ -258,6 +256,10 @@ private:
      * if the target moves
      */
     void recalculate_light_direction();
+
+    std::string renderable_nice_name() {
+        return "spot_light";
+    }
 };
 
 /*
@@ -279,11 +281,12 @@ public:
     type_of_light light_type(){
         return type_of_light::Flash_light;
     }
+
+    const std::vector<GLfloat>& get_light_data() override;
+private:
     std::string renderable_nice_name() {
         return "flash_light";
     }
-
-    const std::vector<GLfloat>& get_light_data() override;
 };
 
 
