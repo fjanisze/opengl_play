@@ -182,7 +182,7 @@ opengl_ui::opengl_ui(int win_width,
     //Create the window
     window_ctx = glfwCreateWindow(win_width,
                                   win_heigth,
-                                  "light play",
+                                  "opengl play",
                                   nullptr,
                                   nullptr);
     if(window_ctx == nullptr){
