@@ -16,6 +16,48 @@
 namespace opengl_play
 {
 
+/*
+ * Internal rappresentation
+ * of a framebuffer
+ */
+struct buffer
+{
+    buffer() = default;
+    buffer( const GLuint fbo ) :
+        FBO{ fbo } {}
+
+    GLuint FBO{ GL_INVALID_INDEX };
+    GLuint texture{ GL_INVALID_INDEX };
+    GLuint RBO{ GL_INVALID_INDEX };
+
+    operator GLuint() const {
+        return FBO;
+    }
+
+    bool operator < ( const buffer& other ) const {
+        return FBO < other.FBO;
+    }
+};
+
+/*
+ * Handle the creation and destruction
+ * of framebuffers
+ */
+class framebuffers
+{
+public:
+    framebuffers( GLuint screen_width,
+                  GLuint screen_height );
+    GLuint create();
+    GLenum bind( const GLuint fbo );
+    ~framebuffers();
+private:
+    GLuint create_renderbuffer();
+    GLuint create_texture();
+    std::set<buffer> buffers;
+    GLuint width;
+    GLuint height;
+};
 
 void mouse_click_callback(GLFWwindow* ctx,
                           int button,
