@@ -12,52 +12,10 @@
 #include <terrains.hpp>
 #include <types.hpp>
 #include <map_entities.hpp>
+#include <framebuffers.hpp>
 
 namespace opengl_play
 {
-
-/*
- * Internal rappresentation
- * of a framebuffer
- */
-struct buffer
-{
-    buffer() = default;
-    buffer( const GLuint fbo ) :
-        FBO{ fbo } {}
-
-    GLuint FBO{ GL_INVALID_INDEX };
-    GLuint texture{ GL_INVALID_INDEX };
-    GLuint RBO{ GL_INVALID_INDEX };
-
-    operator GLuint() const {
-        return FBO;
-    }
-
-    bool operator < ( const buffer& other ) const {
-        return FBO < other.FBO;
-    }
-};
-
-/*
- * Handle the creation and destruction
- * of framebuffers
- */
-class framebuffers
-{
-public:
-    framebuffers( GLuint screen_width,
-                  GLuint screen_height );
-    GLuint create();
-    GLenum bind( const GLuint fbo );
-    ~framebuffers();
-private:
-    GLuint create_renderbuffer();
-    GLuint create_texture();
-    std::set<buffer> buffers;
-    GLuint width;
-    GLuint height;
-};
 
 void mouse_click_callback(GLFWwindow* ctx,
                           int button,
@@ -84,6 +42,12 @@ class opengl_ui
     void init_text();
     void evaluate_key_status();
     void setup_scene();
+    /*
+     * Verify whether the mouse is over one of the
+     * models rendered in models_back_buffer, if so
+     * trigger a mouse_hover call
+     */
+    void verify_models_intersections( GLfloat x, GLfloat y );
 public:
     opengl_ui(int win_width, int win_heigth);
     void        prepare_for_main_loop();
@@ -111,6 +75,8 @@ private:
     int win_h,
     win_w;
     camera_obj		camera;
+    Framebuffers::framebuffers_ptr frame_buffers;
+    GLfloat models_back_buffer;
     /*
      * Ray casting utility
      */

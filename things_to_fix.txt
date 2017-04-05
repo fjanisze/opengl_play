@@ -4,3 +4,7 @@ became very sluggish. This seems to be more evident when the rotation mechanism 
 
 ** Models **
 The models are way too comples.. and ugly.. fix them..
+
+** Shaders **
+Need to use just one shader for all, this continuous switch of shaders
+if a pain for the performance

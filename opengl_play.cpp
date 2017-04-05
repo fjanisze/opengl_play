@@ -67,7 +67,16 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
     mouse_x_pos = x;
     mouse_y_pos = y;
     movement_processor.mouse_input(x, y);
-    game_terrain->mouse_hover( ray_cast( x, y ) );
+    /*
+     * If the mouse is over an entity then
+     * skip the terrain mouse processing.
+     */
+    if( false == game_map_entities->mouse_hover( x, win_h - y ) )
+    {
+        game_terrain->mouse_hover( ray_cast( x, y ) );
+    } else {
+        game_terrain->unselect_highlighted_lot();
+    }
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -216,6 +225,8 @@ opengl_ui::opengl_ui(int win_width,
     glfwSetCursor(window_ctx, cursor);
     glfwSetInputMode(window_ctx,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
 
+    frame_buffers = Framebuffers::framebuffers::create( win_w, win_h );
+
     /*
      * Enable face culling to avoid rendering
      * faces which are hidden behind other faces
@@ -269,17 +280,12 @@ void opengl_ui::setup_scene()
         throw std::runtime_error("Shader creation failure");
     }
 
+    projection = glm::perspective(glm::radians(45.0f),
+                                  (GLfloat)win_w / (GLfloat)win_h,
+                                  1.0f, 100.0f);
+
     game_terrain = terrains::terrains::create(&model_shader);
 
-    game_map_entities = map_entities::entities_collection::create(
-                                &model_shader,
-                                std::bind( &terrains::terrains::get_lot_top_model_matrix,
-                                           game_terrain,
-                                           std::placeholders::_1 ));
-
-    my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
-                                   glm::vec3(1.0),
-                                   "Poldek");
 
     game_terrain->load_terrain("../models/Grass/grass.obj",
                                glm::vec3(1.0),
@@ -320,16 +326,30 @@ void opengl_ui::setup_scene()
         }
     }
 
+
+    game_terrain->load_terrain_map( terrain_map,
+                                    2,
+                                    glm::vec2(map_size_x / 2,
+                                              map_size_y / 2) );
+
+
+    game_map_entities = map_entities::entities_collection::create(
+                                &model_shader,
+                                frame_buffers,
+                                std::bind( &terrains::terrains::get_lot_top_model_matrix,
+                                           game_terrain,
+                                           std::placeholders::_1 ));
+
+    my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
+                                   glm::vec3(1.0),
+                                   "Poldek");
+
     //Add the cars
     game_map_entities->add_entity( my_car, glm::vec2(1.0,1.0) );
     game_map_entities->add_entity( my_car, glm::vec2(1.0,2.0) );
     game_map_entities->add_entity( my_car, glm::vec2(-2.0,1.0) );
     game_map_entities->add_entity( my_car, glm::vec2(-1.0,-1.0) );
 
-    game_terrain->load_terrain_map( terrain_map,
-                                    2,
-                                    glm::vec2(map_size_x / 2,
-                                              map_size_y / 2) );
     game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
 
 
@@ -344,6 +364,24 @@ void opengl_ui::setup_scene()
                 12);
 }
 
+void opengl_ui::verify_models_intersections( GLfloat x, GLfloat y )
+{
+    /*
+     * Extract the Z buffer, is not 1 then
+     * we're moving over a model
+     */
+    GLfloat z_value;
+    frame_buffers->bind( models_back_buffer );
+    glReadPixels(x, win_h - y,
+                 1, 1,
+                 GL_DEPTH_COMPONENT,
+                 GL_FLOAT, &z_value);
+    if( z_value != 1 ) {
+      //  std::cout<<"YOURE OVER A MODEL!"<<std::endl;
+    }
+    frame_buffers->unbind();
+}
+
 void opengl_ui::enter_main_loop()
 {
     setup_scene();
@@ -352,15 +390,12 @@ void opengl_ui::enter_main_loop()
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
 
-    projection = glm::perspective(glm::radians(45.0f),
-                                  (GLfloat)win_w / (GLfloat)win_h,
-                                  1.0f, 100.0f);
 
-    framebuffers buffers( win_w, win_h );
-    GLuint model_buffer = buffers.create();
-    buffers.bind( model_buffer );
-
-    return;
+    models_back_buffer = frame_buffers->create_buffer();
+    if( models_back_buffer < 0 ) {
+        ERR("Quitting!");
+        return;
+    }
 
     glm::vec3 last_cam_pos;
     LOG2("Entering main loop!");
@@ -380,9 +415,12 @@ void opengl_ui::enter_main_loop()
             current_fps = 0;
         }
 
-        glClearColor(0.0,0.2,0.02,1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.0,0.0,0.0,1.0);
 
+        /*
+         * Proceed with the common rendering
+         */
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderable::renderable_object::render_renderables(camera->get_view(),
                                                           projection);
 
@@ -497,119 +535,7 @@ glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
     return glm::vec2( target.x, target.y );
 }
 
-framebuffers::framebuffers(GLuint screen_width,
-                           GLuint screen_height) :
-    width{ screen_width },
-    height{ screen_height }
-{
-    LOG1("Creating a new framebuffers, size: ",
-         screen_width,"/",screen_height);
-}
 
-GLuint framebuffers::create()
-{
-    LOG3("Creating a new buffer!");
-
-    buffer new_buf;
-    glGenFramebuffers(1, &new_buf.FBO);
-    glBindFramebuffer( GL_FRAMEBUFFER,
-                       new_buf.FBO );
-
-    //Create and attach a texture
-    new_buf.texture = create_texture();
-    glFramebufferTexture2D(
-                GL_FRAMEBUFFER,
-                GL_COLOR_ATTACHMENT0,
-                GL_TEXTURE_2D,
-                new_buf.texture,
-                0);
-    /*
-     *Create and attach a renderbuffer for stencil
-     *and depth testing.
-     */
-    new_buf.RBO = create_renderbuffer();
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-                              GL_DEPTH_STENCIL_ATTACHMENT,
-                              GL_RENDERBUFFER,
-                              new_buf.RBO);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if( false == buffers.insert( new_buf ).second ) {
-        ERR("Failed while inserting a new FBO with ID ", new_buf.FBO);
-        glDeleteTextures( 1, &new_buf.texture );
-        return -1;
-    }
-
-    LOG3("Creation completed, all buffers ready!");
-    return new_buf.FBO;
-}
-
-GLenum framebuffers::bind(const GLuint fbo)
-{
-    if( buffers.find( buffer(fbo) ) == buffers.end() ) {
-        ERR("Buffer ",fbo," not found!");
-        return GL_INVALID_OPERATION;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    GLenum buffer_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-    if( GL_FRAMEBUFFER_COMPLETE != buffer_status ) {
-        ERR("Cannot bind the framebuffer, status: ",
-            buffer_status);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-    return buffer_status;
-}
-
-framebuffers::~framebuffers()
-{
-    for( auto& fbo : buffers ) {
-        glDeleteBuffers( 1, &fbo.FBO );
-    }
-}
-
-GLuint framebuffers::create_renderbuffer()
-{
-    LOG1("Creating new renderbuffer");
-    GLuint rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER,
-                       rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER,
-                          GL_DEPTH24_STENCIL8,
-                          height,
-                          width);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    return rbo;
-}
-
-GLuint framebuffers::create_texture()
-{
-    LOG1("Creating a new texture, size: ",
-         width,"/",height);
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB,
-                 height,
-                 width,
-                 0,
-                 GL_RGB,
-                 GL_UNSIGNED_BYTE,
-                 nullptr);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR );
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_MAG_FILTER,
-                    GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    LOG3("New texture ID: ", texture);
-    return texture;
-}
 
 }
 

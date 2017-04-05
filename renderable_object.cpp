@@ -13,12 +13,18 @@ void renderable_object::render_renderables(glm::mat4 view,
 {
     for(auto&& entry : renderables) {
         for(auto&& obj:entry.second.renderables) {
-            obj->set_transformations(view,projection);
-            obj->prepare_for_render();
-            obj->render();
-            obj->clean_after_render();
+            obj->render_me( view, projection );
         }
     }
+}
+
+void renderable_object::render_me(glm::mat4 view,
+                                  glm::mat4 projection)
+{
+    set_transformations(view,projection);
+    prepare_for_render();
+    render();
+    clean_after_render();
 }
 
 bool renderable_object::add_renderable(renderable_object * object,

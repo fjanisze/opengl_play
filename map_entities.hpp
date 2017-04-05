@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <renderable_object.hpp>
 #include <lights.hpp>
+#include <framebuffers.hpp>
 
 namespace map_entities
 {
@@ -36,20 +37,22 @@ struct map_entity
      */
     glm::vec2 position;
     glm::mat4 model_matrix;
-
     /*
-     * On the same position they might be multiple
-     * entities of this kind.
+     * When static coloring is enabled, this is the color
+     * which will be used for rendering the model
      */
-    std::vector< entity_id > entities;
+    glm::vec3 static_color;
+    entity_id id;
 
     map_entity() = default;
 };
 
+using map_entities = std::vector< map_entity >;
+
 class map_entity_data;
 using map_entity_data_ptr = std::shared_ptr< map_entity_data >;
 
-using entities_data_container = std::unordered_map< long, map_entity >;
+using entities_data_container = std::unordered_map< long, map_entities >;
 /*
  * Each loaded entity (model) has
  * its own map_entity object
@@ -61,13 +64,14 @@ public:
     map_entity_data( model_id new_id,
                      const std::string& name,
                      models::model_loader_ptr model ,
-                     const glm::vec3 &color ,
+                     const glm::vec3 &color,
                      const glm::vec2& origin);
     /*
      * Add one more of those entities on the map,
      * it might be everything: unit, building..
      */
-    entity_id add_at_location( const glm::vec2& position );
+    entity_id add_at_location(const glm::vec2& position , const glm::mat4 &model_matrix,
+                               const glm::vec3& static_color );
     entities_data_container& get_data();
     models::model_loader_ptr& get_model();
     glm::vec3& get_color();
@@ -77,7 +81,6 @@ public:
         return std::make_shared< map_entity_data >(
                     std::forward< Args >( args )... );
     }
-    void render();
 private:
     /*
      * The model ID is unique for the specific
@@ -109,6 +112,22 @@ private:
 };
 
 /*
+ * Little utility object for managing
+ * colors, used for static coloring purpose
+ */
+class colors_creator
+{
+public:
+    colors_creator( GLfloat step = 1.0f / 100.0f );
+
+    glm::vec3 get_color();
+private:
+    glm::vec3 next_color;
+    GLfloat color_step;
+    long num_of_colors;
+};
+
+/*
  * This function is used to obtain the
  * proper model matrix for a given position,
  * the function is implemented in 'terrains'
@@ -117,6 +136,7 @@ using entity_matrix_func = std::function<glm::mat4( const glm::vec2&) >;
 
 class entities_collection;
 using entity_collection_ptr = std::shared_ptr< entities_collection >;
+
 
 /*
  * Units, constructions &c are just map
@@ -134,6 +154,7 @@ class entities_collection : public renderable::renderable_object,
 {
 public:
     entities_collection( shaders::my_small_shaders* game_shader,
+                         Framebuffers::framebuffers_ptr frameb,
                          entity_matrix_func lot_pos_generator );
     /*
      * Load the provided obj file
@@ -143,24 +164,53 @@ public:
                           const std::string& pretty_name );
     void set_coord_origin( const glm::vec2& origin );
     /*
+     * Return true if there is something under
+     * the position x,y
+     */
+    bool mouse_hover( const GLfloat x,
+                      const GLfloat y );
+    /*
      * Add an instance of the model
      * on the map
      */
     entity_id add_entity( model_id id, const glm::vec2& position );
 
     static entity_collection_ptr create( shaders::my_small_shaders* shad,
+                                          Framebuffers::framebuffers_ptr frameb,
                                          entity_matrix_func model_mtrc_gen ) {
         LOG3("Creating new entity_collection, shader ptr: ", shad);
-        return std::make_shared< entities_collection >( shad, model_mtrc_gen );
+        return std::make_shared< entities_collection >( shad,
+                                                frameb,model_mtrc_gen );
     }
     ~entities_collection() {}
 private:
+    Framebuffers::framebuffers_ptr framebuffers;
+    GLuint entities_backbuffer;
+    /*
+     * Return the pixel at the position x,y
+     * in the framebuffer used to manage
+     * mouse movements.
+     */
+    glm::vec3 read_static_color( const GLfloat x,
+                                const GLfloat y );
+    /*
+     * Map a color (normally the static color)
+     * with an index used to uniquely idenfity
+     * an entity_id
+     */
+    long color_to_idx( const glm::vec3& color ) const;
+    /*
+     * Maps color indexes with entity_ids
+     */
+    std::unordered_map< long, entity_id > color_entity_mapping;
+    entity_id entity_under_focus;
     shaders::my_small_shaders* shader;
     entity_matrix_func get_entity_model_matrix;
     std::unordered_map< model_id, map_entity_data_ptr > entities;
     model_id new_entity_id();
     glm::vec2 coord_origin;
-
+    colors_creator colors;
+    bool static_coloring;
     /*
      * Rendering functions
      */

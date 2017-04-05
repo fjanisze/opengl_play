@@ -162,6 +162,7 @@ public:
     glm::vec2 get_lot_position( const types::ray_t &dir ) const;
     bool is_a_valid_position( const glm::vec2& pos ) const;
     glm::vec2 get_coord_origin() const;
+    void unselect_highlighted_lot();
 private:
     shaders::my_small_shaders* shader;
     std::unordered_map<long,lot_models> terrain_container;
@@ -185,7 +186,6 @@ private:
     GLfloat   field_of_view_distance;
     void update_rendr_quality( long rendr_mesh_cnt );
 
-    void unselect_highlighted_lot();
     void select_highlighted_lot(const glm::vec2 &lot );
     bool is_highlighted(const glm::vec2 &lot ) const;
     glm::vec3 highlight_lot_color( const glm::vec3& color ) const;

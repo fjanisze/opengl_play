@@ -123,8 +123,10 @@ void terrains::prepare_for_render()
     GLint view_loc = glGetUniformLocation(*shader,"view");
     GLint projection_loc = glGetUniformLocation(*shader,"projection");
 
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-    glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+    glUniformMatrix4fv(view_loc, 1,
+                       GL_FALSE, glm::value_ptr(view_matrix));
+    glUniformMatrix4fv(projection_loc, 1,
+                       GL_FALSE, glm::value_ptr(projection_matrix));
 
     calculate_lighting();
 }
@@ -228,7 +230,6 @@ glm::mat4 terrains::get_lot_model_matrix(const glm::vec2 &pos) const
 glm::mat4 terrains::get_lot_top_model_matrix(const glm::vec2 &pos) const
 {
     glm::mat4 model = get_lot_model_matrix( pos );
-    GLfloat height{ 0 };
     auto it = terrain_map.find( get_position_idx( pos ) );
     if( it == terrain_map.end() ) {
         ERR("Not able to find the terrain lot at position ", pos);

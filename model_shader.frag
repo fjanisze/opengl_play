@@ -18,9 +18,15 @@ uniform sampler2D loaded_texture_specular_map3;
 uniform vec3      object_color;
 uniform int       number_of_lights;
 uniform float     light_data[ 800 ];
+uniform vec3      forced_color = vec3(0.0);
 
 void main()
 {
+    if( vec3(0.0) != forced_color ) {
+	color = vec4( forced_color, 1.0f );
+	//Skip further processing
+	return;
+    }
     vec3 final_object_color;
     //Calculate lights
     vec3 diffuse_res = vec3(0.0);

@@ -32,6 +32,13 @@ class renderable_object
 public:
     static void render_renderables(glm::mat4 view, glm::mat4 projection);
     /*
+     * render_me will trigger the sequence
+     * of prepare+render+clean
+     * for itself
+     */
+    void render_me(glm::mat4 view,
+                   glm::mat4 projection);
+    /*
      * The priority should be between 1 and 10, a lower number
      * means higher priority, object wich higher priority
      * are rendered first

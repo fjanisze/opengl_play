@@ -118,5 +118,17 @@ GLuint my_small_shaders::get_program()
     return shader_program;
 }
 
+void my_small_shaders::force_single_color(const glm::vec3 &color )
+{
+    GLint uniform = glGetUniformLocation(shader_program,
+                                    "forced_color");
+    if( uniform >= 0 ) {
+        glUniform3f(uniform,
+                    color.r,
+                    color.b,
+                    color.g);
+    }
+}
+
 
 }
