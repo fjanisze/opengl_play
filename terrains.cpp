@@ -4,9 +4,8 @@
 namespace terrains
 {
 
-terrains::terrains(shaders::my_small_shaders *game_shader) :
-    object_lighting( game_shader ),
-    shader{ game_shader }
+terrains::terrains(renderable::renderer_pointer rendr ) :
+    renderer{ rendr }
 {
     LOG3("Creating terrains::terrains");
     unselect_highlighted_lot();
@@ -77,7 +76,6 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
      * generate the proper internal reppresentation
      */
     std::size_t x_size = map[0].size();
-    std::vector< terrain_lot > new_terrain_map;
     for( std::size_t y{ 0 } ; y < map.size() ; ++y )
     {
         if( x_size != map[ y ].size() ) {
@@ -87,36 +85,47 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
         }
         for( std::size_t x{ 0 } ; x < map[y].size() ; ++x )
         {
-            terrain_lot new_lot;
-            new_lot.terrain_id = map[ y ][ x ];
-            new_lot.position = glm::vec2(x - central_lot.x, y - central_lot.y );
-            new_lot.model_matrix = get_lot_model_matrix( new_lot.position );
-            new_lot.height = terrain_container[ new_lot.terrain_id ].low_res_model->get_model_height();
-            /*
+            lot_pointer new_lot = std::make_shared< terrain_lot >();
+            new_lot->terrain_id = map[ y ][ x ];
+            new_lot->position = glm::vec2(x - central_lot.x, y - central_lot.y );
+            new_lot->model_matrix = get_lot_model_matrix( new_lot->position );
+            new_lot->default_color = terrain_container[ new_lot->terrain_id ].default_color;
+             /*
              * Is the lot model available?
              */
-            if( terrain_container.find( new_lot.terrain_id ) == terrain_container.end() )
+            auto it = terrain_container.find( new_lot->terrain_id );
+            if( it == terrain_container.end() )
             {
                 WARN1("The model for the terrain ID: ",
-                      new_lot.terrain_id," is not loaded..");
+                      new_lot->terrain_id," is not loaded..");
+            } else {
+                new_lot->model = it->second;
+                new_lot->height = it->second.low_res_model->get_model_height();
             }
-            long lot_idx = get_position_idx( new_lot.position );
+            long lot_idx = get_position_idx( new_lot->position );
             if( terrain_map.find( lot_idx ) != terrain_map.end() ) {
                 ERR("Attempt to add twice a lot at the same idx: ",
                     lot_idx, " number of loaded lots: ", terrain_map.size() );
             } else {
-                terrain_map[ get_position_idx( new_lot.position ) ] = new_lot;
+                new_lot->rendr_id = renderer->add_renderable( new_lot );
+                terrain_map[ get_position_idx( new_lot->position ) ] = new_lot;
             }
         }
     }
-    /*
-     * We cannot add terrains as a renderable object
-     * until we have the terrain map loaded
-     */
-    add_renderable( this );
     return true;
 }
 
+/*
+ * The 'dir' vector specify the proper ray cast
+ * of the mouse when moving over the terrain
+ */
+void terrains::mouse_hover(const types::ray_t &dir)
+{
+    unselect_highlighted_lot();
+    glm::vec2 target = get_lot_position( dir );
+    select_highlighted_lot( target );
+}
+/*
 void terrains::prepare_for_render()
 {
     shader->use_shaders();
@@ -133,7 +142,7 @@ void terrains::prepare_for_render()
 
 void terrains::render()
 {
-    GLint model_loc = glGetUniformLocation(*shader,"model");
+  /*  GLint model_loc = glGetUniformLocation(*shader,"model");
 
     glm::vec3 last_color;
     long mesh_cnt{ 0 };
@@ -173,24 +182,14 @@ void terrains::render()
         }
     }
     rendering_data.num_of_rendered_mesh = mesh_cnt;
-    update_rendr_quality( mesh_cnt );
-}
-
+    update_rendr_quality( mesh_cnt );*/
+//}
+/*
 void terrains::clean_after_render()
 {
 
-}
+}*/
 
-/*
- * The 'dir' vector specify the proper ray cast
- * of the mouse when moving over the terrain
- */
-void terrains::mouse_hover( const types::ray_t &dir )
-{
-    unselect_highlighted_lot();
-    glm::vec2 target = get_lot_position( dir );
-    select_highlighted_lot( target );
-}
 
 void terrains::set_view_center(const glm::vec2 &pos,
                                const GLfloat distance)
@@ -207,12 +206,12 @@ void terrains::set_view_center(const glm::vec2 &pos,
     long visible_obj_count{ 0 };
     //Recalculate the visible lots
     for( auto& entry : terrain_map ) {
-        terrain_lot& lot = entry.second;
-        if( glm::distance( view_center, lot.position ) <= distance ){
-            lot.visible = true;
+        auto lot = entry.second;
+        if( glm::distance( view_center, lot->position ) <= distance ){
+            lot->visible = true;
             ++visible_obj_count;
         } else {
-            lot.visible = false;
+            lot->visible = false;
         }
     }
     update_rendr_quality( visible_obj_count );
@@ -238,7 +237,7 @@ glm::mat4 terrains::get_lot_top_model_matrix(const glm::vec2 &pos) const
     return glm::translate( model,
                            glm::vec3(0.0,
                                      0.0,
-                                     it->second.height));
+                                     it->second->height));
 }
 
 glm::vec2 terrains::get_lot_position( const types::ray_t &dir ) const
@@ -361,6 +360,21 @@ long terrains::generate_unique_id()
     return used_ids.insert( terrain_id ).second ? terrain_id : -1;
 }
 
+void terrain_lot::prepare_for_render()
+{
+}
+
+void terrain_lot::render(shaders::shader_ptr &shader)
+{
+    for( auto&& mesh : model.high_res_model->get_mesh() ) {
+        mesh->render( &*shader );
+    }
+}
+
+void terrain_lot::clean_after_render()
+{
+
+}
 
 
 }

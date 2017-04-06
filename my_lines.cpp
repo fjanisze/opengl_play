@@ -19,8 +19,6 @@ my_simple_lines::my_simple_lines() :
 
     glGenVertexArrays(1,&VAO);
     glGenBuffers(1,&VBO);
-
-    add_renderable(this, 1);
 }
 
 my_simple_lines::~my_simple_lines()

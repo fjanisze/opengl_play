@@ -22,11 +22,15 @@ uniform vec3      forced_color = vec3(0.0);
 
 void main()
 {
-    if( vec3(0.0) != forced_color ) {
-	color = vec4( forced_color, 1.0f );
+  /*  if( vec3(0.0) != forced_color ) {
+	color = vec4( object_color, 1.0f );
 	//Skip further processing
 	return;
-    }
+    }*/
+    color = vec4( object_color * vec3(texture(loaded_texture1,texture_coords)) , 1.0 );
+    return;
+
+
     vec3 final_object_color;
     //Calculate lights
     vec3 diffuse_res = vec3(0.0);

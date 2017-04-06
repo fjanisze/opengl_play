@@ -16,7 +16,7 @@ using movable::mov_direction;
 
 class my_camera;
 
-using camera_obj = std::shared_ptr<my_camera>;
+using camera_ptr = std::shared_ptr<my_camera>;
 
 /*
  * Possible option for the camera setup
@@ -82,7 +82,7 @@ public:
     template<typename CUR_OPT,typename...OPT>
     void setup_following_options(CUR_OPT&& opt, OPT&&...remaining);
     glm::vec3 get_camera_front();
-    static camera_obj create_camera(glm::vec3 pos,glm::vec3 target);
+    static camera_ptr create_camera(glm::vec3 pos,glm::vec3 target);
     /*
      * When set the camera will maintain a fixed
      * UP vector, in this way the camera

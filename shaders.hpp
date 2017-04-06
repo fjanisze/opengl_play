@@ -11,9 +11,13 @@
 
 #include <string>
 #include "logger/logger.hpp"
+#include <memory>
 
 namespace shaders
 {
+
+class my_small_shaders;
+using shader_ptr = std::shared_ptr< my_small_shaders >;
 
 class my_small_shaders
 {
@@ -25,6 +29,10 @@ public:
     bool create_shader_program();
     void use_shaders();
     GLuint get_program();
+    static shader_ptr create() {
+        return std::make_shared< my_small_shaders >();
+    }
+
     /*
      * Configure the fragment shader to skip
      * all the calculations and to render

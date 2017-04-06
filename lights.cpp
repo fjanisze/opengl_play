@@ -382,7 +382,7 @@ void spot_light::recalculate_light_direction()
     }
 }
 
-flash_light::flash_light(opengl_play::camera_obj camera,
+flash_light::flash_light(opengl_play::camera_ptr camera,
                          glm::vec3 color,
                          GLfloat strength,
                          GLfloat cut_off_angle,

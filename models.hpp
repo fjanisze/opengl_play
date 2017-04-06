@@ -117,29 +117,19 @@ private:
  * rendering.
  */
 class my_model : public model_loader,
-        public lights::object_lighting,
         public renderable::renderable_object,
         public movable::movable_object
 {
 public:
-    my_model(shaders::my_small_shaders* shad,
-             const std::string& model_path,
+    my_model(const std::string& model_path,
              const glm::vec3& def_object_color,
              z_axis revert_z);
 
-    void prepare_for_render() override;
-    void render() override;
-    void clean_after_render() override;
-
-    static model_ptr create(shaders::my_small_shaders* shader,
-                            const std::string& path,
+    static model_ptr create(const std::string& path,
                             const glm::vec3& color = glm::vec3(0.0),
                             z_axis revert_z = z_axis::normal) {
-        return std::make_shared< my_model >( shader, path , color, revert_z );
+        return std::make_shared< my_model >( path , color, revert_z );
     }
-private:
-    shaders::my_small_shaders* shader;
-    glm::vec3 object_color;
 };
 
 }

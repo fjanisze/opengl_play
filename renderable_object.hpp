@@ -4,11 +4,16 @@
 #include <headers.hpp>
 #include <vector>
 #include <list>
+#include <shaders.hpp>
+#include <unordered_map>
+#include <my_camera.hpp>
 
 namespace renderable
 {
 
 class renderable_object;
+
+using renderable_pointer = std::shared_ptr< renderable_object >;
 
 /*
  * Renderable objects are classified by
@@ -30,37 +35,56 @@ struct rendr_class
 class renderable_object
 {
 public:
-    static void render_renderables(glm::mat4 view, glm::mat4 projection);
-    /*
-     * render_me will trigger the sequence
-     * of prepare+render+clean
-     * for itself
-     */
-    void render_me(glm::mat4 view,
-                   glm::mat4 projection);
-    /*
-     * The priority should be between 1 and 10, a lower number
-     * means higher priority, object wich higher priority
-     * are rendered first
-     */
-    static bool add_renderable(renderable_object* obj,
-                               std::size_t priority = 5);
-    static bool remove_renderable(renderable_object* obj);
-
-    virtual void set_transformations(glm::mat4 view,glm::mat4 projection);
     virtual void prepare_for_render() {}
-    virtual void render() {}
+    virtual void render( shaders::shader_ptr& shader ) {}
     virtual void clean_after_render() {}
     virtual std::string renderable_nice_name();
 
     virtual void rotate_object(GLfloat yaw) {}
     virtual ~renderable_object() {}
-private:
-    static std::map<std::size_t,rendr_class> renderables;
-protected:
+
     glm::mat4 projection_matrix;
     glm::mat4 view_matrix;
+    glm::mat4 model_matrix;
+    glm::vec3 default_color;
 };
+
+/*
+ * Implementes the rendering functionality
+ */
+
+using renderable_id = long;
+
+struct rendr
+{
+    renderable_id id;
+    renderable_pointer object;
+};
+
+
+class core_renderer
+{
+public:
+    core_renderer() = default;
+    core_renderer(const glm::mat4& proj ,
+                  const opengl_play::camera_ptr cam );
+    renderable_id add_renderable( renderable_pointer object );
+    long render();
+private:
+    shaders::shader_ptr shader;
+    opengl_play::camera_ptr camera;
+ //   lights::light_ptr lights;
+    glm::mat4 projection;
+    renderable_id next_rendr_id;
+    std::unordered_map< renderable_id, rendr > renderables;
+public:
+    GLint color_loc;
+    GLint view_loc;
+    GLint projection_loc;
+    GLint model_loc;
+};
+
+using renderer_pointer = std::shared_ptr< core_renderer >;
 
 }
 

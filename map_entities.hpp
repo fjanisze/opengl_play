@@ -24,8 +24,17 @@ constexpr long invalid_id{ -1 };
  * instances, like many of the same unit
  * might appear on the map
  */
-struct map_entity
+struct map_entity/* : public renderable::renderable_object,
+         public lights::object_lighting*/
 {
+ /*   void prepare_for_render() override;
+    void render() override;
+    void clean_after_render() override;*/
+
+    /*
+     * Each entity has its own unique ID
+     */
+    entity_id id;
     /*
      * Once the entity model is loaded
      * multiple instance of the entity might
@@ -42,9 +51,9 @@ struct map_entity
      * which will be used for rendering the model
      */
     glm::vec3 static_color;
-    entity_id id;
+    models::model_loader_ptr model;
 
-    map_entity() = default;
+    map_entity() {}
 };
 
 using map_entities = std::vector< map_entity >;
@@ -149,12 +158,10 @@ using entity_collection_ptr = std::shared_ptr< entities_collection >;
  * where instance_ID might not be unique
  * between multiple models.
  */
-class entities_collection : public renderable::renderable_object,
-        public lights::object_lighting
+class entities_collection
 {
 public:
-    entities_collection( shaders::my_small_shaders* game_shader,
-                         Framebuffers::framebuffers_ptr frameb,
+    entities_collection( Framebuffers::framebuffers_ptr frameb,
                          entity_matrix_func lot_pos_generator );
     /*
      * Load the provided obj file
@@ -175,12 +182,10 @@ public:
      */
     entity_id add_entity( model_id id, const glm::vec2& position );
 
-    static entity_collection_ptr create( shaders::my_small_shaders* shad,
-                                          Framebuffers::framebuffers_ptr frameb,
+    static entity_collection_ptr create( Framebuffers::framebuffers_ptr frameb,
                                          entity_matrix_func model_mtrc_gen ) {
-        LOG3("Creating new entity_collection, shader ptr: ", shad);
-        return std::make_shared< entities_collection >( shad,
-                                                frameb,model_mtrc_gen );
+        LOG3("Creating new entity_collection");
+        return std::make_shared< entities_collection >( frameb,model_mtrc_gen );
     }
     ~entities_collection() {}
 private:
@@ -204,7 +209,6 @@ private:
      */
     std::unordered_map< long, entity_id > color_entity_mapping;
     entity_id entity_under_focus;
-    shaders::my_small_shaders* shader;
     entity_matrix_func get_entity_model_matrix;
     std::unordered_map< model_id, map_entity_data_ptr > entities;
     model_id new_entity_id();
@@ -214,10 +218,10 @@ private:
     /*
      * Rendering functions
      */
-    void prepare_for_render() override;
+ /*   void prepare_for_render() override;
     void render() override;
     void clean_after_render() override;
-    std::string renderable_nice_name() override;
+    std::string renderable_nice_name() override;*/
 };
 
 } //map_entities

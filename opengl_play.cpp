@@ -204,10 +204,6 @@ opengl_ui::opengl_ui(int win_width,
         throw std::runtime_error("GLEW Init failed!");
     }
 
-    object = std::make_shared<little_object>();
-    position_lines = std::make_shared<my_simple_lines>();
-    mouse_line_idx = position_lines->get_invalid_id();
-
     init_text();
 
     camera = my_camera::create_camera({4.0,4.0,8},{0.0,0.0,0.0});
@@ -226,6 +222,12 @@ opengl_ui::opengl_ui(int win_width,
     glfwSetInputMode(window_ctx,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
 
     frame_buffers = Framebuffers::framebuffers::create( win_w, win_h );
+
+    projection = glm::perspective(glm::radians(45.0f),
+                                  (GLfloat)win_w / (GLfloat)win_h,
+                                  1.0f, 100.0f);
+
+    renderer = std::make_shared< renderable::core_renderer> ( projection, camera );
 
     /*
      * Enable face culling to avoid rendering
@@ -270,7 +272,7 @@ void opengl_ui::setup_scene()
 
     movement_processor.register_movable_object(camera,camera_keys);
     movement_processor.register_movable_object(camera,camera_mouse);
-
+/*
     model_shader.load_fragment_shader(model_shader.read_shader_body(
                                           "../model_shader.frag"));
     model_shader.load_vertex_shader(model_shader.read_shader_body(
@@ -278,13 +280,9 @@ void opengl_ui::setup_scene()
     if( !model_shader.create_shader_program() ) {
         ERR("Unable to create the model shader!");
         throw std::runtime_error("Shader creation failure");
-    }
+    }*/
 
-    projection = glm::perspective(glm::radians(45.0f),
-                                  (GLfloat)win_w / (GLfloat)win_h,
-                                  1.0f, 100.0f);
-
-    game_terrain = terrains::terrains::create(&model_shader);
+    game_terrain = terrains::terrains::create(renderer);
 
 
     game_terrain->load_terrain("../models/Grass/grass.obj",
@@ -334,7 +332,6 @@ void opengl_ui::setup_scene()
 
 
     game_map_entities = map_entities::entities_collection::create(
-                                &model_shader,
                                 frame_buffers,
                                 std::bind( &terrains::terrains::get_lot_top_model_matrix,
                                            game_terrain,
@@ -390,6 +387,8 @@ void opengl_ui::enter_main_loop()
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
 
+   // return;
+
 
     models_back_buffer = frame_buffers->create_buffer();
     if( models_back_buffer < 0 ) {
@@ -421,10 +420,9 @@ void opengl_ui::enter_main_loop()
          * Proceed with the common rendering
          */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        renderable::renderable_object::render_renderables(camera->get_view(),
-                                                          projection);
+        renderer->render();
 
-        fps_info->render_text();
+   /*     fps_info->render_text();
 
         auto yaw = camera->get_yaw(),
                 pitch = camera->get_pitch(),
@@ -436,11 +434,12 @@ void opengl_ui::enter_main_loop()
           <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 
         camera_info->set_text(ss.str());
-        camera_info->render_text();
+        camera_info->render_text();*/
 
         /*
          * Update the visible part of the map
          */
+        glm::vec3 pos = camera->get_position();
         if( last_cam_pos != pos ) {
             types::ray_t ray = ray_cast( win_w / 2, win_h / 2 );
             glm::vec2 center = ray_z_hit_point( ray, 0.0f );

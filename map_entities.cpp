@@ -3,6 +3,24 @@
 namespace map_entities
 {
 
+/*
+void map_entity::prepare_for_render()
+{
+
+}
+
+void map_entity::render()
+{
+
+}
+
+void map_entity::clean_after_render()
+{
+
+}
+
+*/
+
 map_entity_data::map_entity_data(model_id new_id,
                                  const std::string &name,
                                  models::model_loader_ptr model,
@@ -30,6 +48,7 @@ entity_id map_entity_data::add_at_location(const glm::vec2 &position,
     new_entity.static_color = static_color;
     new_entity.id = new_id;
     new_entity.model_matrix = model_matrix;
+    new_entity.model = model_ptr;
     //Add the entity
     entities[ idx ].emplace_back( std::move( new_entity ) );
     return new_id;
@@ -67,13 +86,10 @@ long map_entity_data::get_position_idx(const glm::vec2 &pos) const
 }
 
 
-entities_collection::entities_collection(shaders::my_small_shaders *game_shader,
-                                         Framebuffers::framebuffers_ptr frameb,
+entities_collection::entities_collection(Framebuffers::framebuffers_ptr frameb,
                                          entity_matrix_func lot_pos_generator) :
-    shader{ game_shader },
     framebuffers{ frameb },
     get_entity_model_matrix{ lot_pos_generator },
-    object_lighting( game_shader ),
     coord_origin{ glm::vec2(0.0f) },
     static_coloring{ false },
     entity_under_focus{ invalid_id }
@@ -110,7 +126,6 @@ model_id entities_collection::load_entity(const std::string &model_path,
 
     entities.insert( std::make_pair( new_model_id, new_entity ) );
     LOG3("Entity ",pretty_name," loaded, assigned ID: ", new_model_id);
-    add_renderable( this );
     return new_model_id;
 }
 
@@ -191,7 +206,7 @@ long entities_collection::color_to_idx(const glm::vec3 &color) const
            (long) ( color.b ) << 8 |
            (long) ( color.g );
 }
-
+/*
 void entities_collection::prepare_for_render()
 {
     shader->use_shaders();
@@ -224,7 +239,7 @@ void entities_collection::render()
          * The set of meshes is the same for all
          * the instances of this model
          */
-        auto&& meshes = entity.second->get_model()->get_mesh();
+  /*      auto&& meshes = entity.second->get_model()->get_mesh();
         if( last_color != entity.second->get_color() )
         {
             /*
@@ -233,7 +248,7 @@ void entities_collection::render()
              * different static color. Those colors
              * do not have the same meaning..
              */
-            last_color = entity.second->get_color();
+       /*     last_color = entity.second->get_color();
             apply_object_color( last_color );
         }
         for( auto& entity_instance : data )
@@ -250,7 +265,7 @@ void entities_collection::render()
                  * Render again on the back framebuffer
                  * using the static color
                  */
-                if( true == static_coloring )
+      /*          if( true == static_coloring )
                 {
                     framebuffers->bind( entities_backbuffer );
                     shader->force_single_color( entity_location.static_color );
@@ -273,7 +288,7 @@ std::string entities_collection::renderable_nice_name()
 {
     return "entities_collection";
 }
-
+*/
 /*
  * Return a new unique model_id
  */
@@ -321,5 +336,6 @@ glm::vec3 colors_creator::get_color()
     ++num_of_colors;
     return color;
 }
+
 
 }

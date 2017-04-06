@@ -71,10 +71,11 @@ private:
     int			  mouse_line_idx;
     text_renderer::rendr_text fps_info,
     camera_info;
+    renderable::renderer_pointer renderer;
 
     int win_h,
     win_w;
-    camera_obj		camera;
+    camera_ptr		camera;
     Framebuffers::framebuffers_ptr frame_buffers;
     GLfloat models_back_buffer;
     /*
@@ -85,7 +86,6 @@ private:
                                   const GLfloat z_value );
 
     my_lines_ptr position_lines;
-    shaders::my_small_shaders model_shader;
     terrains::terrains_ptr game_terrain;
     map_entities::entity_collection_ptr game_map_entities;
     lights::generic_light_ptr light_1,

@@ -8,7 +8,7 @@ glm::vec3 get_vec_3( const glm::mat4& mat ) {
     return glm::vec3( mat[3].x, mat[3].y, mat[3].z);
 }
 
-camera_obj my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
+camera_ptr my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
 {
     return std::make_shared<my_camera>(pos,target);
 }

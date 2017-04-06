@@ -253,49 +253,16 @@ my_mesh::textures_ptr model_loader::process_texture(const aiMaterial *material,
     return std::move( textures );
 }
 
-my_model::my_model(shaders::my_small_shaders *shad,
-                   const std::string &model_path,
+my_model::my_model(const std::string &model_path,
                    const glm::vec3 &def_object_color,
                    z_axis revert_z) :
-    model_loader( model_path, revert_z ),
-    lights::object_lighting(shad),
-    shader{ shad },
-    object_color{ def_object_color }
+    model_loader( model_path, revert_z )
 {
     LOG3("Creating a new my_model. Model path: ",
          model_path.c_str());
 
+    default_color = def_object_color;
     load_model();
-
-    add_renderable(this);
-}
-
-void my_model::prepare_for_render()
-{
-    shader->use_shaders();
-    GLint model_loc = glGetUniformLocation(*shader,"model");
-    GLint view_loc = glGetUniformLocation(*shader,"view");
-    GLint projection_loc = glGetUniformLocation(*shader,"projection");
-
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-    glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
-
-    calculate_lighting();
-
-    apply_object_color(object_color);
-}
-
-void my_model::render()
-{
-    for( auto& mesh : get_mesh() ) {
-        mesh->render(shader);
-    }
-}
-
-void my_model::clean_after_render()
-{
-
 }
 
 }

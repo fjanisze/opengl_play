@@ -243,7 +243,6 @@ little_object::little_object() :
                                    load_texture("../textures/borg_cube.png")));
 
     check_for_errors();
-    add_renderable(this);
 }
 
 little_object::~little_object()
