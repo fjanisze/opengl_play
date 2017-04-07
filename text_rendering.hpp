@@ -16,31 +16,33 @@
 //Game
 #include "shaders.hpp"
 #include "logger/logger.hpp"
+#include <renderable_object.hpp>
 
 namespace text_renderer
 {
 
 const std::string simple_vertex_shader = {
     "#version 330 core\n"
-    "layout (location = 0) in vec4 vertex;\n"
-    "out vec2 TexCoords;"
+    "layout (location = 0) in vec3 position;\n"
+    "layout (location = 1) in vec2 tex_coord;\n"
+    "out vec2 texture_coords;"
     "uniform mat4 projection;\n"
     "void main()\n"
     "{\n"
-    "gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);\n"
-    "TexCoords = vertex.zw;\n"
+    "gl_Position = projection * vec4(position, 1.0);\n"
+    "texture_coords = tex_coord;\n"
     "}\0"
 };
 
 const std::string simple_fragment_shader = {
     "#version 330 core\n"
-    "in vec2 TexCoords;\n"
+    "in vec2 texture_coords;\n"
     "out vec4 color;\n"
-    "uniform sampler2D text;\n"
+    "uniform sampler2D text_rendr_texture;\n"
     "uniform vec3 textColor;\n"
     "void main()\n"
     "{\n"
-    "vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);\n"
+    "vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text_rendr_texture, texture_coords).r);\n"
     "color = vec4(textColor, 1.0) * sampled;\n"
     "}\n\0"
 };
@@ -85,16 +87,28 @@ public:
     font_type_id get_default_font_id();
 };
 
-class renderable_text;
+class Renderable_text;
 
-using rendr_text = std::shared_ptr<renderable_text>;
+using rendr_text = std::shared_ptr<Renderable_text>;
 
-class renderable_text
+class Renderable_text : public renderable::renderable_object
 {
+public:
+    Renderable_text();
+    Renderable_text(const std::string& text,
+                    glm::fvec2 position,
+                    GLfloat scale,
+                    glm::vec3 color); //Use the default font
+    void set_window_size(int height,int width);
+    void set_text(const std::string& text);
+    void set_position(glm::fvec2 position);
+    void set_scale(GLfloat scale);
+    void set_color(glm::vec3 color);
+    void render( shaders::shader_ptr& shader ) override;
+private:
     GLuint VAO,VBO;
 
     font_texture_loader  font_loader;
-    shaders::my_small_shaders text_render_shader;
     font_texture_ptr     font_texture;
 
     std::string text_string;
@@ -107,18 +121,6 @@ class renderable_text
 
     void init();
     void check_for_errors();
-public:
-    renderable_text();
-    renderable_text(const std::string& text,
-                    glm::fvec2 position,
-                    GLfloat scale,
-                    glm::vec3 color); //Use the default font
-    void set_window_size(int height,int width);
-    void set_text(const std::string& text);
-    void set_position(glm::fvec2 position);
-    void set_scale(GLfloat scale);
-    void set_color(glm::vec3 color);
-    void render_text();
 };
 
 }

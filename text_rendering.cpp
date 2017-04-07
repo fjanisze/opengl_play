@@ -152,7 +152,7 @@ font_type_id font_texture_loader::get_default_font_id()
     return default_font_id;
 }
 
-void renderable_text::init()
+void Renderable_text::init()
 {
     LOG3("renderable_text::init: VBO, VBA");
     glGenVertexArrays(1,&VAO);
@@ -160,28 +160,22 @@ void renderable_text::init()
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(GLfloat)*6*4,
+                 sizeof(GLfloat)*6*5,
                  NULL,
                  GL_DYNAMIC_DRAW);
+
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0,
-                          4,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          4 * sizeof(GLfloat),
-                          0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          (GLvoid*)0);
+    // Vertex Texture Coords
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          (GLvoid*)(sizeof(GLfloat)*3));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     check_for_errors();
-
-    LOG3("renderable_text::init: Prepare shaders");
-    text_render_shader.load_vertex_shader(simple_vertex_shader);
-    text_render_shader.load_fragment_shader(simple_fragment_shader);
-    if(!text_render_shader.create_shader_program()){
-        ERR("Unable to create the shader program");
-    }
 
     //Use default font textures
     font_texture = font_loader.get_texture(
@@ -189,7 +183,7 @@ void renderable_text::init()
                 );
 }
 
-void renderable_text::check_for_errors()
+void Renderable_text::check_for_errors()
 {
     int error_count = 0;
     GLenum error = GL_NO_ERROR;
@@ -205,12 +199,12 @@ void renderable_text::check_for_errors()
     }
 }
 
-renderable_text::renderable_text()
+Renderable_text::Renderable_text()
 {
     init();
 }
 
-renderable_text::renderable_text(const std::string &text,
+Renderable_text::Renderable_text(const std::string &text,
                                  glm::fvec2 position,
                                  GLfloat scale,
                                  glm::vec3 color) :
@@ -222,62 +216,38 @@ renderable_text::renderable_text(const std::string &text,
     init();
 }
 
-void renderable_text::set_window_size(int height,
+void Renderable_text::set_window_size(int height,
                                       int width)
 {
-    text_render_shader.use_shaders();
-    window_height = height;
-    window_width = width;
-    text_projection = glm::ortho(0.0f,
-                                 static_cast<GLfloat>(window_width),
-                                 0.0f,
-                                 static_cast<GLfloat>(window_height));
-    GLint uniform_var = glGetUniformLocation(text_render_shader.get_program(),
-                                             "projection");
-    if(uniform_var < 0){
-        ERR("Unable to obtain the uniform variable: projection");
-        return;
-    }
-    glUniformMatrix4fv(uniform_var,
-                       1,
-                       GL_FALSE,
-                       glm::value_ptr(text_projection)
-                       );
-    GLenum op_status = glGetError();
-    if(op_status != GL_NO_ERROR){
-        ERR("Error encountered in renderable_text::set_window_size:",
-            op_status);
-    }
 }
 
-void renderable_text::set_text(const std::string &text)
+void Renderable_text::set_text(const std::string &text)
 {
     text_string = text;
 }
 
-void renderable_text::set_position(glm::fvec2 position)
+void Renderable_text::set_position(glm::fvec2 position)
 {
     text_position = position;
 }
 
-void renderable_text::set_scale(GLfloat scale)
+void Renderable_text::set_scale(GLfloat scale)
 {
     text_scale = scale;
 }
 
-void renderable_text::set_color(glm::vec3 color)
+void Renderable_text::set_color(glm::vec3 color)
 {
     text_color = color;
 }
 
-void renderable_text::render_text()
+void Renderable_text::render( shaders::shader_ptr &shader )
 {
-    // Activate corresponding render state
-    text_render_shader.use_shaders();
-    GLint uniform_var = glGetUniformLocation(text_render_shader.get_program(),
-                                             "textColor");
+    shader->use_shaders();
+    GLint uniform_var = glGetUniformLocation(shader->get_program(),
+                                             "text_color");
     if(uniform_var < 0){
-        ERR("Unable to obtain the uniform variable: textColor");
+        ERR("Unable to obtain the uniform variable: text_color");
         return;
     }
     glUniform3f(uniform_var,
@@ -285,8 +255,9 @@ void renderable_text::render_text()
                 text_color.y,
                 text_color.z);
 
-    glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(VAO);
+
+    glActiveTexture(GL_TEXTURE0); //+4?
 
     // Iterate through all characters
     std::string::const_iterator c;
@@ -303,15 +274,16 @@ void renderable_text::render_text()
         GLfloat w = ch.Size.x * text_scale;
         GLfloat h = ch.Size.y * text_scale;
         // Update VBO for each character
-        GLfloat vertices[6][4] = {
-            { xpos,     ypos + h,   0.0, 0.0 },
-            { xpos,     ypos,       0.0, 1.0 },
-            { xpos + w, ypos,       1.0, 1.0 },
+        GLfloat vertices[6][5] = {
+            { xpos,     ypos + h, 0.0 ,   0.0, 0.0 },
+            { xpos,     ypos,     0.0 ,   0.0, 1.0 },
+            { xpos + w, ypos,     0.0 ,   1.0, 1.0 },
 
-            { xpos,     ypos + h,   0.0, 0.0 },
-            { xpos + w, ypos,       1.0, 1.0 },
-            { xpos + w, ypos + h,   1.0, 0.0 }
+            { xpos,     ypos + h, 0.0 ,   0.0, 0.0 },
+            { xpos + w, ypos,     0.0 ,   1.0, 1.0 },
+            { xpos + w, ypos + h, 0.0 ,   1.0, 0.0 }
         };
+
         // Render glyph texture over quad
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
         // Update content of VBO memory
@@ -326,6 +298,8 @@ void renderable_text::render_text()
         // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (ch.Advance >> 6) * text_scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
     }
+
+    glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 

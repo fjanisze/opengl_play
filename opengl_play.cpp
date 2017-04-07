@@ -150,19 +150,23 @@ void opengl_ui::get_current_ctx_viewport()
 
 void opengl_ui::init_text()
 {
-    fps_info = std::make_shared<text_renderer::renderable_text>();
+    fps_info = std::make_shared<text_renderer::Renderable_text>();
     fps_info->set_position(glm::fvec2(10,7));
     fps_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
     fps_info->set_scale(0.4f);
     fps_info->set_text("0 fps");
-    fps_info->set_window_size(win_h,win_w);
+   // fps_info->set_window_size(win_h,win_w);
+    fps_info->set_rendering_state( renderable::renderable_state::rendering_enabled );
+    renderer->add_renderable( fps_info );
 
-    camera_info = std::make_shared<text_renderer::renderable_text>();
+    camera_info = std::make_shared<text_renderer::Renderable_text>();
     camera_info->set_position(glm::fvec2(win_h - 300,7));
     camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
     camera_info->set_scale(0.4f);
     camera_info->set_text(" -- ");
-    camera_info->set_window_size(win_h,win_w);
+    //camera_info->set_window_size(win_h,win_w);
+    camera_info->set_rendering_state( renderable::renderable_state::rendering_enabled );
+    renderer->add_renderable( camera_info );
 }
 
 opengl_ui::opengl_ui(int win_width,
@@ -204,8 +208,6 @@ opengl_ui::opengl_ui(int win_width,
         throw std::runtime_error("GLEW Init failed!");
     }
 
-    init_text();
-
     camera = my_camera::create_camera({4.0,4.0,8},{0.0,0.0,0.0});
     camera->eagle_mode();
 
@@ -228,6 +230,8 @@ opengl_ui::opengl_ui(int win_width,
                                   1.0f, 100.0f);
 
     renderer = std::make_shared< renderable::core_renderer> ( projection, camera );
+
+    init_text();
 
     /*
      * Enable face culling to avoid rendering
@@ -315,10 +319,10 @@ void opengl_ui::setup_scene()
     }
 
 
-    game_terrain->load_terrain_map( terrain_map,
+ /*   game_terrain->load_terrain_map( terrain_map,
                                     2,
                                     glm::vec2(map_size_x / 2,
-                                              map_size_y / 2) );
+                                              map_size_y / 2) );*/
 
 
     game_map_entities = map_entities::entities_collection::create(
@@ -379,9 +383,6 @@ void opengl_ui::enter_main_loop()
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
 
-   // return;
-
-
     models_back_buffer = frame_buffers->create_buffer();
     if( models_back_buffer < 0 ) {
         ERR("Quitting!");
@@ -407,14 +408,8 @@ void opengl_ui::enter_main_loop()
         }
 
         glClearColor(0.0,0.0,0.0,1.0);
-
-        /*
-         * Proceed with the common rendering
-         */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderer->render();
-
-   /*     fps_info->render_text();
 
         auto yaw = camera->get_yaw(),
                 pitch = camera->get_pitch(),
@@ -426,12 +421,10 @@ void opengl_ui::enter_main_loop()
           <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 
         camera_info->set_text(ss.str());
-        camera_info->render_text();*/
 
         /*
          * Update the visible part of the map
          */
-        glm::vec3 pos = camera->get_position();
         if( last_cam_pos != pos ) {
             types::ray_t ray = ray_cast( win_w / 2, win_h / 2 );
             glm::vec2 center = ray_z_hit_point( ray, 0.0f );

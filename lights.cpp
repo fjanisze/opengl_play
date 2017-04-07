@@ -127,6 +127,11 @@ std::pair<glm::vec3, GLfloat> Generic_light::get_light_color()
     return std::make_pair(light_color,color_strength);
 }
 
+void Generic_light::set_light_color(const glm::vec3 &new_color)
+{
+    light_color = new_color;
+}
+
 std::size_t Generic_light::light_data_size()
 {
     /*

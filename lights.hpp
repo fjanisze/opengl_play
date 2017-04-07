@@ -50,6 +50,7 @@ public:
     GLfloat get_strength();
     void    set_strength(GLfloat strength);
     std::pair<glm::vec3,GLfloat> get_light_color();
+    void set_light_color( const glm::vec3& new_color );
     /*
      * get_light_data return a vector with
      * all the information needed to manipulate/render

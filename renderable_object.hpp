@@ -33,21 +33,32 @@ struct rendr_class
     std::vector<renderable_object*> renderables;
 };
 
+enum class renderable_state
+{
+    rendering_enabled,
+    rendering_disabled
+};
+
 class renderable_object
 {
 public:
+    renderable_object();
+    void set_rendering_state( const renderable_state new_state );
+    renderable_state get_rendering_state();
+
     virtual void prepare_for_render() {}
     virtual void render( shaders::shader_ptr& shader ) {}
     virtual void clean_after_render() {}
     virtual std::string renderable_nice_name();
 
-    virtual void rotate_object(GLfloat yaw) {}
     virtual ~renderable_object() {}
 
     glm::mat4 projection_matrix;
     glm::mat4 view_matrix;
     glm::mat4 model_matrix;
     glm::vec3 default_color;
+private:
+    renderable_state state;
 };
 
 /*
@@ -79,6 +90,7 @@ private:
     glm::mat4 projection;
     renderable_id next_rendr_id;
     std::unordered_map< renderable_id, rendr > renderables;
+    GLint load_location( const std::string& loc_name );
 private:
     GLint color_loc;
     GLint view_loc;

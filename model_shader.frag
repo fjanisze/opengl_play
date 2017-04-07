@@ -15,6 +15,9 @@ uniform sampler2D loaded_texture_specular_map2;
 uniform sampler2D loaded_texture3;
 uniform sampler2D loaded_texture_specular_map3;
 
+uniform sampler2D text_texture;
+uniform vec3      text_color;
+
 uniform vec3      object_color;
 uniform int       number_of_lights;
 uniform float     light_data[ 800 ];
@@ -27,8 +30,9 @@ void main()
 	//Skip further processing
 	return;
     }*/
-    //color = vec4( object_color * vec3(texture(loaded_texture1,texture_coords)) , 1.0 );
-    //return;
+    //color = vec4( text_color * vec3(texture(text_texture,texture_coords)) , 1.0 );
+    color = vec4( text_color.x, 1.0, 1.0, 1.0 );
+    return;
 
 
     vec3 final_object_color;
