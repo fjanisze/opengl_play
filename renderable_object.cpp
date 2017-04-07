@@ -39,6 +39,8 @@ core_renderer::core_renderer(const glm::mat4 &proj,
     projection_loc = glGetUniformLocation(*shader,"projection");
     model_loc = glGetUniformLocation(*shader,"model");
     color_loc = glGetUniformLocation(*shader,"object_color");
+
+    game_lights = std::make_shared< lighting::Core_lighting >();
 }
 
 renderable_id core_renderer::add_renderable( renderable_pointer object )
@@ -60,6 +62,7 @@ renderable_id core_renderer::add_renderable( renderable_pointer object )
 
 long core_renderer::render()
 {
+    game_lights->calculate_lighting( shader );
     glm::mat4 view = camera->get_view();
 
     glUniformMatrix4fv(view_loc, 1,
@@ -80,6 +83,11 @@ long core_renderer::render()
         rendr.second.object->render( shader );
         rendr.second.object->clean_after_render();
     }
+}
+
+lighting::lighting_pointer core_renderer::lights()
+{
+    return game_lights;
 }
 
 

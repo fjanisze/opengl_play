@@ -1,36 +1,30 @@
 #include "lights.hpp"
 
-namespace lights
+namespace lighting
 {
 
-std::vector<generic_light_ptr> object_lighting::all_lights;
-
-object_lighting::object_lighting(shaders::my_small_shaders * shader) :
-    frag_shader{ shader }
+Core_lighting::Core_lighting()
 {
-    LOG1("New object_lighting");
+    LOG3("New Core_lighting");
     /*
      * Hardcoded size! This allow to support
      * something like 128 lights!
      */
     light_data_buffer.resize( 1024 ); //TODO, there should be one buffer for ALL, not many copies with identical data (see calculate_lighting)
+    LOG1("Data buffer size: ", light_data_buffer.size() );
 }
 
 /*
  * Calculate the ambient light color and intensity,
  * load to the proper uniforms the position,color and strength
  * of all the lights in the scene.
- *
- * Those information will be used during the render
- * procedure (by the fragment shader) for all
- * the little_object. (see little_object::render)
  */
-void object_lighting::calculate_lighting()
+void Core_lighting::calculate_lighting( shaders::shader_ptr& shader )
 {
     int light_cnt = 0;
     std::size_t current_idx{ 0 };
 
-    for(auto & light : all_lights) {
+    for(auto & light : lights) {
         auto light_data = light->get_light_data();
         for( auto& entry : light_data ) {
             light_data_buffer[ current_idx++ ] = entry;
@@ -42,7 +36,7 @@ void object_lighting::calculate_lighting()
         ++light_cnt;
     }
 
-    GLint nl = glGetUniformLocation(*frag_shader,
+    GLint nl = glGetUniformLocation(shader->get_program(),
                                     "number_of_lights");
 
     if( nl < 0 )
@@ -51,15 +45,15 @@ void object_lighting::calculate_lighting()
     }
     else
     {
-        glUniform1i(nl,all_lights.size());
+        glUniform1i(nl,lights.size());
     }
 
-    GLint shader_light_buffer = glGetUniformLocation(*frag_shader,
+    GLint shader_light_buffer = glGetUniformLocation(shader->get_program(),
                                                      "light_data");
 
     if( shader_light_buffer < 0 )
     {
-        ERR("Unable to load the uniform shader_light_buffer");
+        ERR("Unable to load the uniform light_data");
     }
     else
     {
@@ -69,60 +63,19 @@ void object_lighting::calculate_lighting()
     }
 }
 
-void object_lighting::apply_object_color(const glm::vec3 &color)
+void Core_lighting::add_light( light_ptr obj )
 {
-    //Apply the object color
-    GLint obj_color_uniform = glGetUniformLocation(*frag_shader,
-                                                   "object_color");
-    glUniform3f(obj_color_uniform,
-                color.r,
-                color.b,
-                color.g);
+    LOG3("Adding new light");
+    lights.push_back( obj );
+    LOG3("Amount of lights: ", lights.size());
 }
+
 
 //////////////////////////////////////
 /// generic_light implementation
 /////////////////////////////////////
 
-void generic_light::init_render_buffers() throw (std::runtime_error)
-{
-    LOG1("Initializing buffers");
-
-    cube_vrtx = std::make_unique<GLfloat[]>(36 * 3);
-    std::copy(model_vertices::cube_vertices,
-              model_vertices::cube_vertices + 36 * 3 - 1,
-              cube_vrtx.get());
-
-    light_shader.load_vertex_shader(
-                light_shader.read_shader_body("../light_shader.vert"));
-    light_shader.load_fragment_shader(
-                light_shader.read_shader_body("../light_shader.frag"));
-
-    if(!light_shader.create_shader_program()) {
-        ERR("Unable to create the shader program");
-        throw std::runtime_error("Failed to create the light_shader.");
-    }
-
-    glGenVertexArrays(1,&VAO);
-    glGenBuffers(1,&VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER,VBO);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(GLfloat) * 36 * 3,
-                 cube_vrtx.get(),
-                 GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,
-                          sizeof(GL_FLOAT) * 3,
-                          (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER,0);
-    glBindVertexArray(0);
-}
-
-std::size_t generic_light::fill_common_light_data()
+std::size_t Generic_light::fill_common_light_data()
 {
     light_data[0] = static_cast<int>(light_type());
     glm::vec3 pos = get_position();
@@ -137,13 +90,13 @@ std::size_t generic_light::fill_common_light_data()
     return 8; //Next valid index
 }
 
-generic_light::generic_light()
+Generic_light::Generic_light()
 {
     //Setup the default size for a generic light
     light_data.resize(light_data_size());
 }
 
-generic_light::generic_light(glm::vec3 position,
+Generic_light::Generic_light(glm::vec3 position,
                              glm::vec3 color,
                              GLfloat strength) :
     light_color{ color },
@@ -155,28 +108,26 @@ generic_light::generic_light(glm::vec3 position,
     light_data.resize(light_data_size());
 }
 
-generic_light::~generic_light()
+Generic_light::~Generic_light()
 {
-    glDeleteVertexArrays(1,&VAO);
-    glDeleteBuffers(1,&VBO);
 }
 
-GLfloat generic_light::get_strength()
+GLfloat Generic_light::get_strength()
 {
     return color_strength;
 }
 
-void generic_light::set_strength(GLfloat strength)
+void Generic_light::set_strength(GLfloat strength)
 {
     color_strength = strength;
 }
 
-std::pair<glm::vec3, GLfloat> generic_light::get_light_color()
+std::pair<glm::vec3, GLfloat> Generic_light::get_light_color()
 {
     return std::make_pair(light_color,color_strength);
 }
 
-std::size_t generic_light::light_data_size()
+std::size_t Generic_light::light_data_size()
 {
     /*
      * Those are the default values for a generic light
@@ -187,12 +138,7 @@ std::size_t generic_light::light_data_size()
             1;  //strength
 }
 
-void generic_light::attach_to_object(movable::mov_obj_ptr object)
-{
-    WARN1("attach_to_object not implemented!");
-}
-
-const std::vector<GLfloat>& generic_light::get_light_data()
+const std::vector<GLfloat>& Generic_light::get_light_data()
 {
     /*
      * The format of the data for a generic
@@ -216,68 +162,13 @@ const std::vector<GLfloat>& generic_light::get_light_data()
 point_light::point_light(glm::vec3 position,
                          glm::vec3 color,
                          GLfloat strength) :
-    generic_light(position,color,strength)
+    Generic_light(position,color,strength)
 {
     LOG1("New point_light");
-    init_render_buffers();
-
-    //add_renderable(this);
 }
 
 point_light::~point_light()
 {
-    //remove_renderable( this );
-}
-
-void point_light::set_transformations(glm::mat4 v,
-                                      glm::mat4 p)
-{
-    view = v;
-    projection = p;
-}
-
-void point_light::prepare_for_render()
-{
-    light_shader.use_shaders();
-
-    GLint obj_color_uniform = glGetUniformLocation(light_shader,
-                                                   "light_color");
-    glUniform3f(obj_color_uniform,
-                light_color.r,
-                light_color.g,
-                light_color.b);
-
-    GLint obj_col_strength_uniform = glGetUniformLocation(light_shader,
-                                                          "light_strength");
-    glUniform1f(obj_col_strength_uniform,
-                color_strength);
-
-    glm::mat4 model = get_model_matrix();
-
-    GLint model_loc = glGetUniformLocation(light_shader,"model");
-    GLint view_loc = glGetUniformLocation(light_shader,"view");
-    GLint projection_loc = glGetUniformLocation(light_shader,"projection");
-
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
-}
-
-void point_light::render()
-{
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES,0,36);
-    glBindVertexArray(0);
-}
-
-void point_light::clean_after_render()
-{
-
-}
-
-void point_light::rotate_object(GLfloat yaw)
-{
-    current_yaw = yaw;
 }
 
 //////////////////////////////////////
@@ -288,6 +179,7 @@ directional_light::directional_light(glm::vec3 direction,
                                      glm::vec3 color,
                                      GLfloat strength)
 {
+    LOG3("Creating a new directional light!");
     set_position(direction);
     light_color = color;
     color_strength = strength;
@@ -313,17 +205,13 @@ spot_light::spot_light(glm::vec3 position,
                        glm::vec3 direction,
                        GLfloat cut_off_angle,
                        GLfloat out_cutoff_angle) :
-    generic_light::generic_light(position,color,strength),
+    Generic_light::Generic_light(position,color,strength),
     light_direction{ direction - position },
     cut_off{ glm::cos( glm::radians(cut_off_angle) ) },
     out_cutoff{ glm::cos( glm::radians( out_cutoff_angle) ) }
 {
+    LOG3("Creating a new spot_light");
     light_data.resize( light_data_size() );
-}
-
-void spot_light::attach_to_object(movable::mov_obj_ptr object)
-{
-    target_obj = object;
 }
 
 std::size_t spot_light::light_data_size()
@@ -332,7 +220,7 @@ std::size_t spot_light::light_data_size()
      * The additional elements are the light direction
      * plus the two cutoff angles
      */
-    return generic_light::light_data_size() + 5;
+    return Generic_light::light_data_size() + 5;
 }
 
 const std::vector<GLfloat> &spot_light::get_light_data()
@@ -348,7 +236,6 @@ const std::vector<GLfloat> &spot_light::get_light_data()
         //Calculate the new position and direction
         //on the base of the target model-matrix
         glm::vec3 pos = target_obj->get_position();
-        recalculate_light_direction();
         light_data[ idx     ] = static_cast<int>(light_type());
         light_data[ idx + 1 ] = pos.x;
         light_data[ idx + 2 ] = pos.y;
@@ -368,19 +255,6 @@ const std::vector<GLfloat> &spot_light::get_light_data()
     return light_data;
 }
 
-void spot_light::recalculate_light_direction()
-{
-    if( target_obj != nullptr ) {
-        //Calculate the new position and direction
-        //on the base of the target model-matrix
-        glm::mat4 model_mtx = target_obj->get_model_matrix();
-        glm::vec3 pos = glm::vec3( model_mtx[3].x, model_mtx[3].y, model_mtx[3].z );
-        model_mtx = glm::translate( model_mtx,
-                                    glm::vec3(0.0,0.0,200.0) ); //Far enough?
-        light_direction = glm::normalize(
-                    glm::vec3( model_mtx[3].x, model_mtx[3].y, model_mtx[3].z ) - pos );
-    }
-}
 
 flash_light::flash_light(opengl_play::camera_ptr camera,
                          glm::vec3 color,
@@ -395,7 +269,7 @@ flash_light::flash_light(opengl_play::camera_ptr camera,
                            out_cutoff_angle),
     camera_ptr{ camera }
 {
-
+    LOG3("Creating a new flash_light");
 }
 
 const std::vector<GLfloat> &flash_light::get_light_data()

@@ -27,8 +27,8 @@ void main()
 	//Skip further processing
 	return;
     }*/
-    color = vec4( object_color * vec3(texture(loaded_texture1,texture_coords)) , 1.0 );
-    return;
+    //color = vec4( object_color * vec3(texture(loaded_texture1,texture_coords)) , 1.0 );
+    //return;
 
 
     vec3 final_object_color;

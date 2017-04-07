@@ -7,6 +7,7 @@
 #include <shaders.hpp>
 #include <unordered_map>
 #include <my_camera.hpp>
+#include <lights.hpp>
 
 namespace renderable
 {
@@ -70,14 +71,15 @@ public:
                   const opengl_play::camera_ptr cam );
     renderable_id add_renderable( renderable_pointer object );
     long render();
+    lighting::lighting_pointer lights();
 private:
     shaders::shader_ptr shader;
     opengl_play::camera_ptr camera;
- //   lights::light_ptr lights;
+    lighting::lighting_pointer game_lights;
     glm::mat4 projection;
     renderable_id next_rendr_id;
     std::unordered_map< renderable_id, rendr > renderables;
-public:
+private:
     GLint color_loc;
     GLint view_loc;
     GLint projection_loc;

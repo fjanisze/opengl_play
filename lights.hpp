@@ -1,61 +1,13 @@
 #include <headers.hpp>
 #include <shaders.hpp>
-#include <renderable_object.hpp>
 #include <movable_object.hpp>
 #include "my_camera.hpp"
 
 #ifndef LIGHTS_HPP
 #define LIGHTS_HPP
 
-namespace lights
+namespace lighting
 {
-
-namespace model_vertices
-{
-const GLfloat cube_vertices[] = {
-    -0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f,  0.5f, -0.5f,
-    0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f, -0.5f,  0.5f,
-    0.5f, -0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-
-    0.5f,  0.5f,  0.5f,
-    0.5f,  0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,
-
-    -0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f,  0.5f,
-    0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f,  0.5f, -0.5f,
-    0.5f,  0.5f, -0.5f,
-    0.5f,  0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-};
-}
 
 /*
  * Type of available lights,
@@ -70,68 +22,31 @@ enum type_of_light {
     Flash_light
 };
 
-class generic_light;
+class Generic_light;
 
-template<typename T>
-using light_ptr = std::shared_ptr<T>;
+using light_ptr = std::shared_ptr< Generic_light >;
 
-using generic_light_ptr = light_ptr<generic_light>;
-
-class object_lighting
-{
-    static std::vector<generic_light_ptr> all_lights;
-    shaders::my_small_shaders * frag_shader;
-    std::vector<GLfloat> light_data_buffer;
-public:
-    object_lighting(shaders::my_small_shaders* shader);
-    void calculate_lighting();
-    void apply_object_color(const glm::vec3& color);
-    /*
-     * At the moment the limit on the amount of lights
-     * is relaxed, increasing the light_data_buffer is
-     * sufficient to increase the amount of lights.
-     * That's why those functions are returning always
-     * true, that might change in the future
-     */
-    static bool can_add_simple_light() {
-        return true;
-    }
-    template<typename LightT>
-    static bool add_simple_light(generic_light_ptr new_light) {
-        all_lights.emplace_back(new_light);
-        return true;
-    }
-    virtual ~object_lighting() {}
-};
-
-template<typename LightT>
-struct light_factory
-{
-    template<typename...Args>
-    static light_ptr<LightT> create(Args&&...args) {
-        if( false == object_lighting::can_add_simple_light() ) {
-            return nullptr;
-        }
-        auto light = std::make_shared<LightT>(std::forward<Args>(args)...);
-        if( false == object_lighting::add_simple_light<LightT>(light) ) {
-            return nullptr;
-        }
-        LOG1("Creating a new light, type: ",
-             light->light_type());
-        return light;
-    }
-};
-
-class generic_light : public renderable::renderable_object,
-        public movable::movable_object
+class Core_lighting
 {
 public:
-    generic_light();
-    generic_light(glm::vec3 position,
+    Core_lighting();
+    void calculate_lighting( shaders::shader_ptr& shader );
+    void add_light( light_ptr obj );
+private:
+    std::vector< light_ptr > lights;
+    std::vector< GLfloat > light_data_buffer;
+};
+
+using lighting_pointer = std::shared_ptr< Core_lighting >;
+
+class Generic_light : public movable::movable_object
+{
+public:
+    Generic_light();
+    Generic_light(glm::vec3 position,
                   glm::vec3 color,
                   GLfloat   strength);
     virtual type_of_light light_type() = 0;
-    virtual ~generic_light();
     GLfloat get_strength();
     void    set_strength(GLfloat strength);
     std::pair<glm::vec3,GLfloat> get_light_color();
@@ -152,20 +67,11 @@ public:
      * might be different
      */
     virtual std::size_t light_data_size();
-    /*
-     * Attach the spot_light to the object,
-     * will cast the light in front of this object (+Z)
-     */
-    virtual void attach_to_object( movable::mov_obj_ptr object );
+    virtual ~Generic_light();
 protected:
-    GLuint VAO,VBO;
-    shaders::my_small_shaders light_shader;
-    std::unique_ptr<GLfloat[]> cube_vrtx;
     glm::vec3 light_color;
     GLfloat   color_strength;
-    glm::mat4 view,projection;
     std::vector<GLfloat> light_data;
-    virtual void init_render_buffers() throw (std::runtime_error);
     /*
      * Certain light data like position, color &c
      * are commong whithin all the lights,
@@ -178,7 +84,7 @@ protected:
  * Cast light in every direction at equal
  * intensity
  */
-class point_light : public generic_light
+class point_light : public Generic_light
 {
 public:
     point_light() = default;
@@ -188,13 +94,7 @@ public:
     type_of_light light_type() {
         return type_of_light::Point_Light;
     }
-    void rotate_object(GLfloat yaw);
     ~point_light();
-private:
-    void set_transformations(glm::mat4 v, glm::mat4 p);
-    void prepare_for_render();
-    void render();
-    void clean_after_render();
 };
 
 /*
@@ -203,7 +103,7 @@ private:
  * coming from a certain 'direction' toward
  * out scene.
  */
-class directional_light : public generic_light
+class directional_light : public Generic_light
 {
 public:
     directional_light() = default;
@@ -214,10 +114,6 @@ public:
     type_of_light light_type(){
         return type_of_light::Directional_Light;
     }
-private:
-    std::string renderable_nice_name() {
-        return "directional_light";
-    }
 };
 
 /*
@@ -225,7 +121,7 @@ private:
  * everything that is outside the radius of the spotlight
  * is not illuminated
  */
-class spot_light : public generic_light
+class spot_light : public Generic_light
 {
 protected:
     GLfloat cut_off,
@@ -245,21 +141,8 @@ public:
         return type_of_light::Spot_light;
     }
 
-    void attach_to_object( movable::mov_obj_ptr object );
-
     std::size_t light_data_size() override;
     const std::vector<GLfloat>& get_light_data() override;
-private:
-    /*
-     * If we're attached to a movable object,
-     * then we need to recalculate the direction light
-     * if the target moves
-     */
-    void recalculate_light_direction();
-
-    std::string renderable_nice_name() {
-        return "spot_light";
-    }
 };
 
 /*
@@ -283,12 +166,16 @@ public:
     }
 
     const std::vector<GLfloat>& get_light_data() override;
-private:
-    std::string renderable_nice_name() {
-        return "flash_light";
-    }
 };
 
+template<typename LightT>
+struct Light_factory
+{
+    template<typename...Args>
+    static light_ptr create(Args&&...args) {
+        return std::make_shared<  LightT>(std::forward<Args>(args)...);
+    }
+};
 
 }
 

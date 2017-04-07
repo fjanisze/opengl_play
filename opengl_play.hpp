@@ -2,7 +2,6 @@
 #include "logger/logger.hpp"
 #include "shaders.hpp"
 #include "text_rendering.hpp"
-#include <opengl_object.hpp>
 #include "my_camera.hpp"
 #include "my_lines.hpp"
 #include "lights.hpp"
@@ -66,7 +65,6 @@ private:
     GLFWwindow*   window_ctx;
     glm::mat4	  projection;
     glm::vec4     viewport;
-    little_object_ptr object;
     GLFWcursor*   cursor;
     int			  mouse_line_idx;
     text_renderer::rendr_text fps_info,
@@ -88,9 +86,8 @@ private:
     my_lines_ptr position_lines;
     terrains::terrains_ptr game_terrain;
     map_entities::entity_collection_ptr game_map_entities;
-    lights::generic_light_ptr light_1,
-                            light_2,
-                            flash_light;
+    lighting::light_ptr light_1,
+                        light_2;
     map_entities::model_id my_car;
     GLfloat mouse_x_pos;
     GLfloat mouse_y_pos;

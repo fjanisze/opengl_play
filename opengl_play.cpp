@@ -243,7 +243,6 @@ opengl_ui::opengl_ui(int win_width,
 void opengl_ui::prepare_for_main_loop()
 {
     LOG3("Preparing the remaining environment.");
-    check_for_errors();
     //Save the instance pointer
     ui_instance = this;
     //Init the callbacks
@@ -272,15 +271,6 @@ void opengl_ui::setup_scene()
 
     movement_processor.register_movable_object(camera,camera_keys);
     movement_processor.register_movable_object(camera,camera_mouse);
-/*
-    model_shader.load_fragment_shader(model_shader.read_shader_body(
-                                          "../model_shader.frag"));
-    model_shader.load_vertex_shader(model_shader.read_shader_body(
-                                        "../model_shader.vert"));
-    if( !model_shader.create_shader_program() ) {
-        ERR("Unable to create the model shader!");
-        throw std::runtime_error("Shader creation failure");
-    }*/
 
     game_terrain = terrains::terrains::create(renderer);
 
@@ -350,15 +340,18 @@ void opengl_ui::setup_scene()
     game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
 
 
-    light_1 = lights::light_factory<lights::directional_light>::create(
+    light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
                 glm::vec3(0.9,0.8,0.7),
                 30);
 
-    light_2 = lights::light_factory<lights::directional_light>::create(
+    light_2 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(-10,100,-10),
                 glm::vec3(0.8,0.7,0.7),
                 12);
+
+    renderer->lights()->add_light( light_1 );
+    renderer->lights()->add_light( light_2 );
 }
 
 void opengl_ui::verify_models_intersections( GLfloat x, GLfloat y )
@@ -382,7 +375,6 @@ void opengl_ui::verify_models_intersections( GLfloat x, GLfloat y )
 void opengl_ui::enter_main_loop()
 {
     setup_scene();
-    check_for_errors();
 
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
