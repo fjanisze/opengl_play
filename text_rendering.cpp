@@ -102,10 +102,12 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
             // Now store character for later use
             character_data character = {
                 texture,
-                glm::ivec2(font_face->glyph->bitmap.width,
-                font_face->glyph->bitmap.rows),
-                glm::ivec2(font_face->glyph->bitmap_left,
-                font_face->glyph->bitmap_top),
+                glm::fvec2(
+                    font_face->glyph->bitmap.width,
+                    font_face->glyph->bitmap.rows),
+                glm::fvec2(
+                    font_face->glyph->bitmap_left,
+                    font_face->glyph->bitmap_top),
                 font_face->glyph->advance.x
             };
             new_font->charset.insert({current_char,character});
@@ -205,7 +207,7 @@ Renderable_text::Renderable_text()
 }
 
 Renderable_text::Renderable_text(const std::string &text,
-                                 glm::fvec2 position,
+                                 const glm::vec3& position,
                                  GLfloat scale,
                                  glm::vec3 color) :
     text_position{ position },
@@ -213,6 +215,7 @@ Renderable_text::Renderable_text(const std::string &text,
     text_color{ color },
     text_string{ text }
 {
+    set_position( position );
     init();
 }
 
@@ -226,24 +229,31 @@ void Renderable_text::set_text(const std::string &text)
     text_string = text;
 }
 
-void Renderable_text::set_position(glm::fvec2 position)
+void Renderable_text::set_position(const glm::vec3 position)
 {
     text_position = position;
+    model_matrix = glm::translate( model_matrix,
+                                   position );
 }
 
 void Renderable_text::set_scale(GLfloat scale)
 {
     text_scale = scale;
+    for( auto&& ch : font_texture->charset ) {
+        ch.second.Bearing *= scale;
+        ch.second.Size *= scale;
+        ch.second.Advance *= scale;
+    }
 }
 
 void Renderable_text::set_color(glm::vec3 color)
 {
+    LOG1("Setting text color to: ", color);
     text_color = color;
 }
 
 void Renderable_text::render( shaders::shader_ptr &shader )
 {
-    shader->use_shaders();
     GLint uniform_var = glGetUniformLocation(shader->get_program(),
                                              "text_color");
     if(uniform_var < 0){
@@ -251,9 +261,9 @@ void Renderable_text::render( shaders::shader_ptr &shader )
         return;
     }
     glUniform3f(uniform_var,
-                text_color.x,
-                text_color.y,
-                text_color.z);
+                text_color.r,
+                text_color.g,
+                text_color.b);
 
     glBindVertexArray(VAO);
 
@@ -261,27 +271,26 @@ void Renderable_text::render( shaders::shader_ptr &shader )
 
     // Iterate through all characters
     std::string::const_iterator c;
-    GLfloat x = text_position.x,
-            y = text_position.y;
+    GLfloat x = 0.0f, //text_position.x,
+            y = 0.0f; //text_position.y;
     for (c = text_string.begin(); c != text_string.end(); c++)
     {
         character_data ch = font_texture->charset[*c];
 
-        GLfloat xpos = x + ch.Bearing.x * text_scale;
-        GLfloat ypos = y -
-                (ch.Size.y - ch.Bearing.y) * text_scale;
+        GLfloat xpos = x + ch.Bearing.x;
+        GLfloat ypos = y - (ch.Size.y - ch.Bearing.y);
 
-        GLfloat w = ch.Size.x * text_scale;
-        GLfloat h = ch.Size.y * text_scale;
+        GLfloat w = ch.Size.x;
+        GLfloat h = ch.Size.y;
         // Update VBO for each character
         GLfloat vertices[6][5] = {
-            { xpos,     ypos + h, 0.0 ,   0.0, 0.0 },
-            { xpos,     ypos,     0.0 ,   0.0, 1.0 },
-            { xpos + w, ypos,     0.0 ,   1.0, 1.0 },
+            { xpos,     ypos + h,  0.0 ,   0.0, 0.0 },
+            { xpos,     ypos,      0.0 ,   0.0, 1.0 },
+            { xpos + w, ypos,      0.0 ,   1.0, 1.0 },
 
-            { xpos,     ypos + h, 0.0 ,   0.0, 0.0 },
-            { xpos + w, ypos,     0.0 ,   1.0, 1.0 },
-            { xpos + w, ypos + h, 0.0 ,   1.0, 0.0 }
+            { xpos,     ypos + h,  0.0 ,   0.0, 0.0 },
+            { xpos + w, ypos,      0.0 ,   1.0, 1.0 },
+            { xpos + w, ypos + h,  0.0 ,   1.0, 0.0 }
         };
 
         // Render glyph texture over quad
@@ -295,14 +304,23 @@ void Renderable_text::render( shaders::shader_ptr &shader )
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         // Render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
-        // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.Advance >> 6) * text_scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
+        x += (ch.Advance / 64.0f);
     }
 
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+}
+
+/*
+ * Return false when the text string must
+ * be rendered in "front" of the viewer, always
+ * (not at some world position)
+ */
+bool Renderable_text::using_view_matrix()
+{
+    return false;
 }
 
 }

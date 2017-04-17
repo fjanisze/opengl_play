@@ -14,9 +14,9 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection/* * view * model*/ * vec4(position, 1.0);
+    gl_Position = projection * view * model * vec4(position, 1.0);
     //normal = mat3(transpose(inverse(model))) * normal_vec;
     texture_coords = tex_coord;
-    //frag_pos = vec3( model * vec4(position, 1.0f) );
-    //camera_pos = inverse(view)[3].xyz;
+    frag_pos = vec3( model * vec4(position, 1.0f) );
+    camera_pos = inverse(view)[3].xyz;
 }

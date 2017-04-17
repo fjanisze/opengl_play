@@ -50,9 +50,9 @@ const std::string simple_fragment_shader = {
 // Holds all state information relevant to a character as loaded using FreeType
 struct character_data {
     GLuint TextureID;   // ID handle of the glyph texture
-    glm::ivec2 Size;    // Size of glyph
-    glm::ivec2 Bearing;  // Offset from baseline to left/top of glyph
-    FT_Pos Advance;    // Horizontal offset to advance to next glyph
+    glm::fvec2 Size;    // Size of glyph
+    glm::fvec2 Bearing;  // Offset from baseline to left/top of glyph
+    GLfloat Advance;    // Horizontal offset to advance to next glyph
 };
 
 /*
@@ -96,15 +96,17 @@ class Renderable_text : public renderable::renderable_object
 public:
     Renderable_text();
     Renderable_text(const std::string& text,
-                    glm::fvec2 position,
+                    const glm::vec3 &position,
                     GLfloat scale,
                     glm::vec3 color); //Use the default font
     void set_window_size(int height,int width);
     void set_text(const std::string& text);
-    void set_position(glm::fvec2 position);
+    void set_position(const glm::vec3 position);
     void set_scale(GLfloat scale);
     void set_color(glm::vec3 color);
+
     void render( shaders::shader_ptr& shader ) override;
+    bool using_view_matrix();
 private:
     GLuint VAO,VBO;
 
@@ -112,7 +114,7 @@ private:
     font_texture_ptr     font_texture;
 
     std::string text_string;
-    glm::fvec2  text_position;
+    glm::vec3   text_position;
     GLfloat     text_scale;
     glm::vec3   text_color;
     glm::mat4   text_projection;

@@ -9,7 +9,7 @@ namespace renderable
 renderable_object::renderable_object() :
     state{ renderable_state::rendering_disabled }
 {
-
+    model_matrix = glm::mat4();
 }
 
 void renderable_object::set_rendering_state(const renderable_state new_state)
@@ -51,18 +51,13 @@ core_renderer::core_renderer(const glm::mat4 &proj,
 
     shader->use_shaders();
 
-    //view_loc = load_location("view");
+    view_loc = load_location("view");
     projection_loc = load_location("projection");
-
-    projection = glm::ortho(0.0f,
-                                    static_cast<GLfloat>(1920),
-                                    0.0f,
-                                    static_cast<GLfloat>(1280));
 
 
     glUniformMatrix4fv(projection_loc, 1,
                        GL_FALSE, glm::value_ptr(projection));
-    //model_loc = load_location("model");
+    model_loc = load_location("model");
     //color_loc = load_location("object_color");
 
     game_lights = std::make_shared< lighting::Core_lighting >();
@@ -90,18 +85,31 @@ long core_renderer::render()
     //game_lights->calculate_lighting( shader );
     glm::mat4 view = camera->get_view();
 
-  /*  glUniformMatrix4fv(view_loc, 1,
-                       GL_FALSE, glm::value_ptr(view));*/
+    bool def_view_matrix_loaded{ true };
+    glUniformMatrix4fv(view_loc, 1,
+                       GL_FALSE, glm::value_ptr(view));
 
     for( auto&& rendr : renderables )
     {
         if( rendr.second.object->get_rendering_state() == renderable_state::rendering_disabled ) {
             continue;
         }
-   /*     glm::vec3 color = rendr.second.object->default_color;
+    //    glm::vec3 color = rendr.second.object->default_color;
         glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-                           glm::value_ptr( rendr.second.object->model_matrix ));
-        glUniform3f(color_loc,
+                           glm::value_ptr( rendr.second.object->model_matrix ) );
+        if( false == rendr.second.object->using_view_matrix() ) {
+            glUniformMatrix4fv(view_loc, 1,
+                               GL_FALSE, glm::value_ptr(
+                                   rendr.second.object->model_matrix
+                                   ));
+            def_view_matrix_loaded = false;
+        } else if( false == def_view_matrix_loaded ){
+            glUniformMatrix4fv(view_loc, 1,
+                               GL_FALSE, glm::value_ptr(view));
+            def_view_matrix_loaded = true;
+        }
+
+    /*    glUniform3f(color_loc,
                     color.r,
                     color.b,
                     color.g);*/

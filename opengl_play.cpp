@@ -1,5 +1,7 @@
 #include "opengl_play.hpp"
 #include <iomanip>
+#include <thread>
+#include <chrono>
 
 namespace opengl_play
 {
@@ -71,12 +73,12 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
      * If the mouse is over an entity then
      * skip the terrain mouse processing.
      */
-    if( false == game_map_entities->mouse_hover( x, win_h - y ) )
+  /*  if( false == game_map_entities->mouse_hover( x, win_h - y ) )
     {
         game_terrain->mouse_hover( ray_cast( x, y ) );
     } else {
         game_terrain->unselect_highlighted_lot();
-    }
+    }*/
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -150,23 +152,13 @@ void opengl_ui::get_current_ctx_viewport()
 
 void opengl_ui::init_text()
 {
-    fps_info = std::make_shared<text_renderer::Renderable_text>();
-    fps_info->set_position(glm::fvec2(10,7));
-    fps_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-    fps_info->set_scale(0.4f);
-    fps_info->set_text("0 fps");
-   // fps_info->set_window_size(win_h,win_w);
-    fps_info->set_rendering_state( renderable::renderable_state::rendering_enabled );
-    renderer->add_renderable( fps_info );
-
-    camera_info = std::make_shared<text_renderer::Renderable_text>();
-    camera_info->set_position(glm::fvec2(win_h - 300,7));
-    camera_info->set_color(glm::vec3(1.0f,1.0f,1.0f));
-    camera_info->set_scale(0.4f);
-    camera_info->set_text(" -- ");
-    //camera_info->set_window_size(win_h,win_w);
-    camera_info->set_rendering_state( renderable::renderable_state::rendering_enabled );
-    renderer->add_renderable( camera_info );
+    info_string = std::make_shared<text_renderer::Renderable_text>();
+    info_string->set_position(glm::vec3(-6.0,-4.0,-10.0f));
+    info_string->set_color(glm::vec3(1.0f,1.0f,1.0f));
+    info_string->set_scale(0.008f);
+    info_string->set_text("0 fps");
+    info_string->set_rendering_state( renderable::renderable_state::rendering_enabled );
+    renderer->add_renderable( info_string );
 }
 
 opengl_ui::opengl_ui(int win_width,
@@ -275,7 +267,7 @@ void opengl_ui::setup_scene()
 
     movement_processor.register_movable_object(camera,camera_keys);
     movement_processor.register_movable_object(camera,camera_mouse);
-
+/*
     game_terrain = terrains::terrains::create(renderer);
 
 
@@ -300,7 +292,7 @@ void opengl_ui::setup_scene()
     game_terrain->load_highres_terrain("../models/Forest/Forest_complex.obj",
                                forest_id);
 
-
+*/
     //Generate random terrain map
     const int map_size_x{ 40 };
     const int map_size_y{ 40 };
@@ -324,7 +316,7 @@ void opengl_ui::setup_scene()
                                     glm::vec2(map_size_x / 2,
                                               map_size_y / 2) );*/
 
-
+/*
     game_map_entities = map_entities::entities_collection::create(
                                 frame_buffers,
                                 std::bind( &terrains::terrains::get_lot_top_model_matrix,
@@ -342,7 +334,7 @@ void opengl_ui::setup_scene()
     game_map_entities->add_entity( my_car, glm::vec2(-1.0,-1.0) );
 
     game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
-
+*/
 
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
@@ -391,6 +383,7 @@ void opengl_ui::enter_main_loop()
 
     glm::vec3 last_cam_pos;
     LOG2("Entering main loop!");
+    std::string current_fps_string = "0 fps";
     while(!glfwWindowShouldClose(window_ctx))
     {
         ++current_fps;
@@ -403,7 +396,7 @@ void opengl_ui::enter_main_loop()
            std::chrono::milliseconds>(
                current_time - ref_time).count() > 1000){
             ref_time = current_time;
-            fps_info->set_text(std::to_string(current_fps) + "fps");
+            current_fps_string = (std::to_string(current_fps) + " fps");
             current_fps = 0;
         }
 
@@ -417,15 +410,15 @@ void opengl_ui::enter_main_loop()
         glm::vec3 pos = camera->get_position();
 
         std::stringstream ss;
-        ss <<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
+        ss <<current_fps_string<<" - "<<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
           <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
 
-        camera_info->set_text(ss.str());
+        info_string->set_text(ss.str());
 
         /*
          * Update the visible part of the map
          */
-        if( last_cam_pos != pos ) {
+    /*    if( last_cam_pos != pos ) {
             types::ray_t ray = ray_cast( win_w / 2, win_h / 2 );
             glm::vec2 center = ray_z_hit_point( ray, 0.0f );
             /*
@@ -433,12 +426,14 @@ void opengl_ui::enter_main_loop()
              * by this simple formula. The higher is the camera (z)
              * then much more lots we need to draw
              */
-            game_terrain->set_view_center( center, std::max( 4.0f,
+        /*    game_terrain->set_view_center( center, std::max( 4.0f,
                                                              std::max(pos.z,6.0f) / 1.2f ) );
             last_cam_pos = pos;
-        }
+        }*/
 
         glfwSwapBuffers(window_ctx);
+
+       // std::this_thread::sleep_for(std::chrono::seconds{1});
     }
 }
 

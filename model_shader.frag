@@ -30,8 +30,9 @@ void main()
 	//Skip further processing
 	return;
     }*/
-    //color = vec4( text_color * vec3(texture(text_texture,texture_coords)) , 1.0 );
-    color = vec4( text_color.x, 1.0, 1.0, 1.0 );
+    vec3 col = text_color;
+    color = vec4( col, vec3( texture(text_texture,texture_coords) ) );
+    //color = vec4( text_color.x, 1.0, 1.0, 1.0 );
     return;
 
 

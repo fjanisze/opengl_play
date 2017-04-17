@@ -49,6 +49,13 @@ public:
     virtual void prepare_for_render() {}
     virtual void render( shaders::shader_ptr& shader ) {}
     virtual void clean_after_render() {}
+
+    /*
+     * Handy function which permit to force the
+     * renderer to not apply the view transformation
+     * matrix during rendering.
+     */
+    virtual bool using_view_matrix() { return true; }
     virtual std::string renderable_nice_name();
 
     virtual ~renderable_object() {}

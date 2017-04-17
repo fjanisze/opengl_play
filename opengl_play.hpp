@@ -67,8 +67,7 @@ private:
     glm::vec4     viewport;
     GLFWcursor*   cursor;
     int			  mouse_line_idx;
-    text_renderer::rendr_text fps_info,
-    camera_info;
+    text_renderer::rendr_text info_string;
     renderable::renderer_pointer renderer;
 
     int win_h,
