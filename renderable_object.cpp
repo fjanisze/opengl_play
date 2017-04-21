@@ -27,7 +27,7 @@ void renderable_object::set_view_method(const view_method new_method)
 {
     type_of_view = new_method;
     if( view_method::camera_space_coord == new_method ) {
-       // model_matrix = glm::mat4();
+        model_matrix = glm::mat4();
     }
 }
 
@@ -41,9 +41,11 @@ std::string renderable_object::renderable_nice_name()
 /////////////////////////////////////
 
 core_renderer::core_renderer(const glm::mat4 &proj,
+                             const glm::mat4& def_ortho,
                              const opengl_play::camera_ptr cam ) :
     next_rendr_id{ 1 },
     projection{ proj },
+    ortho{ def_ortho },
     camera{ cam }
 {
     LOG3("Creating the core renderer!");
@@ -63,9 +65,10 @@ core_renderer::core_renderer(const glm::mat4 &proj,
     view_loc = load_location("view");
     projection_loc = load_location("projection");
 
-
+    cur_perspective = perspective_type::projection;
     glUniformMatrix4fv(projection_loc, 1,
                        GL_FALSE, glm::value_ptr(projection));
+
     model_loc = load_location("model");
     color_loc = load_location("object_color");
 
@@ -80,41 +83,56 @@ renderable_id core_renderer::add_renderable( renderable_pointer object )
     }
     LOG1("Adding new renderable: ",
          object->renderable_nice_name());
-    rendr new_rendr;
-    new_rendr.id = next_rendr_id;
-    new_rendr.object = object;
+    rendr_ptr new_rendr = std::make_shared<rendr>();
+    new_rendr->id = next_rendr_id;
+    new_rendr->object = object;
     renderables[ next_rendr_id ] = new_rendr;
     /*
      * object with view mode set to camera_space_coord
-     * should be rendered last (
-     * */
+     * should be rendered last (tail of the rendering list)
+     */
+    if( nullptr == rendering_head ) {
+        rendering_head = new_rendr;
+        rendering_tail = new_rendr;
+    } else {
+        if( renderable::view_method::camera_space_coord == object->get_view_method() ) {
+            rendering_tail->next = new_rendr;
+            rendering_tail = new_rendr;
+        } else {
+            new_rendr->next = rendering_head;
+            rendering_head = new_rendr;
+        }
+    }
     ++next_rendr_id;
-    LOG1("Assigned ID: ", new_rendr.id );
-    return new_rendr.id;
+    LOG1("Assigned ID: ", new_rendr->id );
+    return new_rendr->id;
 }
 
 long core_renderer::render()
 {
     game_lights->calculate_lighting( shader );
     glm::mat4 view = camera->get_view();
-    glm::mat4 identity_matrix = glm::mat4();
 
     bool def_view_matrix_loaded{ true };
     glUniformMatrix4fv(view_loc, 1,
                        GL_FALSE, glm::value_ptr(view));
 
-    for( auto&& rendr : renderables )
+    for( rendr_ptr cur = rendering_head ;
+         cur != nullptr ;
+         cur = cur->next )
     {
-        if( rendr.second.object->get_rendering_state() == renderable_state::rendering_disabled ) {
+        if( cur->object->get_rendering_state() == renderable_state::rendering_disabled ) {
             continue;
         }
 
+        switch_proper_perspective( cur->object );
+
         glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-                           glm::value_ptr( rendr.second.object->model_matrix ) );
-        if( view_method::camera_space_coord == rendr.second.object->get_view_method() ) {
+                           glm::value_ptr( cur->object->model_matrix ) );
+        if( view_method::camera_space_coord == cur->object->get_view_method() ) {
             glUniformMatrix4fv(view_loc, 1,
                                GL_FALSE, glm::value_ptr(
-                                   rendr.second.object->model_matrix
+                                   cur->object->model_matrix
                                    ));
             def_view_matrix_loaded = false;
         } else if( false == def_view_matrix_loaded ){
@@ -123,15 +141,15 @@ long core_renderer::render()
             def_view_matrix_loaded = true;
         }
 
-        glm::vec3 color = rendr.second.object->default_color;
+        glm::vec3 color = cur->object->default_color;
         glUniform3f(color_loc,
                     color.r,
                     color.g,
                     color.b);
 
-        rendr.second.object->prepare_for_render();
-        rendr.second.object->render( shader );
-        rendr.second.object->clean_after_render();
+        cur->object->prepare_for_render();
+        cur->object->render( shader );
+        cur->object->clean_after_render();
     }
 }
 
@@ -152,6 +170,27 @@ GLint core_renderer::load_location(const std::string &loc_name)
     return loc;
 }
 
-
+void core_renderer::switch_proper_perspective(const renderable_pointer &obj)
+{
+    if( renderable::view_method::camera_space_coord ==
+        obj->get_view_method() &&
+        perspective_type::projection == cur_perspective ) {
+        /*
+         * Need to switch from projection to ortho
+         */
+        glUniformMatrix4fv(projection_loc, 1,
+                           GL_FALSE, glm::value_ptr(ortho));
+        cur_perspective = perspective_type::ortho;
+    } else if (renderable::view_method::world_space_coord ==
+               obj->get_view_method() &&
+               perspective_type::ortho == cur_perspective) {
+        /*
+         * Need to switch from ortho to projection
+         */
+        glUniformMatrix4fv(projection_loc, 1,
+                           GL_FALSE, glm::value_ptr(projection));
+        cur_perspective = perspective_type::projection;
+    }
+}
 
 }

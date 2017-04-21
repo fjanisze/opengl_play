@@ -47,7 +47,7 @@ enum class renderable_state
 enum class view_method
 {
     world_space_coord,
-    camera_space_coord //Do not use view matrix
+    camera_space_coord //Only X,Y are relevant. Draw in front of the camera
 };
 
 class renderable_object
@@ -67,7 +67,7 @@ public:
      * matrix during rendering.
      */
     void set_view_method( const view_method new_method );
-    view_method get_view_method() {
+    view_method get_view_method() const {
         return type_of_view;
     }
 
@@ -90,6 +90,8 @@ private:
 
 using renderable_id = long;
 
+struct rendr;
+using rendr_ptr = std::shared_ptr<rendr>;
 struct rendr
 {
     renderable_id id;
@@ -100,20 +102,29 @@ struct rendr
      * elements should be rendered first, the tail
      * last..
      */
-    rendr* next;
+    rendr_ptr next;
 
     rendr():
-        next{ nullptr },
         id{ -1 }
     {}
 };
 
+/*
+ * Two perspective models are supported:
+ *  projection: For common drawing
+ *  ortho: Mostly for rendering stuff in front of the camera.
+ */
+enum class perspective_type
+{
+    projection,
+    ortho
+};
 
 class core_renderer
 {
 public:
     core_renderer() = default;
-    core_renderer(const glm::mat4& proj ,
+    core_renderer(const glm::mat4& proj , const glm::mat4 &def_ortho,
                   const opengl_play::camera_ptr cam );
     renderable_id add_renderable( renderable_pointer object );
     long render();
@@ -122,19 +133,27 @@ private:
     shaders::shader_ptr shader;
     opengl_play::camera_ptr camera;
     lighting::lighting_pointer game_lights;
+    perspective_type cur_perspective;
     glm::mat4 projection;
+    glm::mat4 ortho;
     renderable_id next_rendr_id;
     /*
      * Used for rendering the rendr objects based
      * on their priority (head first, tail last)
      */
-    rendr* rendering_head;
+    rendr_ptr rendering_head;
+    rendr_ptr rendering_tail;
     /*
      * For fast retrieval of renderable objects
      * by their ID
      */
-    std::unordered_map< renderable_id, rendr > renderables;
+    std::unordered_map< renderable_id, rendr_ptr > renderables;
     GLint load_location( const std::string& loc_name );
+    /*
+     * Load the proper perspective matrix
+     * to the shader
+     */
+    void switch_proper_perspective(const renderable_pointer &obj );
 private:
     GLint color_loc;
     GLint view_loc;

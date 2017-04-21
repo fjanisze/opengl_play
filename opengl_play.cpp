@@ -153,7 +153,7 @@ void opengl_ui::get_current_ctx_viewport()
 void opengl_ui::init_text()
 {
     info_string = std::make_shared<text_renderer::Renderable_text>();
-    info_string->set_position(glm::vec3(0.0,0.0,-10.0f));
+    info_string->set_position(glm::vec3(0.0,0.0,0.0f));
     info_string->set_color(glm::vec3(1.0f,1.0f,1.0f));
     info_string->set_scale(1.0f);
     info_string->set_text("0 fps");
@@ -221,8 +221,12 @@ opengl_ui::opengl_ui(int win_width,
     projection = glm::perspective(glm::radians(45.0f),
                                   (GLfloat)win_w / (GLfloat)win_h,
                                   1.0f, 100.0f);
+    glm::mat4 def_ortho = glm::ortho(0.0,
+                            (double)win_w,
+                            0.0,
+                            (double)win_h);
 
-    renderer = std::make_shared< renderable::core_renderer> ( projection, camera );
+    renderer = std::make_shared< renderable::core_renderer> ( projection, def_ortho, camera );
 
     init_text();
 
@@ -311,7 +315,7 @@ void opengl_ui::setup_scene()
         }
     }
 
-/*
+
     game_terrain->load_terrain_map( terrain_map,
                                     2,
                                     glm::vec2(map_size_x / 2,
