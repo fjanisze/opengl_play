@@ -153,11 +153,12 @@ void opengl_ui::get_current_ctx_viewport()
 void opengl_ui::init_text()
 {
     info_string = std::make_shared<text_renderer::Renderable_text>();
-    info_string->set_position(glm::vec3(-6.0,-4.0,-10.0f));
+    info_string->set_position(glm::vec3(0.0,0.0,-10.0f));
     info_string->set_color(glm::vec3(1.0f,1.0f,1.0f));
-    info_string->set_scale(0.008f);
+    info_string->set_scale(1.0f);
     info_string->set_text("0 fps");
     info_string->set_rendering_state( renderable::renderable_state::rendering_enabled );
+    info_string->set_view_method( renderable::view_method::camera_space_coord );
     renderer->add_renderable( info_string );
 }
 
@@ -267,7 +268,7 @@ void opengl_ui::setup_scene()
 
     movement_processor.register_movable_object(camera,camera_keys);
     movement_processor.register_movable_object(camera,camera_mouse);
-/*
+
     game_terrain = terrains::terrains::create(renderer);
 
 
@@ -292,7 +293,7 @@ void opengl_ui::setup_scene()
     game_terrain->load_highres_terrain("../models/Forest/Forest_complex.obj",
                                forest_id);
 
-*/
+
     //Generate random terrain map
     const int map_size_x{ 40 };
     const int map_size_y{ 40 };
@@ -310,11 +311,11 @@ void opengl_ui::setup_scene()
         }
     }
 
-
- /*   game_terrain->load_terrain_map( terrain_map,
+/*
+    game_terrain->load_terrain_map( terrain_map,
                                     2,
                                     glm::vec2(map_size_x / 2,
-                                              map_size_y / 2) );*/
+                                              map_size_y / 2) );
 
 /*
     game_map_entities = map_entities::entities_collection::create(
@@ -432,8 +433,6 @@ void opengl_ui::enter_main_loop()
         }*/
 
         glfwSwapBuffers(window_ctx);
-
-       // std::this_thread::sleep_for(std::chrono::seconds{1});
     }
 }
 

@@ -15,9 +15,6 @@ uniform sampler2D loaded_texture_specular_map2;
 uniform sampler2D loaded_texture3;
 uniform sampler2D loaded_texture_specular_map3;
 
-uniform sampler2D text_texture;
-uniform vec3      text_color;
-
 uniform vec3      object_color;
 uniform int       number_of_lights;
 uniform float     light_data[ 800 ];
@@ -30,10 +27,11 @@ void main()
 	//Skip further processing
 	return;
     }*/
-    vec3 col = text_color;
-    color = vec4( col, vec3( texture(text_texture,texture_coords) ) );
-    //color = vec4( text_color.x, 1.0, 1.0, 1.0 );
-    return;
+    //vec3 col = object_color * vec3( texture(loaded_texture1,texture_coords) );
+    //color = vec4( col, 1.0f );
+    //color = vec4( object_color.r, vec3( texture(loaded_texture1,texture_coords) ) );
+    //color = vec4( object_color.x, 1.0, 1.0, 1.0 );
+    //return;
 
 
     vec3 final_object_color;
@@ -128,7 +126,7 @@ void main()
 	vec3 view_dir = normalize( camera_pos - frag_pos );
 	vec3 reflect_dir = reflect(-light_dir, norm);
 	float spec = pow( max( dot(view_dir,reflect_dir), 0.0), 32);
-	vec3 specular =  spec * light_color;
+	vec3 specular = spec * light_color;
 	specular *= (vec3(texture(loaded_texture_specular_map1,texture_coords)) * .2 * attenuation);
 	spec_res += specular;
     }

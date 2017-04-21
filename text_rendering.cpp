@@ -212,10 +212,10 @@ Renderable_text::Renderable_text(const std::string &text,
                                  glm::vec3 color) :
     text_position{ position },
     text_scale{ scale },
-    text_color{ color },
     text_string{ text }
 {
     set_position( position );
+    set_color( color );
     init();
 }
 
@@ -232,8 +232,10 @@ void Renderable_text::set_text(const std::string &text)
 void Renderable_text::set_position(const glm::vec3 position)
 {
     text_position = position;
-    model_matrix = glm::translate( model_matrix,
-                                   position );
+    if( renderable::view_method::world_space_coord == get_view_method() ) {
+        model_matrix = glm::translate( model_matrix,
+                                       position );
+    }
 }
 
 void Renderable_text::set_scale(GLfloat scale)
@@ -249,22 +251,11 @@ void Renderable_text::set_scale(GLfloat scale)
 void Renderable_text::set_color(glm::vec3 color)
 {
     LOG1("Setting text color to: ", color);
-    text_color = color;
+    default_color = color;
 }
 
 void Renderable_text::render( shaders::shader_ptr &shader )
 {
-    GLint uniform_var = glGetUniformLocation(shader->get_program(),
-                                             "text_color");
-    if(uniform_var < 0){
-        ERR("Unable to obtain the uniform variable: text_color");
-        return;
-    }
-    glUniform3f(uniform_var,
-                text_color.r,
-                text_color.g,
-                text_color.b);
-
     glBindVertexArray(VAO);
 
     glActiveTexture(GL_TEXTURE0); //+4?
@@ -311,16 +302,6 @@ void Renderable_text::render( shaders::shader_ptr &shader )
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-}
-
-/*
- * Return false when the text string must
- * be rendered in "front" of the viewer, always
- * (not at some world position)
- */
-bool Renderable_text::using_view_matrix()
-{
-    return false;
 }
 
 }

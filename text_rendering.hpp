@@ -106,7 +106,6 @@ public:
     void set_color(glm::vec3 color);
 
     void render( shaders::shader_ptr& shader ) override;
-    bool using_view_matrix();
 private:
     GLuint VAO,VBO;
 
@@ -116,7 +115,6 @@ private:
     std::string text_string;
     glm::vec3   text_position;
     GLfloat     text_scale;
-    glm::vec3   text_color;
     glm::mat4   text_projection;
     int window_height,
     window_width;

@@ -39,6 +39,17 @@ enum class renderable_state
     rendering_disabled
 };
 
+/*
+ * Specify how to calculate the position
+ * of the object, if it should be in world position
+ * or always in front of the camera
+ */
+enum class view_method
+{
+    world_space_coord,
+    camera_space_coord //Do not use view matrix
+};
+
 class renderable_object
 {
 public:
@@ -55,7 +66,11 @@ public:
      * renderer to not apply the view transformation
      * matrix during rendering.
      */
-    virtual bool using_view_matrix() { return true; }
+    void set_view_method( const view_method new_method );
+    view_method get_view_method() {
+        return type_of_view;
+    }
+
     virtual std::string renderable_nice_name();
 
     virtual ~renderable_object() {}
@@ -64,6 +79,7 @@ public:
     glm::mat4 view_matrix;
     glm::mat4 model_matrix;
     glm::vec3 default_color;
+    view_method type_of_view;
 private:
     renderable_state state;
 };
@@ -78,6 +94,18 @@ struct rendr
 {
     renderable_id id;
     renderable_pointer object;
+    /*
+     * For rendering purpose we have those
+     * rendr objects inside a list, the head
+     * elements should be rendered first, the tail
+     * last..
+     */
+    rendr* next;
+
+    rendr():
+        next{ nullptr },
+        id{ -1 }
+    {}
 };
 
 
@@ -96,6 +124,15 @@ private:
     lighting::lighting_pointer game_lights;
     glm::mat4 projection;
     renderable_id next_rendr_id;
+    /*
+     * Used for rendering the rendr objects based
+     * on their priority (head first, tail last)
+     */
+    rendr* rendering_head;
+    /*
+     * For fast retrieval of renderable objects
+     * by their ID
+     */
     std::unordered_map< renderable_id, rendr > renderables;
     GLint load_location( const std::string& loc_name );
 private:
