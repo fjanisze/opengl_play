@@ -57,9 +57,9 @@ public:
     void set_rendering_state( const renderable_state new_state );
     renderable_state get_rendering_state();
 
-    virtual void prepare_for_render() {}
+    virtual void prepare_for_render( shaders::shader_ptr& shader ) {}
     virtual void render( shaders::shader_ptr& shader ) {}
-    virtual void clean_after_render() {}
+    virtual void clean_after_render( shaders::shader_ptr& shader ) {}
 
     /*
      * Handy function which permit to force the
@@ -78,7 +78,7 @@ public:
     glm::mat4 projection_matrix;
     glm::mat4 view_matrix;
     glm::mat4 model_matrix;
-    glm::vec3 default_color;
+    glm::vec4 default_color;
     view_method type_of_view;
 private:
     renderable_state state;

@@ -141,15 +141,16 @@ long core_renderer::render()
             def_view_matrix_loaded = true;
         }
 
-        glm::vec3 color = cur->object->default_color;
-        glUniform3f(color_loc,
+        glm::vec4 color = cur->object->default_color;
+        glUniform4f(color_loc,
                     color.r,
                     color.g,
-                    color.b);
+                    color.b,
+                    color.a);
 
-        cur->object->prepare_for_render();
+        cur->object->prepare_for_render( shader );
         cur->object->render( shader );
-        cur->object->clean_after_render();
+        cur->object->clean_after_render( shader );
     }
 }
 

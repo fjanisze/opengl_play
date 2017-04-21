@@ -153,8 +153,8 @@ void opengl_ui::get_current_ctx_viewport()
 void opengl_ui::init_text()
 {
     info_string = std::make_shared<text_renderer::Renderable_text>();
-    info_string->set_position(glm::vec3(0.0,0.0,0.0f));
-    info_string->set_color(glm::vec3(1.0f,1.0f,1.0f));
+    info_string->set_position(glm::vec3(0.0,0.0,0.0));
+    info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
     info_string->set_scale(1.0f);
     info_string->set_text("0 fps");
     info_string->set_rendering_state( renderable::renderable_state::rendering_enabled );
@@ -224,7 +224,8 @@ opengl_ui::opengl_ui(int win_width,
     glm::mat4 def_ortho = glm::ortho(0.0,
                             (double)win_w,
                             0.0,
-                            (double)win_h);
+                            (double)win_h,
+                            0.0,100.0);
 
     renderer = std::make_shared< renderable::core_renderer> ( projection, def_ortho, camera );
 
@@ -277,21 +278,21 @@ void opengl_ui::setup_scene()
 
 
     game_terrain->load_terrain("../models/Grass/grass.obj",
-                               glm::vec3(1.0),
+                               glm::vec4(1.0),
                                1);
 
     game_terrain->load_terrain("../models/Grass/grass2.obj",
-                               glm::vec3(1.0),
+                               glm::vec4(1.0),
                                2);
 
     long mountain_id = game_terrain->load_terrain("../models/Mountain/mountain.obj",
-                               glm::vec3(1.0),
+                               glm::vec4(1.0),
                                3);
     game_terrain->load_highres_terrain("../models/Mountain/mountain_highres.obj",
                                mountain_id);
 
     long forest_id = game_terrain->load_terrain("../models/Forest/Forest.obj",
-                               glm::vec3(1.2),
+                               glm::vec4(1.2),
                                4);
 
     game_terrain->load_highres_terrain("../models/Forest/Forest_complex.obj",
@@ -343,12 +344,12 @@ void opengl_ui::setup_scene()
 
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
-                glm::vec3(0.9,0.8,0.7),
+                glm::vec4(0.9,0.8,0.7,1.0),
                 30);
 
     light_2 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(-10,100,-10),
-                glm::vec3(0.8,0.7,0.7),
+                glm::vec4(0.8,0.7,0.7,1.0),
                 12);
 
     renderer->lights()->add_light( light_1 );
@@ -525,7 +526,7 @@ int main()
 {
     opengl_play::opengl_ui entry(1920,1280);
     log_inst.set_thread_name("MAIN");
-    //log_inst.set_logging_level( logging::severity_type::debug2 );
+    log_inst.set_logging_level( logging::severity_type::debug2 );
 
     entry.prepare_for_main_loop();
     entry.enter_main_loop();

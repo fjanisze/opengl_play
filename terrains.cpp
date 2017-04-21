@@ -12,7 +12,7 @@ terrains::terrains(renderable::renderer_pointer rendr ) :
 }
 
 long terrains::load_terrain(const std::string &model_filename,
-                            const glm::vec3 &color,
+                            const glm::vec4 &color,
                             long terrain_id)
 {
     LOG3("Loading terrain model: ",
@@ -361,7 +361,7 @@ long terrains::generate_unique_id()
     return used_ids.insert( terrain_id ).second ? terrain_id : -1;
 }
 
-void terrain_lot::prepare_for_render()
+void terrain_lot::prepare_for_render( shaders::shader_ptr& shader )
 {
 }
 
@@ -372,7 +372,7 @@ void terrain_lot::render(shaders::shader_ptr &shader)
     }
 }
 
-void terrain_lot::clean_after_render()
+void terrain_lot::clean_after_render( shaders::shader_ptr &shader )
 {
 
 }

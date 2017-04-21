@@ -86,8 +86,9 @@ std::size_t Generic_light::fill_common_light_data()
     light_data[4] = color_info.first.r;
     light_data[5] = color_info.first.g;
     light_data[6] = color_info.first.b;
-    light_data[7] = color_info.second;
-    return 8; //Next valid index
+    light_data[7] = color_info.first.a;
+    light_data[8] = color_info.second;
+    return 9; //Next valid index
 }
 
 Generic_light::Generic_light()
@@ -97,7 +98,7 @@ Generic_light::Generic_light()
 }
 
 Generic_light::Generic_light(glm::vec3 position,
-                             glm::vec3 color,
+                             glm::vec4 color,
                              GLfloat strength) :
     light_color{ color },
     color_strength{ strength }
@@ -122,12 +123,12 @@ void Generic_light::set_strength(GLfloat strength)
     color_strength = strength;
 }
 
-std::pair<glm::vec3, GLfloat> Generic_light::get_light_color()
+std::pair<glm::vec4, GLfloat> Generic_light::get_light_color()
 {
     return std::make_pair(light_color,color_strength);
 }
 
-void Generic_light::set_light_color(const glm::vec3 &new_color)
+void Generic_light::set_light_color(const glm::vec4 &new_color)
 {
     light_color = new_color;
 }
@@ -139,7 +140,7 @@ std::size_t Generic_light::light_data_size()
      */
     return 1 + //type
             3 + //position
-            3 + //color
+            4 + //color
             1;  //strength
 }
 
@@ -165,7 +166,7 @@ const std::vector<GLfloat>& Generic_light::get_light_data()
 
 
 point_light::point_light(glm::vec3 position,
-                         glm::vec3 color,
+                         glm::vec4 color,
                          GLfloat strength) :
     Generic_light(position,color,strength)
 {
@@ -181,7 +182,7 @@ point_light::~point_light()
 /////////////////////////////////////
 
 directional_light::directional_light(glm::vec3 direction,
-                                     glm::vec3 color,
+                                     glm::vec4 color,
                                      GLfloat strength)
 {
     LOG3("Creating a new directional light!");
@@ -205,7 +206,7 @@ directional_light::directional_light(glm::vec3 direction,
  * the 'direction' choosen by the user.
  */
 spot_light::spot_light(glm::vec3 position,
-                       glm::vec3 color,
+                       glm::vec4 color,
                        GLfloat strength,
                        glm::vec3 direction,
                        GLfloat cut_off_angle,
@@ -249,11 +250,12 @@ const std::vector<GLfloat> &spot_light::get_light_data()
         light_data[ idx + 4 ] = color_info.first.r;
         light_data[ idx + 5 ] = color_info.first.g;
         light_data[ idx + 6 ] = color_info.first.b;
-        light_data[ idx + 7 ] = color_info.second;
-        light_data[ idx + 8 ] = light_direction.x;
-        light_data[ idx + 9 ] = light_direction.y;
-        light_data[ idx + 10 ] = light_direction.z;
-        idx += 11;
+        light_data[ idx + 7 ] = color_info.first.a;
+        light_data[ idx + 8 ] = color_info.second;
+        light_data[ idx + 9 ] = light_direction.x;
+        light_data[ idx + 10 ] = light_direction.y;
+        light_data[ idx + 11 ] = light_direction.z;
+        idx += 12;
     }
     light_data[ idx++ ] = cut_off;
     light_data[ idx ] = out_cutoff;
@@ -262,7 +264,7 @@ const std::vector<GLfloat> &spot_light::get_light_data()
 
 
 flash_light::flash_light(opengl_play::camera_ptr camera,
-                         glm::vec3 color,
+                         glm::vec4 color,
                          GLfloat strength,
                          GLfloat cut_off_angle,
                          GLfloat out_cutoff_angle) :

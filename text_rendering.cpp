@@ -63,18 +63,54 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
         FT_Set_Pixel_Sizes(font_face, 0, 48);
 
         //Make sure that the proper alignment is set
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+        GLenum error = glGetError();
+        if( GL_NO_ERROR != error ) {
+            WARN1("Running load_new_textureset while OpenGL error set to: ",
+                  error);
+        }
+        GLuint glyph_buffer[ 2048 ];
         // Load first 128 characters of ASCII set
         for (GLubyte current_char = 0; current_char < 128; current_char++)
         {
             // Load character glyph
             if (FT_Load_Char(font_face, current_char,
-                             FT_LOAD_RENDER))
+                              FT_LOAD_RENDER ))
             {
                 ERR("Failed to load the Glyph for the requested font!");
                 return {0,nullptr};
             }
+
+            /*
+             * FT_Load_Char generate only a buffer of bytes,
+             * one for each glyph with greyscale values, but for
+             * our texture we need a RGBA pixel format.
+             *
+             * For such reason I'm creating a new glyph_buffer
+             * of RGBA values that can be used to create the proper
+             * texture
+             */
+            int glyph_buffer_idx{ 0 };
+            for( int y{0} ; y < font_face->glyph->bitmap.rows ; ++y )
+            {
+                for( int x{0} ; x < font_face->glyph->bitmap.width ; ++x )
+                {
+                    int idx = x + y * font_face->glyph->bitmap.width;
+                    if( glyph_buffer_idx >= 2048 ) {
+                        throw std::runtime_error("Glyph buffer too small!");
+                    }
+                    auto data = font_face->glyph->bitmap.buffer[ idx ];
+                    glyph_buffer[ glyph_buffer_idx ] = (
+                                data << 24 |
+                                data << 16 |
+                                data << 8 |
+                                data
+                                );
+                    ++glyph_buffer_idx;
+                }
+            }
+
             // Generate texture
             GLuint texture;
             glGenTextures(1, &texture);
@@ -82,14 +118,20 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
             glTexImage2D(
                         GL_TEXTURE_2D,
                         0,
-                        GL_RED,
+                        GL_RGBA8,
                         font_face->glyph->bitmap.width,
                         font_face->glyph->bitmap.rows,
                         0,
-                        GL_RED,
-                        GL_UNSIGNED_BYTE,
-                        font_face->glyph->bitmap.buffer
+                        GL_RGBA,
+                        GL_UNSIGNED_INT_8_8_8_8, //RGBA, each component 8 bit size
+                        glyph_buffer
                         );
+
+            error = glGetError();
+            if(error != GL_NO_ERROR){
+                ERR("glTexImage2D ERROR code: ",
+                    error);
+            }
             // Set texture options
             glTexParameteri(GL_TEXTURE_2D,
                             GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -99,6 +141,10 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
                             GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D,
                             GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D,
+                            GL_TEXTURE_BASE_LEVEL, 0);
+            glTexParameteri(GL_TEXTURE_2D,
+                            GL_TEXTURE_MAX_LEVEL, 0);
             // Now store character for later use
             character_data character = {
                 texture,
@@ -115,12 +161,6 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
 
         glBindTexture(GL_TEXTURE_2D, 0);
         FT_Done_Face(font_face);
-
-        GLenum error = glGetError();
-        if(error != GL_NO_ERROR){
-            ERR("Error encountered in font_texture_loader::load_new_textureset: ",
-                error);
-        }
 
         new_font_id = next_id++;
         LOG1("Font ",font_name," loaded properly!");
@@ -183,6 +223,7 @@ void Renderable_text::init()
     font_texture = font_loader.get_texture(
                 font_loader.get_default_font_id()
                 );
+    light_calc_uniform = -1;
 }
 
 void Renderable_text::check_for_errors()
@@ -209,7 +250,7 @@ Renderable_text::Renderable_text()
 Renderable_text::Renderable_text(const std::string &text,
                                  const glm::vec3& position,
                                  GLfloat scale,
-                                 glm::vec3 color) :
+                                 glm::vec4 color) :
     text_position{ position },
     text_scale{ scale },
     text_string{ text }
@@ -248,17 +289,27 @@ void Renderable_text::set_scale(GLfloat scale)
     }
 }
 
-void Renderable_text::set_color(glm::vec3 color)
+void Renderable_text::set_color(glm::vec4 color)
 {
     LOG1("Setting text color to: ", color);
     default_color = color;
+}
+
+void Renderable_text::prepare_for_render( shaders::shader_ptr &shader )
+{
+    //Skip lighting calculation
+    if( light_calc_uniform < 0 ) {
+        light_calc_uniform = glGetUniformLocation( shader->get_program(),
+                          "skip_light_calculation");
+    }
+    glUniform1i( light_calc_uniform, 1 );
 }
 
 void Renderable_text::render( shaders::shader_ptr &shader )
 {
     glBindVertexArray(VAO);
 
-    glActiveTexture(GL_TEXTURE0); //+4?
+    glActiveTexture(GL_TEXTURE0);
 
     // Iterate through all characters
     std::string::const_iterator c;
@@ -303,5 +354,11 @@ void Renderable_text::render( shaders::shader_ptr &shader )
     glBindTexture(GL_TEXTURE_2D, 0);
 
 }
+
+void Renderable_text::clean_after_render( shaders::shader_ptr &shader )
+{
+    glUniform1i( light_calc_uniform, 0 );
+}
+
 
 }

@@ -98,14 +98,16 @@ public:
     Renderable_text(const std::string& text,
                     const glm::vec3 &position,
                     GLfloat scale,
-                    glm::vec3 color); //Use the default font
+                    glm::vec4 color); //Use the default font
     void set_window_size(int height,int width);
     void set_text(const std::string& text);
     void set_position(const glm::vec3 position);
     void set_scale(GLfloat scale);
-    void set_color(glm::vec3 color);
+    void set_color(glm::vec4 color);
 
+    void prepare_for_render( shaders::shader_ptr& shader ) override;
     void render( shaders::shader_ptr& shader ) override;
+    void clean_after_render( shaders::shader_ptr& shader ) override;
 private:
     GLuint VAO,VBO;
 
@@ -116,6 +118,7 @@ private:
     glm::vec3   text_position;
     GLfloat     text_scale;
     glm::mat4   text_projection;
+    GLint       light_calc_uniform;
     int window_height,
     window_width;
 

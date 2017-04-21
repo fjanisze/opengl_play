@@ -22,7 +22,7 @@ namespace terrains
  */
 struct lot_models
 {
-    glm::vec3 default_color;
+    glm::vec4 default_color;
     /*
      * If not provided, the high_res_model is the
      * same as the low res..
@@ -70,9 +70,9 @@ struct terrain_lot : public renderable::renderable_object
     /*
      * Rendering functions
      */
-    void prepare_for_render() override;
+    void prepare_for_render( shaders::shader_ptr& shader ) override;
     void render( shaders::shader_ptr& shader ) override;
-    void clean_after_render() override;
+    void clean_after_render( shaders::shader_ptr& shader ) override;
 };
 
 using lot_pointer = std::shared_ptr< terrain_lot >;
@@ -123,7 +123,7 @@ public:
      * own identificator. If not, a new unique one will be created
      */
     long load_terrain(const std::string& model_filename,
-                      const glm::vec3& color,
+                      const glm::vec4 &color,
                       long terrain_id = -1);
     /*
      * To load the highres model first the lowres need to be loaded,

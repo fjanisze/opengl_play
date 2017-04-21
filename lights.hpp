@@ -44,13 +44,13 @@ class Generic_light : public movable::movable_object
 public:
     Generic_light();
     Generic_light(glm::vec3 position,
-                  glm::vec3 color,
+                  glm::vec4 color,
                   GLfloat   strength);
     virtual type_of_light light_type() = 0;
     GLfloat get_strength();
     void    set_strength(GLfloat strength);
-    std::pair<glm::vec3,GLfloat> get_light_color();
-    void set_light_color( const glm::vec3& new_color );
+    std::pair<glm::vec4,GLfloat> get_light_color();
+    void set_light_color( const glm::vec4& new_color );
     /*
      * get_light_data return a vector with
      * all the information needed to manipulate/render
@@ -70,7 +70,7 @@ public:
     virtual std::size_t light_data_size();
     virtual ~Generic_light();
 protected:
-    glm::vec3 light_color;
+    glm::vec4 light_color;
     GLfloat   color_strength;
     std::vector<GLfloat> light_data;
     /*
@@ -90,7 +90,7 @@ class point_light : public Generic_light
 public:
     point_light() = default;
     point_light(glm::vec3 position,
-                glm::vec3 color,
+                glm::vec4 color,
                 GLfloat   strength);
     type_of_light light_type() {
         return type_of_light::Point_Light;
@@ -109,7 +109,7 @@ class directional_light : public Generic_light
 public:
     directional_light() = default;
     directional_light(glm::vec3 direction,
-                      glm::vec3 color,
+                      glm::vec4 color,
                       GLfloat   strength);
 
     type_of_light light_type(){
@@ -132,7 +132,7 @@ protected:
 public:
     spot_light() = default;
     spot_light(glm::vec3 position,
-               glm::vec3 color,
+               glm::vec4 color,
                GLfloat   strength,
                glm::vec3 direction,
                GLfloat cut_off_angle,
@@ -157,7 +157,7 @@ class flash_light : public spot_light
 public:
     flash_light() = default;
     flash_light(opengl_play::camera_ptr camera,
-                glm::vec3 color,
+                glm::vec4 color,
                 GLfloat   strength,
                 GLfloat cut_off_angle,
                 GLfloat out_cutoff_angle);

@@ -122,11 +122,11 @@ class my_model : public model_loader,
 {
 public:
     my_model(const std::string& model_path,
-             const glm::vec3& def_object_color,
+             const glm::vec4 &def_object_color,
              z_axis revert_z);
 
     static model_ptr create(const std::string& path,
-                            const glm::vec3& color = glm::vec3(0.0),
+                            const glm::vec4& color = glm::vec4(0.0,0.0,0.0,1.0),
                             z_axis revert_z = z_axis::normal) {
         return std::make_shared< my_model >( path , color, revert_z );
     }

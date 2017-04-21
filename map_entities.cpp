@@ -24,7 +24,7 @@ void map_entity::clean_after_render()
 map_entity_data::map_entity_data(model_id new_id,
                                  const std::string &name,
                                  models::model_loader_ptr model,
-                                 const glm::vec3& color,
+                                 const glm::vec4& color,
                                  const glm::vec2& origin) :
     pretty_name{ name },
     id{ new_id },
@@ -64,7 +64,7 @@ models::model_loader_ptr &map_entity_data::get_model()
     return model_ptr;
 }
 
-glm::vec3 &map_entity_data::get_color()
+glm::vec4 &map_entity_data::get_color()
 {
     return default_color;
 }
@@ -104,7 +104,7 @@ entities_collection::entities_collection(Framebuffers::framebuffers_ptr frameb,
 }
 
 model_id entities_collection::load_entity(const std::string &model_path,
-                                          const glm::vec3 &default_color,
+                                          const glm::vec4 &default_color,
                                           const std::string &pretty_name)
 {
     LOG3("Loading model: ", model_path,", name: ", pretty_name);

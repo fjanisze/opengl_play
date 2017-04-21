@@ -254,7 +254,7 @@ my_mesh::textures_ptr model_loader::process_texture(const aiMaterial *material,
 }
 
 my_model::my_model(const std::string &model_path,
-                   const glm::vec3 &def_object_color,
+                   const glm::vec4 &def_object_color,
                    z_axis revert_z) :
     model_loader( model_path, revert_z )
 {
