@@ -129,7 +129,7 @@ long core_renderer::render()
 
         glUniformMatrix4fv(model_loc, 1, GL_FALSE,
                            glm::value_ptr( cur->object->model_matrix ) );
-        if( view_method::camera_space_coord == cur->object->get_view_method() ) {
+		if( view_method::camera_space_coord == cur->object->get_view_method() ) {
             glUniformMatrix4fv(view_loc, 1,
                                GL_FALSE, glm::value_ptr(
                                    cur->object->model_matrix

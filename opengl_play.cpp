@@ -153,9 +153,9 @@ void opengl_ui::get_current_ctx_viewport()
 void opengl_ui::init_text()
 {
     info_string = std::make_shared<text_renderer::Renderable_text>();
-    info_string->set_position(glm::vec3(0.0,0.0,0.0));
+    info_string->set_position(glm::vec3(10.0,10.0,0.0));
     info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
-    info_string->set_scale(1.0f);
+    info_string->set_scale(0.6f);
     info_string->set_text("0 fps");
     info_string->set_rendering_state( renderable::renderable_state::rendering_enabled );
     info_string->set_view_method( renderable::view_method::camera_space_coord );

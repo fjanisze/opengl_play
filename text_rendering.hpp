@@ -20,33 +20,6 @@
 
 namespace text_renderer
 {
-
-const std::string simple_vertex_shader = {
-    "#version 330 core\n"
-    "layout (location = 0) in vec3 position;\n"
-    "layout (location = 1) in vec2 tex_coord;\n"
-    "out vec2 texture_coords;"
-    "uniform mat4 projection;\n"
-    "void main()\n"
-    "{\n"
-    "gl_Position = projection * vec4(position, 1.0);\n"
-    "texture_coords = tex_coord;\n"
-    "}\0"
-};
-
-const std::string simple_fragment_shader = {
-    "#version 330 core\n"
-    "in vec2 texture_coords;\n"
-    "out vec4 color;\n"
-    "uniform sampler2D text_rendr_texture;\n"
-    "uniform vec3 textColor;\n"
-    "void main()\n"
-    "{\n"
-    "vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text_rendr_texture, texture_coords).r);\n"
-    "color = vec4(textColor, 1.0) * sampled;\n"
-    "}\n\0"
-};
-
 // Holds all state information relevant to a character as loaded using FreeType
 struct character_data {
     GLuint TextureID;   // ID handle of the glyph texture
@@ -75,16 +48,20 @@ using font_type_id = int;
 
 class font_texture_loader
 {
-    FT_Library freetype_lib;
-    font_type_id next_id;
-    std::unordered_map<font_type_id,font_texture_ptr> fonts;
-    font_type_id default_font_id;
 public:
     font_texture_loader();
     ~font_texture_loader();
     std::pair<font_type_id,font_texture_ptr> load_new_textureset(const std::string& font_name);
     font_texture_ptr get_texture(font_type_id id);
     font_type_id get_default_font_id();
+private:
+    using glyph_buffer_ptr = std::unique_ptr<GLuint[]>;
+    glyph_buffer_ptr create_glyph_buffer( const FT_Face& font_face );
+    GLuint create_texture( glyph_buffer_ptr glyph_buffer, const FT_Face& font_face );
+    FT_Library freetype_lib;
+    font_type_id next_id;
+    std::unordered_map<font_type_id,font_texture_ptr> fonts;
+    font_type_id default_font_id;
 };
 
 class Renderable_text;

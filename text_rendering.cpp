@@ -70,7 +70,6 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
             WARN1("Running load_new_textureset while OpenGL error set to: ",
                   error);
         }
-        GLuint glyph_buffer[ 2048 ];
         // Load first 128 characters of ASCII set
         for (GLubyte current_char = 0; current_char < 128; current_char++)
         {
@@ -82,69 +81,11 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
                 return {0,nullptr};
             }
 
-            /*
-             * FT_Load_Char generate only a buffer of bytes,
-             * one for each glyph with greyscale values, but for
-             * our texture we need a RGBA pixel format.
-             *
-             * For such reason I'm creating a new glyph_buffer
-             * of RGBA values that can be used to create the proper
-             * texture
-             */
-            int glyph_buffer_idx{ 0 };
-            for( int y{0} ; y < font_face->glyph->bitmap.rows ; ++y )
-            {
-                for( int x{0} ; x < font_face->glyph->bitmap.width ; ++x )
-                {
-                    int idx = x + y * font_face->glyph->bitmap.width;
-                    if( glyph_buffer_idx >= 2048 ) {
-                        throw std::runtime_error("Glyph buffer too small!");
-                    }
-                    auto data = font_face->glyph->bitmap.buffer[ idx ];
-                    glyph_buffer[ glyph_buffer_idx ] = (
-                                data << 24 |
-                                data << 16 |
-                                data << 8 |
-                                data
-                                );
-                    ++glyph_buffer_idx;
-                }
-            }
-
+            // Generate the RGBA information
+            auto glyph_buffer = create_glyph_buffer( font_face );
             // Generate texture
-            GLuint texture;
-            glGenTextures(1, &texture);
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glTexImage2D(
-                        GL_TEXTURE_2D,
-                        0,
-                        GL_RGBA8,
-                        font_face->glyph->bitmap.width,
-                        font_face->glyph->bitmap.rows,
-                        0,
-                        GL_RGBA,
-                        GL_UNSIGNED_INT_8_8_8_8, //RGBA, each component 8 bit size
-                        glyph_buffer
-                        );
+            GLuint texture = create_texture( std::move( glyph_buffer ), font_face );
 
-            error = glGetError();
-            if(error != GL_NO_ERROR){
-                ERR("glTexImage2D ERROR code: ",
-                    error);
-            }
-            // Set texture options
-            glTexParameteri(GL_TEXTURE_2D,
-                            GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D,
-                            GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D,
-                            GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D,
-                            GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D,
-                            GL_TEXTURE_BASE_LEVEL, 0);
-            glTexParameteri(GL_TEXTURE_2D,
-                            GL_TEXTURE_MAX_LEVEL, 0);
             // Now store character for later use
             character_data character = {
                 texture,
@@ -171,6 +112,93 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
                 new_font};
 }
 
+/*
+ * Create a buffer of RGBA pixels on the base of the
+ * information in the FT_Face
+ */
+font_texture_loader::glyph_buffer_ptr
+font_texture_loader::create_glyph_buffer(
+        const FT_Face &font_face)
+{
+    LOG1("Create the RGBA glyph buffer.");
+    constexpr std::size_t buf_size{ 2048 };
+    auto glyph_buffer = std::make_unique<GLuint[]>( buf_size );
+    /*
+     * FT_Load_Char generate only a buffer of bytes,
+     * one for each glyph with greyscale values, but for
+     * our texture we need a RGBA pixel format.
+     *
+     * For such reason I'm creating a new glyph_buffer
+     * of RGBA values that can be used to create the proper
+     * texture
+     */
+    int glyph_buffer_idx{ 0 };
+    for( int y{0} ; y < font_face->glyph->bitmap.rows ; ++y )
+    {
+        for( int x{0} ; x < font_face->glyph->bitmap.width ; ++x )
+        {
+            int idx = x + y * font_face->glyph->bitmap.width;
+            if( glyph_buffer_idx >= buf_size ) {
+                ERR("Glyph buffer too small!");
+                throw std::runtime_error("Glyph buffer too small!");
+            }
+            auto data = font_face->glyph->bitmap.buffer[ idx ];
+            glyph_buffer[ glyph_buffer_idx ] = (
+                        data << 24 |
+                        data << 16 |
+                        data << 8 |
+                        data
+                        );
+            ++glyph_buffer_idx;
+        }
+    }
+    return glyph_buffer;
+}
+
+GLuint font_texture_loader::create_texture(
+        font_texture_loader::glyph_buffer_ptr glyph_buffer,
+        const FT_Face &font_face)
+{
+    LOG1("Creating the font texture.");
+    GLuint texture;
+
+    // Generate texture
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA8,
+                font_face->glyph->bitmap.width,
+                font_face->glyph->bitmap.rows,
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_INT_8_8_8_8, //RGBA, each component 8 bit size
+                glyph_buffer.get()
+                );
+
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR){
+        ERR("glTexImage2D ERROR code: ",
+            error);
+    }
+    // Set texture options
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MAX_LEVEL, 0);
+
+    LOG1("Texture ready, ID:",texture);
+    return texture;
+}
 
 /*
  * Return the pointe to the texture information for the given font,
@@ -313,8 +341,12 @@ void Renderable_text::render( shaders::shader_ptr &shader )
 
     // Iterate through all characters
     std::string::const_iterator c;
-    GLfloat x = 0.0f, //text_position.x,
-            y = 0.0f; //text_position.y;
+    GLfloat x{ 0.0f },
+            y{ 0.0f };
+    if( renderable::view_method::camera_space_coord ==  get_view_method() ) {
+        x = text_position.x;
+        y = text_position.y;
+    }
     for (c = text_string.begin(); c != text_string.end(); c++)
     {
         character_data ch = font_texture->charset[*c];
