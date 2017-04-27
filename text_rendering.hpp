@@ -68,7 +68,7 @@ class Renderable_text;
 
 using rendr_text = std::shared_ptr<Renderable_text>;
 
-class Renderable_text : public renderable::renderable_object
+class Renderable_text : public renderer::Renderable
 {
 public:
     Renderable_text();

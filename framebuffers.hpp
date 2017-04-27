@@ -2,17 +2,18 @@
 #define FRAMEBUFFERS_HPP
 #include <headers.hpp>
 #include <set>
+#include <types.hpp>
 
-namespace Framebuffers
+namespace buffers
 {
 /*
  * Internal rappresentation
  * of a framebuffer
  */
-struct buffer
+struct Buffer
 {
-    buffer() = default;
-    buffer( const GLuint fbo ) :
+    Buffer() = default;
+    Buffer( const GLuint fbo ) :
         FBO{ fbo } {}
 
     GLuint FBO{ GL_INVALID_INDEX };
@@ -23,7 +24,7 @@ struct buffer
         return FBO;
     }
 
-    bool operator < ( const buffer& other ) const {
+    bool operator < ( const Buffer& other ) const {
         return FBO < other.FBO;
     }
 };
@@ -32,29 +33,22 @@ struct buffer
  * Handle the creation and destruction
  * of framebuffers
  */
-class framebuffers;
-using framebuffers_ptr = std::shared_ptr< framebuffers >;
-class framebuffers
+class Framebuffers
 {
 public:
-    framebuffers( GLuint screen_width,
-                  GLuint screen_height );
+    using pointer = std::shared_ptr< Framebuffers >;
+    using buffer_id_t = GLuint;
+
+    Framebuffers( const types::win_size& window );
     GLuint create_buffer();
     GLenum bind( const GLuint fbo );
     void unbind();
-    ~framebuffers();
-
-    static framebuffers_ptr create( const GLuint screen_w,
-                                    const GLuint screen_h ) {
-        return std::make_shared< framebuffers >( screen_w, screen_h );
-    }
-
+    ~Framebuffers();
 private:
     GLuint create_renderbuffer();
     GLuint create_texture();
-    std::set<buffer> buffers;
-    GLuint width;
-    GLuint height;
+    std::set<Buffer> buffers;
+    types::win_size window_size;
 };
 
 }

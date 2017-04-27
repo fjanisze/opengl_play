@@ -161,7 +161,7 @@ using entity_collection_ptr = std::shared_ptr< entities_collection >;
 class entities_collection
 {
 public:
-    entities_collection( Framebuffers::framebuffers_ptr frameb,
+    entities_collection( buffers::Framebuffers::pointer frameb,
                          entity_matrix_func lot_pos_generator );
     /*
      * Load the provided obj file
@@ -182,14 +182,14 @@ public:
      */
     entity_id add_entity( model_id id, const glm::vec2& position );
 
-    static entity_collection_ptr create( Framebuffers::framebuffers_ptr frameb,
+    static entity_collection_ptr create( buffers::Framebuffers::pointer frameb,
                                          entity_matrix_func model_mtrc_gen ) {
         LOG3("Creating new entity_collection");
         return std::make_shared< entities_collection >( frameb,model_mtrc_gen );
     }
     ~entities_collection() {}
 private:
-    Framebuffers::framebuffers_ptr framebuffers;
+    buffers::Framebuffers::pointer framebuffers;
     GLuint entities_backbuffer;
     /*
      * Return the pixel at the position x,y

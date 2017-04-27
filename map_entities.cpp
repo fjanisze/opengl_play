@@ -86,7 +86,7 @@ long map_entity_data::get_position_idx(const glm::vec2 &pos) const
 }
 
 
-entities_collection::entities_collection(Framebuffers::framebuffers_ptr frameb,
+entities_collection::entities_collection(buffers::Framebuffers::pointer frameb,
                                          entity_matrix_func lot_pos_generator) :
     framebuffers{ frameb },
     get_entity_model_matrix{ lot_pos_generator },

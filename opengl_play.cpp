@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <factory.hpp>
 
 namespace opengl_play
 {
@@ -157,8 +158,8 @@ void opengl_ui::init_text()
     info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
     info_string->set_scale(0.6f);
     info_string->set_text("0 fps");
-    info_string->set_rendering_state( renderable::renderable_state::rendering_enabled );
-    info_string->set_view_method( renderable::view_method::camera_space_coord );
+    info_string->set_rendering_state( renderer::renderable_state::rendering_enabled );
+    info_string->set_view_method( renderer::view_method::camera_space_coord );
     renderer->add_renderable( info_string );
 }
 
@@ -216,7 +217,7 @@ opengl_ui::opengl_ui(int win_width,
     glfwSetCursor(window_ctx, cursor);
     glfwSetInputMode(window_ctx,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
 
-    frame_buffers = Framebuffers::framebuffers::create( win_w, win_h );
+   // frame_buffers = framebuffers::Framebuffers::create( win_w, win_h );
 
     projection = glm::perspective(glm::radians(45.0f),
                                   (GLfloat)win_w / (GLfloat)win_h,
@@ -227,7 +228,11 @@ opengl_ui::opengl_ui(int win_width,
                             (double)win_h,
                             0.0,100.0);
 
-    renderer = std::make_shared< renderable::core_renderer> ( projection, def_ortho, camera );
+    renderer = factory< renderer::Core_renderer >::create(
+                types::win_size( win_w, win_h ),
+                projection,
+                def_ortho,
+                camera );
 
     init_text();
 
@@ -352,8 +357,8 @@ void opengl_ui::setup_scene()
                 glm::vec4(0.8,0.7,0.7,1.0),
                 12);
 
-    renderer->lights()->add_light( light_1 );
-    renderer->lights()->add_light( light_2 );
+    renderer->scene_lights()->add_light( light_1 );
+    renderer->scene_lights()->add_light( light_2 );
 }
 
 void opengl_ui::verify_models_intersections( GLfloat x, GLfloat y )
@@ -381,11 +386,11 @@ void opengl_ui::enter_main_loop()
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
 
-    models_back_buffer = frame_buffers->create_buffer();
+    /*models_back_buffer = frame_buffers->create_buffer();
     if( models_back_buffer < 0 ) {
         ERR("Quitting!");
         return;
-    }
+    }*/
 
     glm::vec3 last_cam_pos;
     LOG2("Entering main loop!");
@@ -524,10 +529,10 @@ glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
 
 int main()
 {
-    opengl_play::opengl_ui entry(1920,1280);
     log_inst.set_thread_name("MAIN");
     log_inst.set_logging_level( logging::severity_type::debug2 );
 
+    opengl_play::opengl_ui entry(1920,1280);
     entry.prepare_for_main_loop();
     entry.enter_main_loop();
 }

@@ -20,7 +20,7 @@ struct single_line
 };
 
 class my_simple_lines :
-        public renderable::renderable_object
+        public renderer::Renderable
 {
 public:
     my_simple_lines();

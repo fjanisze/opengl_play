@@ -68,12 +68,12 @@ private:
     GLFWcursor*   cursor;
     int			  mouse_line_idx;
     text_renderer::rendr_text info_string;
-    renderable::renderer_pointer renderer;
+    renderer::core_renderer_ptr renderer;
 
     int win_h,
     win_w;
     camera_ptr		camera;
-    Framebuffers::framebuffers_ptr frame_buffers;
+    buffers::Framebuffers::pointer frame_buffers;
     GLfloat models_back_buffer;
     /*
      * Ray casting utility

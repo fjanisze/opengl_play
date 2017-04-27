@@ -301,7 +301,7 @@ void Renderable_text::set_text(const std::string &text)
 void Renderable_text::set_position(const glm::vec3 position)
 {
     text_position = position;
-    if( renderable::view_method::world_space_coord == get_view_method() ) {
+    if( renderer::view_method::world_space_coord == get_view_method() ) {
         model_matrix = glm::translate( model_matrix,
                                        position );
     }
@@ -343,7 +343,7 @@ void Renderable_text::render( shaders::shader_ptr &shader )
     std::string::const_iterator c;
     GLfloat x{ 0.0f },
             y{ 0.0f };
-    if( renderable::view_method::camera_space_coord ==  get_view_method() ) {
+    if( renderer::view_method::camera_space_coord ==  get_view_method() ) {
         x = text_position.x;
         y = text_position.y;
     }

@@ -4,7 +4,7 @@
 namespace terrains
 {
 
-terrains::terrains(renderable::renderer_pointer rendr ) :
+terrains::terrains(renderer::core_renderer_ptr rendr ) :
     renderer{ rendr }
 {
     LOG3("Creating terrains::terrains");
@@ -108,7 +108,7 @@ bool terrains::load_terrain_map(const terrain_map_t &map,
                     lot_idx, " number of loaded lots: ", terrain_map.size() );
             } else {
                 new_lot->rendr_id = renderer->add_renderable( new_lot );
-                new_lot->set_rendering_state( renderable::renderable_state::rendering_enabled );
+                new_lot->set_rendering_state( renderer::renderable_state::rendering_enabled );
                 terrain_map[ get_position_idx( new_lot->position ) ] = new_lot;
             }
         }
@@ -126,71 +126,6 @@ void terrains::mouse_hover(const types::ray_t &dir)
     glm::vec2 target = get_lot_position( dir );
     select_highlighted_lot( target );
 }
-/*
-void terrains::prepare_for_render()
-{
-    shader->use_shaders();
-    GLint view_loc = glGetUniformLocation(*shader,"view");
-    GLint projection_loc = glGetUniformLocation(*shader,"projection");
-
-    glUniformMatrix4fv(view_loc, 1,
-                       GL_FALSE, glm::value_ptr(view_matrix));
-    glUniformMatrix4fv(projection_loc, 1,
-                       GL_FALSE, glm::value_ptr(projection_matrix));
-
-    calculate_lighting();
-}
-
-void terrains::render()
-{
-  /*  GLint model_loc = glGetUniformLocation(*shader,"model");
-
-    glm::vec3 last_color;
-    long mesh_cnt{ 0 };
-    for( auto& entry : terrain_map ) {
-        terrain_lot& lot = entry.second;
-        if( false == lot.visible ) {
-            continue;
-        }
-        auto& model = terrain_container[ lot.terrain_id ];
-        auto color = terrain_container[ lot.terrain_id ].default_color;
-        if( is_highlighted( lot.position ) ) {
-            color = highlight_lot_color( color );
-        }
-        if( color != last_color ) {
-            //Do not update the color if not needed.
-            apply_object_color( color );
-            last_color = color;
-        }
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-                           glm::value_ptr( lot.model_matrix ));
-
-        if( rendering_data.current_rendr_quality == rendering_quality::highres )
-        {
-            //High res
-            for( auto&& mesh : model.high_res_model->get_mesh() ) {
-                mesh->render( shader );
-                ++mesh_cnt;
-            }
-        }
-        else
-        {
-            //Low res
-            for( auto&& mesh : model.low_res_model->get_mesh() ) {
-                mesh->render( shader );
-                ++mesh_cnt;
-            }
-        }
-    }
-    rendering_data.num_of_rendered_mesh = mesh_cnt;
-    update_rendr_quality( mesh_cnt );*/
-//}
-/*
-void terrains::clean_after_render()
-{
-
-}*/
-
 
 void terrains::set_view_center(const glm::vec2 &pos,
                                const GLfloat distance)

@@ -45,7 +45,7 @@ using terrain_map_t = vec_of_vecs< long >;
 /*
  * Internal reppresentation of a terrain lot
  */
-struct terrain_lot : public renderable::renderable_object
+struct terrain_lot : public renderer::Renderable
 {
     long terrain_id; //Must match one of the unique loaded terrains
     lot_models model;
@@ -54,7 +54,7 @@ struct terrain_lot : public renderable::renderable_object
     /*
      * The ID assigned by the core renderer
      */
-    renderable::renderable_id rendr_id;
+    renderer::renderable_id rendr_id;
     bool visible; //True when this lot should be rendered
 
     terrain_lot() = default;
@@ -117,7 +117,7 @@ struct rendr_eng_data
 class terrains
 {
 public:
-    terrains(renderable::renderer_pointer rendr );
+    terrains(renderer::core_renderer_ptr rendr );
     /*
      * Load a terrain model, the user might provide its
      * own identificator. If not, a new unique one will be created
@@ -142,7 +142,7 @@ public:
                           glm::vec2 central_lot); //Position of the lot at the center (0,0)
 
     //Factory
-    static terrains_ptr create( renderable::renderer_pointer rendr) {
+    static terrains_ptr create( renderer::core_renderer_ptr rendr) {
         return std::make_shared<terrains>( rendr);
     }
 
@@ -175,7 +175,7 @@ public:
     glm::vec2 get_coord_origin() const;
     void unselect_highlighted_lot();
 private:
-    renderable::renderer_pointer renderer;
+    renderer::core_renderer_ptr renderer;
 
     std::unordered_map<long,lot_models> terrain_container;
 

@@ -117,7 +117,7 @@ private:
  * rendering.
  */
 class my_model : public model_loader,
-        public renderable::renderable_object,
+        public renderer::Renderable,
         public movable::movable_object
 {
 public:
