@@ -24,7 +24,7 @@ void map_entity::clean_after_render()
 map_entity_data::map_entity_data(model_id new_id,
                                  const std::string &name,
                                  models::model_loader_ptr model,
-                                 const glm::vec4& color,
+                                 const types::color &color,
                                  const glm::vec2& origin) :
     pretty_name{ name },
     id{ new_id },
@@ -88,23 +88,16 @@ long map_entity_data::get_position_idx(const glm::vec2 &pos) const
 
 entities_collection::entities_collection(buffers::Framebuffers::pointer frameb,
                                          entity_matrix_func lot_pos_generator) :
-    framebuffers{ frameb },
     get_entity_model_matrix{ lot_pos_generator },
     coord_origin{ glm::vec2(0.0f) },
     static_coloring{ false },
     entity_under_focus{ invalid_id }
 {
     LOG3("Creating new entity collection");
-    entities_backbuffer = framebuffers->create_buffer();
-    if( entities_backbuffer > 0 ) {
-        LOG3("Enabling static coloring with back framebuffer with ID: ",
-             entities_backbuffer);
-        static_coloring = true;
-    }
 }
 
 model_id entities_collection::load_entity(const std::string &model_path,
-                                          const glm::vec4 &default_color,
+                                          const types::color &default_color,
                                           const std::string &pretty_name)
 {
     LOG3("Loading model: ", model_path,", name: ", pretty_name);
@@ -189,14 +182,14 @@ entity_id entities_collection::add_entity(model_id id,
 glm::vec3 entities_collection::read_static_color(const GLfloat x,
                                                 const GLfloat y)
 {
-    framebuffers->bind( entities_backbuffer );
+    //framebuffers->bind( entities_backbuffer );
     GLubyte pixels[3] = { 0,0,0 };
     glReadPixels( x, y,
                   1, 1,
                   GL_RGB,
                   GL_UNSIGNED_BYTE,
                   &pixels);
-    framebuffers->unbind();
+    //framebuffers->unbind();
     return glm::vec3( pixels[0], pixels[2], pixels[1] );
 }
 

@@ -21,7 +21,8 @@ void Renderable::set_rendering_state(const renderable_state new_state)
     state = new_state;
 }
 
-renderable_state Renderable::get_rendering_state()
+inline
+renderable_state Renderable::get_rendering_state() const
 {
     return state;
 }
@@ -67,15 +68,15 @@ Core_renderer::Core_renderer(const types::win_size &window,
 
     shader->use_shaders();
 
-    view_loc = load_location("view");
-    projection_loc = load_location("projection");
+    view_loc = shader->load_location("view");
+    projection_loc = shader->load_location("projection");
 
     cur_perspective = perspective_type::projection;
     glUniformMatrix4fv(projection_loc, 1,
                        GL_FALSE, glm::value_ptr(projection));
 
-    model_loc = load_location("model");
-    color_loc = load_location("object_color");
+    model_loc = shader->load_location("model");
+    color_loc = shader->load_location("object_color");
 
     framebuffers = factory< buffers::Framebuffers >::create(
                 window );
@@ -119,6 +120,7 @@ renderable_id Core_renderer::add_renderable( Renderable::pointer object )
 
 long Core_renderer::render()
 {
+    long num_of_render_op{ 0 };
     game_lights->calculate_lighting( shader );
     glm::mat4 view = camera->get_view();
 
@@ -126,41 +128,82 @@ long Core_renderer::render()
     glUniformMatrix4fv(view_loc, 1,
                        GL_FALSE, glm::value_ptr(view));
 
-    for( rendr_ptr cur = rendering_head ;
-         cur != nullptr ;
-         cur = cur->next )
+    /*
+     * The rendering loop is performed twice,
+     * once for the rendering to the default framebuffer
+     * the second time in order to update the mouse picking
+     * data
+     */
+    for( int rendr_loop{1} ; rendr_loop <= 2 ; ++rendr_loop )
     {
-        if( cur->object->get_rendering_state() == renderable_state::rendering_disabled ) {
-            continue;
+        for( rendr_ptr cur = rendering_head ;
+             cur != nullptr ;
+             cur = cur->next )
+        {
+            if( cur->object->get_rendering_state() == renderable_state::rendering_disabled ) {
+                continue;
+            }
+
+            switch_proper_perspective( cur->object );
+
+            glUniformMatrix4fv(model_loc, 1, GL_FALSE,
+                               glm::value_ptr( cur->object->model_matrix ) );
+            if( view_method::camera_space_coord == cur->object->get_view_method() ) {
+                glUniformMatrix4fv(view_loc, 1,
+                                   GL_FALSE, glm::value_ptr(
+                                       cur->object->model_matrix
+                                       ));
+                def_view_matrix_loaded = false;
+            } else if( false == def_view_matrix_loaded ){
+                glUniformMatrix4fv(view_loc, 1,
+                                   GL_FALSE, glm::value_ptr(view));
+                def_view_matrix_loaded = true;
+            }
+
+            glm::vec4 color = cur->object->default_color;
+            /*
+             * If this Renderable is currencly picked
+             * increase a little bit it's default color
+             * to increase it's visibility
+             */
+            if( model_picking->get_selected() ==
+                cur->object->id ) {
+                color *= 1.4f;
+                color.a = 1.0f;
+            }
+            glUniform4f(color_loc,
+                        color.r,
+                        color.g,
+                        color.b,
+                        color.a);
+
+            cur->object->prepare_for_render( shader );
+            /*
+             * First loop: Default framebuffer rendering,
+             * Second loop: Mouse picking
+             */
+            if( rendr_loop == 1 ) {
+                cur->object->render( shader );
+            } else {
+                model_picking->update( cur->object );
+            }
+            ++num_of_render_op;
+            cur->object->clean_after_render( shader );
         }
-
-        switch_proper_perspective( cur->object );
-
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-                           glm::value_ptr( cur->object->model_matrix ) );
-        if( view_method::camera_space_coord == cur->object->get_view_method() ) {
-            glUniformMatrix4fv(view_loc, 1,
-                               GL_FALSE, glm::value_ptr(
-                                   cur->object->model_matrix
-                                   ));
-            def_view_matrix_loaded = false;
-        } else if( false == def_view_matrix_loaded ){
-            glUniformMatrix4fv(view_loc, 1,
-                               GL_FALSE, glm::value_ptr(view));
-            def_view_matrix_loaded = true;
-        }
-
-        glm::vec4 color = cur->object->default_color;
-        glUniform4f(color_loc,
-                    color.r,
-                    color.g,
-                    color.b,
-                    color.a);
-
-        cur->object->prepare_for_render( shader );
-        cur->object->render( shader );
-        cur->object->clean_after_render( shader );
+        /*
+         * After the first loop we're going to
+         * repeat the process to update the mouse
+         * picking information
+         */
+        model_picking->prepare_to_update();
     }
+    /*
+     * Model_picking is the last rendering
+     * stuff, we nee to tell him to clean up
+     * after he's done.
+     */
+    model_picking->cleanup_after_update();
+    return num_of_render_op;
 }
 
 lighting::lighting_pointer Core_renderer::scene_lights()
@@ -168,16 +211,10 @@ lighting::lighting_pointer Core_renderer::scene_lights()
     return game_lights;
 }
 
-GLint Core_renderer::load_location(const std::string &loc_name)
+Renderable::pointer Core_renderer::model_selection(const GLuint x,
+                                                   const GLuint y)
 {
-    LOG2("Loading location: ", loc_name );
-    GLint loc = glGetUniformLocation( *shader,
-                               loc_name.c_str() );
-    if( loc < 0 ) {
-        throw std::runtime_error(
-                ("Unable to load the shader uniform: " + loc_name).c_str());
-    }
-    return loc;
+    return model_picking->pick( x, y );
 }
 
 void Core_renderer::switch_proper_perspective(
@@ -212,19 +249,22 @@ void Core_renderer::switch_proper_perspective(
 Model_picking::Model_picking(shaders::shader_ptr shader,
         buffers::Framebuffers::pointer framebuffers) :
     game_shader{ shader },
-    framebuffers{ framebuffers }
+    framebuffers{ framebuffers },
+    cur_selected_renderable{ 0 }
 {
     LOG3("Creating a new Model_picking object");
     picking_buffer_id = framebuffers->create_buffer();
+    shader_color_loc = game_shader->load_location("object_color");
 }
 
 types::color Model_picking::add_model(
         Renderable::pointer object )
 {
-    auto assigned_color = colors.get_color();
-    auto color_code = get_color_code( assigned_color );
-    LOG1("Adding new object with color code: ", color_code,
-         ", for the color: ", assigned_color );
+    types::color assigned_color = color_operations.get_color();
+    uint64_t color_code = color_operations.get_color_code(
+                color_operations.denormalize_color( assigned_color ) );
+    LOG3("Adding new object with color code: ", color_code,
+         ", for the color: ", color_operations.denormalize_color( assigned_color ) );
     rendrid_to_color[ object->id ] = color_code;
     color_to_rendr[ color_code ] = object;
     return assigned_color;
@@ -234,12 +274,41 @@ Renderable::pointer Model_picking::pick(
         const GLuint x,
         const GLuint y)
 {
-
+    /*
+     * Read the color from the model picking
+     * frame buffer
+     */
+    framebuffers->bind( picking_buffer_id );
+    GLubyte pixels[3] = { 0,0,0 };
+    glReadPixels( x, y,
+                  1, 1,
+                  GL_RGB,
+                  GL_UNSIGNED_BYTE,
+                  &pixels);
+    framebuffers->unbind();
+    /*
+     * Attempt to find the model corresponding
+     * to the color
+     */
+    types::color color( pixels[0], pixels[1], pixels[2], 1.0f );
+    uint64_t color_code = color_operations.get_color_code( color );
+    auto it = color_to_rendr.find( color_code );
+    if( color_to_rendr.end() != it ) {
+        cur_selected_renderable = it->second->id;
+        return it->second;
+    }
+    unpick();
+    return nullptr;
 }
 
 void Model_picking::unpick()
 {
+    cur_selected_renderable = 0;
+}
 
+uint64_t Model_picking::get_selected() const
+{
+    return cur_selected_renderable;
 }
 
 void Model_picking::update(
@@ -249,16 +318,40 @@ void Model_picking::update(
     auto it = rendrid_to_color.find( object->id );
     if( rendrid_to_color.end() != it ) {
         //The object exist in our 'database'
+        auto color = color_operations.get_color_rgba( it->second );
+        color = color_operations.normalize_color( color );
 
+        glUniform4f(shader_color_loc,
+                    color.r,
+                    color.g,
+                    color.b,
+                    color.a);
+
+        object->render( game_shader );
     }
 }
 
-uint64_t Model_picking::get_color_code(const types::color &color)
+void Model_picking::prepare_to_update()
 {
-    auto den_color = colors.denormalize_color( color );
-    return (uint64_t)den_color.r << 16 |
-           (uint64_t)den_color.g << 8 |
-           (uint64_t)den_color.b;
+    /*
+     * Render the model in our model picking
+     * framebuffer
+     */
+    framebuffers->bind( picking_buffer_id );
+
+    game_shader->disable_light_calculations();
+    game_shader->disable_texture_calculations();
+}
+
+void Model_picking::cleanup_after_update()
+{
+    game_shader->enable_texture_calculations();
+    game_shader->enable_light_calculations();
+
+    /*
+     * return to default framebuffer
+     */
+    framebuffers->unbind();
 }
 
 //////////////////////////////////////
@@ -307,12 +400,37 @@ types::color Color_creator::get_color()
     return color;
 }
 
-types::color Color_creator::denormalize_color( types::color color )
+types::color Color_creator::denormalize_color( types::color color ) const
 {
     for( int i {0}; i < 3; ++i ) {
         color[ i ] = std::floor( color[ i ] * 255.0f + 0.5f );
     }
     return color;
 }
+
+types::color Color_creator::normalize_color( types::color color ) const
+{
+    color /= 255.0f;
+    color.a = 1.0f;
+    return color;
+}
+
+uint64_t Color_creator::get_color_code(const types::color &color)
+{
+    return (uint64_t)color.r << 16 |
+           (uint64_t)color.g << 8 |
+           (uint64_t)color.b;
+}
+
+types::color Color_creator::get_color_rgba(const uint64_t color_code) const
+{
+    types::color color;
+    color.r = ( color_code >> 16 ) & 0xFF;
+    color.g = ( color_code >> 8 ) & 0xFF;
+    color.b = ( color_code ) & 0xFF;
+    color.a = 1.0f;
+    return color;
+}
+
 
 }

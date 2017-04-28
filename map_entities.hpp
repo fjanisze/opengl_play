@@ -73,13 +73,14 @@ public:
     map_entity_data(model_id new_id,
                      const std::string& name,
                      models::model_loader_ptr model ,
-                     const glm::vec4 &color,
+                     const types::color &color,
                      const glm::vec2& origin);
     /*
      * Add one more of those entities on the map,
      * it might be everything: unit, building..
      */
-    entity_id add_at_location(const glm::vec2& position , const glm::mat4 &model_matrix,
+    entity_id add_at_location(const glm::vec2& position ,
+                              const glm::mat4 &model_matrix,
                                const glm::vec3& static_color );
     entities_data_container& get_data();
     models::model_loader_ptr& get_model();
@@ -106,7 +107,7 @@ private:
     std::string pretty_name;
 
     glm::vec2   coord_origin;
-    glm::vec4   default_color;
+    types::color   default_color;
     models::model_loader_ptr model_ptr;
 
     /*
@@ -167,7 +168,7 @@ public:
      * Load the provided obj file
      */
     model_id load_entity(const std::string& model_path,
-                          const glm::vec4 &default_color,
+                          const types::color &default_color,
                           const std::string& pretty_name );
     void set_coord_origin( const glm::vec2& origin );
     /*
@@ -189,7 +190,6 @@ public:
     }
     ~entities_collection() {}
 private:
-    buffers::Framebuffers::pointer framebuffers;
     GLuint entities_backbuffer;
     /*
      * Return the pixel at the position x,y

@@ -105,6 +105,9 @@ bool my_small_shaders::create_shader_program()
         ERR("Detailed information: ",log_buffer);
         return false;
     }
+
+    light_calc_uniform = load_location("skip_light_calculations");
+    tex_calc_uniform = load_location("skip_texture_calculations");
     return true;
 }
 
@@ -118,16 +121,35 @@ GLuint my_small_shaders::get_program()
     return shader_program;
 }
 
-void my_small_shaders::force_single_color(const glm::vec3 &color )
+GLint my_small_shaders::load_location(const std::string &loc_name)
 {
-    GLint uniform = glGetUniformLocation(shader_program,
-                                    "forced_color");
-    if( uniform >= 0 ) {
-        glUniform3f(uniform,
-                    color.r,
-                    color.b,
-                    color.g);
+    LOG1("Loading location: ", loc_name );
+    GLint loc = glGetUniformLocation( shader_program,
+                               loc_name.c_str() );
+    if( loc < 0 ) {
+        PANIC("Unable to load the shader uniform: " + loc_name );
     }
+    return loc;
+}
+
+void my_small_shaders::enable_light_calculations()
+{
+    glUniform1i(light_calc_uniform, 0);
+}
+
+void my_small_shaders::disable_light_calculations()
+{
+    glUniform1i(light_calc_uniform, 1);
+}
+
+void my_small_shaders::enable_texture_calculations()
+{
+    glUniform1i(tex_calc_uniform, 0);
+}
+
+void my_small_shaders::disable_texture_calculations()
+{
+    glUniform1i(tex_calc_uniform, 1);
 }
 
 

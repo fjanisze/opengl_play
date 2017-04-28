@@ -325,12 +325,7 @@ void Renderable_text::set_color(glm::vec4 color)
 
 void Renderable_text::prepare_for_render( shaders::shader_ptr &shader )
 {
-    //Skip lighting calculation
-    if( light_calc_uniform < 0 ) {
-        light_calc_uniform = glGetUniformLocation( shader->get_program(),
-                          "skip_light_calculation");
-    }
-    glUniform1i( light_calc_uniform, 1 );
+    shader->disable_light_calculations();
 }
 
 void Renderable_text::render( shaders::shader_ptr &shader )
@@ -389,7 +384,7 @@ void Renderable_text::render( shaders::shader_ptr &shader )
 
 void Renderable_text::clean_after_render( shaders::shader_ptr &shader )
 {
-    glUniform1i( light_calc_uniform, 0 );
+    shader->enable_light_calculations();
 }
 
 

@@ -69,17 +69,8 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
 {
     mouse_x_pos = x;
     mouse_y_pos = y;
-    movement_processor.mouse_input(x, y);
-    /*
-     * If the mouse is over an entity then
-     * skip the terrain mouse processing.
-     */
-  /*  if( false == game_map_entities->mouse_hover( x, win_h - y ) )
-    {
-        game_terrain->mouse_hover( ray_cast( x, y ) );
-    } else {
-        game_terrain->unselect_highlighted_lot();
-    }*/
+    movement_processor.mouse_input(x, win_h - y);
+    auto it = renderer->model_selection( x, win_h - y );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -156,7 +147,7 @@ void opengl_ui::init_text()
     info_string = std::make_shared<text_renderer::Renderable_text>();
     info_string->set_position(glm::vec3(10.0,10.0,0.0));
     info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
-    info_string->set_scale(0.6f);
+    info_string->set_scale(0.7f);
     info_string->set_text("0 fps");
     info_string->set_rendering_state( renderer::renderable_state::rendering_enabled );
     info_string->set_view_method( renderer::view_method::camera_space_coord );
@@ -305,8 +296,8 @@ void opengl_ui::setup_scene()
 
 
     //Generate random terrain map
-    const int map_size_x{ 40 };
-    const int map_size_y{ 40 };
+    const int map_size_x{ 20 };
+    const int map_size_y{ 20 };
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );
@@ -335,7 +326,7 @@ void opengl_ui::setup_scene()
                                            std::placeholders::_1 ));
 
     my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
-                                   glm::vec3(1.0),
+                                   types::color(1.0),
                                    "Poldek");
 
     //Add the cars
@@ -343,9 +334,9 @@ void opengl_ui::setup_scene()
     game_map_entities->add_entity( my_car, glm::vec2(1.0,2.0) );
     game_map_entities->add_entity( my_car, glm::vec2(-2.0,1.0) );
     game_map_entities->add_entity( my_car, glm::vec2(-1.0,-1.0) );
-
-    game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
 */
+    game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
+
 
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
@@ -395,6 +386,7 @@ void opengl_ui::enter_main_loop()
     glm::vec3 last_cam_pos;
     LOG2("Entering main loop!");
     std::string current_fps_string = "0 fps";
+    long num_of_rendering_cycles{ 0 };
     while(!glfwWindowShouldClose(window_ctx))
     {
         ++current_fps;
@@ -413,7 +405,7 @@ void opengl_ui::enter_main_loop()
 
         glClearColor(0.0,0.0,0.0,1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        renderer->render();
+        num_of_rendering_cycles = renderer->render();
 
         auto yaw = camera->get_yaw(),
                 pitch = camera->get_pitch(),
@@ -422,7 +414,7 @@ void opengl_ui::enter_main_loop()
 
         std::stringstream ss;
         ss <<current_fps_string<<" - "<<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
-          <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z;
+          <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z<<", rendr cycles:"<<num_of_rendering_cycles;
 
         info_string->set_text(ss.str());
 

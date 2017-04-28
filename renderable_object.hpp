@@ -38,7 +38,7 @@ public:
 
     Renderable();
     void set_rendering_state( const renderable_state new_state );
-    renderable_state get_rendering_state();
+    renderable_state get_rendering_state() const;
 
     virtual void prepare_for_render( shaders::shader_ptr& shader ) {}
     virtual void render( shaders::shader_ptr& shader ) {}
@@ -117,7 +117,7 @@ enum class perspective_type
 class Color_creator
 {
 public:
-    Color_creator( const GLfloat step = 1.0f / 100.0f );
+    Color_creator( const GLfloat step = 1.0f / 50.0f );
     /*
      * Return a normalized RGBA color where:
      * 0.0 = 0.0 , 1.0 = 255
@@ -127,7 +127,18 @@ public:
      * Convert the RGB range from 0.0-1.0
      * to 0.0-255.0
      */
-    types::color denormalize_color(types::color color );
+    types::color denormalize_color( types::color color ) const;
+    /*
+     * Convert a denormalized color (0.0-255.0)
+     * to a normalized color
+     */
+    types::color normalize_color( types::color color ) const;
+    /*
+     * Conversion function from color RGBA to codes
+     * and vice-versa
+     */
+    uint64_t get_color_code( const types::color& color );
+    types::color get_color_rgba( const uint64_t color_code ) const;
 private:
     types::color next_color;
     GLfloat color_step;
@@ -163,24 +174,36 @@ public:
      */
     void unpick();
     /*
+     * Return the ID of the currently selected
+     * Renderable, if any
+     */
+    uint64_t get_selected() const;
+    /*
      * Update the picking information for the provided model
      */
     void update( const Renderable::pointer& object );
+    /*
+     * Two functions which ask Model_picking to be ready
+     * for rendering next, or to cleanup after the rendering
+     * is completed
+     */
+    void prepare_to_update();
+    void cleanup_after_update();
 private:
     shaders::shader_ptr game_shader;
     GLuint shader_color_loc;
     buffers::Framebuffers::pointer framebuffers;
     buffers::Framebuffers::buffer_id_t picking_buffer_id;
-    Color_creator colors;
+    uint64_t cur_selected_renderable;
+    Color_creator color_operations;
     /*
      * Map a renderable ID to a color code
      */
     std::unordered_map< uint64_t, uint64_t > rendrid_to_color;
     /*
-     * Map a color to a renderable
+     * Map a color code to a renderable
      */
     std::unordered_map< uint64_t, Renderable::pointer > color_to_rendr;
-    uint64_t get_color_code( const types::color& color );
 };
 
 /*
@@ -202,6 +225,12 @@ public:
     renderable_id add_renderable(Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
+    /*
+     * This is the wrapper for the mouse picking
+     * functionality
+     */
+    Renderable::pointer model_selection( const GLuint x,
+                                         const GLuint y );
 private:
     shaders::shader_ptr shader;
     opengl_play::camera_ptr camera;
@@ -224,7 +253,6 @@ private:
      * by their ID
      */
     std::unordered_map< renderable_id, rendr_ptr > renderables;
-    GLint load_location( const std::string& loc_name );
     /*
      * Load the proper perspective matrix
      * to the shader

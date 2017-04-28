@@ -32,20 +32,26 @@ public:
     static shader_ptr create() {
         return std::make_shared< my_small_shaders >();
     }
-
-    /*
-     * Configure the fragment shader to skip
-     * all the calculations and to render
-     * everything in one color
-     */
-    void force_single_color(const glm::vec3& color = glm::vec3(0.0));
     operator GLuint(){
         return shader_program;
     }
+
+    /*
+     * Load from the shader an uniform
+     * or raise an error
+     */
+    GLint load_location( const std::string& loc_name );
+
+    void enable_light_calculations();
+    void disable_light_calculations();
+    void enable_texture_calculations();
+    void disable_texture_calculations();
 private:
     GLuint vertex_shader,
             fragment_shader,
             shader_program;
+    GLuint light_calc_uniform;
+    GLuint tex_calc_uniform;
     GLchar log_buffer[512];
     void load_shader_generic(GLuint& shader_target,
                              const std::string& body,

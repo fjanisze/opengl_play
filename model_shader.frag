@@ -18,9 +18,10 @@ uniform sampler2D loaded_texture_specular_map3;
 uniform vec4      object_color;
 uniform int       number_of_lights;
 uniform float     light_data[ 800 ];
-uniform bool      skip_light_calculation;
+uniform bool      skip_light_calculations;
+uniform bool      skip_texture_calculations;
 
-vec4 calculate_lighting()
+vec4 calculate_lighting( vec4 tex )
 {
     vec4 diffuse_res = vec4(0.0);
     vec4 spec_res = vec4(0.0);
@@ -106,7 +107,10 @@ vec4 calculate_lighting()
 	//Common diffuse light calculations
 	float diff = max( dot( norm, light_dir ), 0.4);
 	vec4 diffuse = diff * light_color;
-	diffuse *= texture(loaded_texture1,texture_coords);
+	if( false == skip_texture_calculations )
+	{
+	    diffuse *= tex;
+	}
 	diffuse *= attenuation;
 	diffuse_res += diffuse;
 	//The specular calculations are the same for both the lights
@@ -114,7 +118,10 @@ vec4 calculate_lighting()
 	vec3 reflect_dir = reflect(-light_dir, norm);
 	float spec = pow( max( dot(view_dir,reflect_dir), 0.0), 32);
 	vec4 specular = spec * light_color;
-	specular *= (texture(loaded_texture_specular_map1,texture_coords) * .2 * attenuation);
+	if( false == skip_texture_calculations )
+	{
+	    specular *= (texture(loaded_texture_specular_map1,texture_coords) * .2 * attenuation);
+	}
 	spec_res += specular;
     }
     //Final color
@@ -123,10 +130,14 @@ vec4 calculate_lighting()
 
 void main()
 {
-    vec4 light_res = texture(loaded_texture1,texture_coords);
-    if( false == skip_light_calculation ) {
-	light_res = calculate_lighting();
+    vec4 tex_result = vec4(1.0f);
+    if( false == skip_texture_calculations )
+    {
+	tex_result = texture(loaded_texture1,texture_coords);
+    }
+    if( false == skip_light_calculations ) {
+	tex_result = calculate_lighting( tex_result );
     }
     //Final color
-    color = light_res * object_color;
+    color = tex_result * object_color;
 }
