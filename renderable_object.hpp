@@ -61,7 +61,7 @@ public:
     glm::mat4 projection_matrix;
     glm::mat4 view_matrix;
     glm::mat4 model_matrix;
-    glm::vec4 default_color;
+    types::color default_color;
 
     /*
      * Each Renderable shall have its
@@ -222,14 +222,14 @@ public:
             const glm::mat4& proj,
             const glm::mat4 &def_ortho,
             const opengl_play::camera_ptr cam );
-    renderable_id add_renderable(Renderable::pointer object );
+    renderable_id add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
     /*
      * This is the wrapper for the mouse picking
      * functionality
      */
-    Renderable::pointer model_selection( const GLuint x,
+    Renderable::pointer select_model( const GLuint x,
                                          const GLuint y );
     /*
      * Clean the rendering buffers
@@ -271,7 +271,24 @@ private:
     Model_picking::pointer model_picking;
 };
 
-using core_renderer_ptr = std::shared_ptr< Core_renderer >;
+/*
+ * Proxy interface for the Core_rendered,
+ * should be provided to whoever needs
+ * to perform some ALLOWED operations on the renderer,
+ * like adding or removing renderable objects
+ */
+class Core_renderer_proxy
+{
+public:
+    Core_renderer_proxy( Core_renderer::pointer renderer ) :
+        core_renderer{ renderer }
+    {}
+    auto add_renderable( Renderable::pointer&& object ) {
+        return core_renderer->add_renderable( std::forward< Renderable::pointer >( object ) );
+    }
+private:
+    Core_renderer::pointer core_renderer;
+};
 
 }
 

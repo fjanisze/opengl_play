@@ -70,7 +70,7 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
     mouse_x_pos = x;
     mouse_y_pos = y;
     movement_processor.mouse_input(x, win_h - y);
-    auto it = renderer->model_selection( x, win_h - y );
+    auto it = renderer->select_model( x, win_h - y );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -208,8 +208,6 @@ opengl_ui::opengl_ui(int win_width,
     glfwSetCursor(window_ctx, cursor);
     glfwSetInputMode(window_ctx,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
 
-   // frame_buffers = framebuffers::Framebuffers::create( win_w, win_h );
-
     projection = glm::perspective(glm::radians(45.0f),
                                   (GLfloat)win_w / (GLfloat)win_h,
                                   1.0f, 100.0f);
@@ -270,7 +268,8 @@ void opengl_ui::setup_scene()
     movement_processor.register_movable_object(camera,camera_keys);
     movement_processor.register_movable_object(camera,camera_mouse);
 
-    game_terrain = terrains::terrains::create(renderer);
+    game_terrain = factory< terrains::Terrains >::create(
+                renderer::Core_renderer_proxy( renderer ) );
 
 
     game_terrain->load_terrain("../models/Grass/grass.obj",

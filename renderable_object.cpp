@@ -211,7 +211,7 @@ lighting::lighting_pointer Core_renderer::scene_lights()
     return game_lights;
 }
 
-Renderable::pointer Core_renderer::model_selection(const GLuint x,
+Renderable::pointer Core_renderer::select_model(const GLuint x,
                                                    const GLuint y)
 {
     return model_picking->pick( x, y );

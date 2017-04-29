@@ -68,7 +68,7 @@ private:
     GLFWcursor*   cursor;
     int			  mouse_line_idx;
     text_renderer::rendr_text info_string;
-    renderer::core_renderer_ptr renderer;
+    renderer::Core_renderer::pointer renderer;
 
     int win_h,
     win_w;
@@ -83,7 +83,7 @@ private:
                                   const GLfloat z_value );
 
     my_lines_ptr position_lines;
-    terrains::terrains_ptr game_terrain;
+    terrains::Terrains::pointer game_terrain;
     map_entities::entity_collection_ptr game_map_entities;
     lighting::light_ptr light_1,
                         light_2;
