@@ -231,6 +231,10 @@ public:
      */
     Renderable::pointer model_selection( const GLuint x,
                                          const GLuint y );
+    /*
+     * Clean the rendering buffers
+     */
+    void clear();
 private:
     shaders::shader_ptr shader;
     opengl_play::camera_ptr camera;

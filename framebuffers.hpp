@@ -44,6 +44,11 @@ public:
     GLenum bind( const GLuint fbo );
     void unbind();
     ~Framebuffers();
+    /*
+     * Clear all the buffers or just the
+     * selected one.
+     */
+    long clear( GLuint buffer_id = 0 );
 private:
     GLuint create_renderbuffer();
     GLuint create_texture();

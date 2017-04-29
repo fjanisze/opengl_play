@@ -79,6 +79,31 @@ Framebuffers::~Framebuffers()
     }
 }
 
+long Framebuffers::clear(GLuint buffer_id)
+{
+    auto clear_op = []( ) {
+        glClearColor(0.0,0.0,0.0,1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    };
+
+    if( 0 != buffer_id ) {
+        bind( buffer_id );
+        clear_op();
+    } else {
+        /*
+         * First clear the default buffer,
+         * then all the framebuffers.
+         */
+        unbind(); //Make sure the def buffer is binded
+        clear_op();
+        for( const auto& id : buffers ) {
+            bind( id );
+            clear_op();
+        }
+    }
+    unbind();
+}
+
 GLuint Framebuffers::create_renderbuffer()
 {
     LOG3("Creating new renderbuffer");

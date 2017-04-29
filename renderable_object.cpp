@@ -160,29 +160,29 @@ long Core_renderer::render()
                 def_view_matrix_loaded = true;
             }
 
-            glm::vec4 color = cur->object->default_color;
-            /*
-             * If this Renderable is currencly picked
-             * increase a little bit it's default color
-             * to increase it's visibility
-             */
-            if( model_picking->get_selected() ==
-                cur->object->id ) {
-                color *= 1.4f;
-                color.a = 1.0f;
-            }
-            glUniform4f(color_loc,
-                        color.r,
-                        color.g,
-                        color.b,
-                        color.a);
-
             cur->object->prepare_for_render( shader );
             /*
              * First loop: Default framebuffer rendering,
              * Second loop: Mouse picking
              */
             if( rendr_loop == 1 ) {
+                glm::vec4 color = cur->object->default_color;
+                /*
+                 * If this Renderable is currencly picked
+                 * increase a little bit it's default color
+                 * to increase it's visibility
+                 */
+                if( model_picking->get_selected() ==
+                    cur->object->id ) {
+                    color *= 1.4f;
+                    color.a = 1.0f;
+                }
+                glUniform4f(color_loc,
+                            color.r,
+                            color.g,
+                            color.b,
+                            color.a);
+
                 cur->object->render( shader );
             } else {
                 model_picking->update( cur->object );
@@ -216,6 +216,12 @@ Renderable::pointer Core_renderer::model_selection(const GLuint x,
 {
     return model_picking->pick( x, y );
 }
+
+void Core_renderer::clear()
+{
+    framebuffers->clear();
+}
+
 
 void Core_renderer::switch_proper_perspective(
         const Renderable::pointer &obj
@@ -262,7 +268,12 @@ types::color Model_picking::add_model(
 {
     types::color assigned_color = color_operations.get_color();
     uint64_t color_code = color_operations.get_color_code(
-                color_operations.denormalize_color( assigned_color ) );
+                color_operations.denormalize_color( assigned_color )
+                );
+    auto it = color_to_rendr.find( color_code );
+    if( it != color_to_rendr.end() ) {
+        PANIC("Not able to generate unique color codes.");
+    }
     LOG3("Adding new object with color code: ", color_code,
          ", for the color: ", color_operations.denormalize_color( assigned_color ) );
     rendrid_to_color[ object->id ] = color_code;
@@ -293,6 +304,7 @@ Renderable::pointer Model_picking::pick(
     types::color color( pixels[0], pixels[1], pixels[2], 1.0f );
     uint64_t color_code = color_operations.get_color_code( color );
     auto it = color_to_rendr.find( color_code );
+    //LOG3("Color: ", color, ". code: ", color_code, ". Found: ", ( it != color_to_rendr.end()) );
     if( color_to_rendr.end() != it ) {
         cur_selected_renderable = it->second->id;
         return it->second;

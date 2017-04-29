@@ -334,9 +334,9 @@ void opengl_ui::setup_scene()
     game_map_entities->add_entity( my_car, glm::vec2(1.0,2.0) );
     game_map_entities->add_entity( my_car, glm::vec2(-2.0,1.0) );
     game_map_entities->add_entity( my_car, glm::vec2(-1.0,-1.0) );
-*/
-    game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
 
+    game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
+*/
 
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
@@ -403,8 +403,7 @@ void opengl_ui::enter_main_loop()
             current_fps = 0;
         }
 
-        glClearColor(0.0,0.0,0.0,1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderer->clear();
         num_of_rendering_cycles = renderer->render();
 
         auto yaw = camera->get_yaw(),
