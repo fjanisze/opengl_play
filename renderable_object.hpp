@@ -232,6 +232,10 @@ public:
     Renderable::pointer select_model( const GLuint x,
                                          const GLuint y );
     /*
+     * Return the currently selected model
+     */
+    uint64_t get_selected_model() const;
+    /*
      * Clean the rendering buffers
      */
     void clear();
@@ -286,6 +290,10 @@ public:
     auto add_renderable( Renderable::pointer&& object ) {
         return core_renderer->add_renderable( std::forward< Renderable::pointer >( object ) );
     }
+    uint64_t get_selected_renderable() const {
+        return core_renderer->get_selected_model();
+    }
+
 private:
     Core_renderer::pointer core_renderer;
 };

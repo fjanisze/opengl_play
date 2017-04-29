@@ -107,7 +107,7 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
                         );
 
             new_lot->model_matrix = get_lot_model_matrix( new_lot->position );
-            new_lot->default_color = terrain_container[ new_lot->id ].default_color;
+            new_lot->default_color = terrain_container[ new_lot->terrain_model_id ].default_color;
             new_lot->textures = it->second;
 
             long lot_idx = get_position_idx( new_lot->position );
@@ -152,7 +152,7 @@ GLfloat Terrains::get_position_idx(const glm::vec2 &pos) const
 
 Terrain_lot::Terrain_lot(const long unique_id,
                          const glm::vec2 unique_position) :
-    id{ unique_id },
+    terrain_model_id{ unique_id },
     position{ unique_position }
 {
 

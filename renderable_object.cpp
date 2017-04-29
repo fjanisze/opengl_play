@@ -217,6 +217,11 @@ Renderable::pointer Core_renderer::select_model(const GLuint x,
     return model_picking->pick( x, y );
 }
 
+uint64_t Core_renderer::get_selected_model() const
+{
+    return model_picking->get_selected();
+}
+
 void Core_renderer::clear()
 {
     framebuffers->clear();

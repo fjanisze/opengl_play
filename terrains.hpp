@@ -50,7 +50,18 @@ public:
     Terrain_lot( const long unique_id,
                  const glm::vec2 unique_position );
 
-    const long id;
+    /*
+     * This is the ID corresponding to one
+     * of the loaded terrain models.
+     *
+     * Changing this ID will cause the lot
+     * to be rendered with a different model,
+     * in the future this might be used to implement
+     * terraforming: A terrain change it appearance due
+     * to some gameplay, changing this ID will change
+     * the look of the terrain on the map.
+     */
+    const long terrain_model_id;
     const glm::vec2 position;
     Lot_model_textures textures;
 
