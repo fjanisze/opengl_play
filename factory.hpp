@@ -16,6 +16,13 @@ struct factory
     }
 };
 
+namespace constants
+{
+
+constexpr uint64_t INVALID_ID{ 0 };
+
+}
+
 template< typename T >
 struct ids
 {
@@ -28,4 +35,21 @@ private:
 };
 
 template< typename T >
-uint64_t ids< T >::next_id{ 1 };
+uint64_t ids< T >::next_id{ constants::INVALID_ID + 1 };
+
+/*
+ * A class that generate unique IDs'
+ * for the type T
+ */
+template< typename T >
+class id_factory
+{
+public:
+    id_factory() :
+        id{ ids< T >::create() }
+    { }
+    operator uint64_t() const {
+        return id;
+    }
+    const uint64_t id;
+};

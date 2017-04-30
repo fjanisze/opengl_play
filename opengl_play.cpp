@@ -2,7 +2,6 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
-#include <factory.hpp>
 
 namespace opengl_play
 {
@@ -317,6 +316,8 @@ void opengl_ui::setup_scene()
                                     glm::vec2(map_size_x / 2,
                                               map_size_y / 2) );
 
+    units = factory< game_units::Units >::create();
+
 /*
     game_map_entities = map_entities::entities_collection::create(
                                 frame_buffers,
@@ -351,23 +352,6 @@ void opengl_ui::setup_scene()
     renderer->scene_lights()->add_light( light_2 );
 }
 
-void opengl_ui::verify_models_intersections( GLfloat x, GLfloat y )
-{
-    /*
-     * Extract the Z buffer, is not 1 then
-     * we're moving over a model
-     */
-    GLfloat z_value;
-    frame_buffers->bind( models_back_buffer );
-    glReadPixels(x, win_h - y,
-                 1, 1,
-                 GL_DEPTH_COMPONENT,
-                 GL_FLOAT, &z_value);
-    if( z_value != 1 ) {
-      //  std::cout<<"YOURE OVER A MODEL!"<<std::endl;
-    }
-    frame_buffers->unbind();
-}
 
 void opengl_ui::enter_main_loop()
 {

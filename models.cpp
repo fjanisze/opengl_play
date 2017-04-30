@@ -134,7 +134,7 @@ bool model_loader::load_model()
     return true;
 }
 
-std::vector<mesh_ptr> &model_loader::get_mesh()
+my_mesh::meshes &model_loader::get_mesh()
 {
     return meshes;
 }

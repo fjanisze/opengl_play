@@ -12,6 +12,7 @@
 #include <types.hpp>
 #include <map_entities.hpp>
 #include <framebuffers.hpp>
+#include <units.hpp>
 
 namespace opengl_play
 {
@@ -73,8 +74,6 @@ private:
     int win_h,
     win_w;
     camera_ptr		camera;
-    buffers::Framebuffers::pointer frame_buffers;
-    GLfloat models_back_buffer;
     /*
      * Ray casting utility
      */
@@ -84,6 +83,8 @@ private:
 
     my_lines_ptr position_lines;
     terrains::Terrains::pointer game_terrain;
+    game_units::Units::pointer units;
+
     map_entities::entity_collection_ptr game_map_entities;
     lighting::light_ptr light_1,
                         light_2;

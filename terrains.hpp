@@ -27,8 +27,8 @@ struct Lot_model_textures
      * If not provided, the high_res_model is the
      * same as the low res..
      */
-    models::model_loader_ptr low_res_model;
-    models::model_loader_ptr high_res_model;
+    models::model_loader::pointer low_res_model;
+    models::model_loader::pointer high_res_model;
 };
 
 template<typename T>

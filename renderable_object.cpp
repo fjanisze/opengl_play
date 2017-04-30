@@ -279,7 +279,7 @@ types::color Model_picking::add_model(
     if( it != color_to_rendr.end() ) {
         PANIC("Not able to generate unique color codes.");
     }
-    LOG3("Adding new object with color code: ", color_code,
+    LOG1("Adding new object with color code: ", color_code,
          ", for the color: ", color_operations.denormalize_color( assigned_color ) );
     rendrid_to_color[ object->id ] = color_code;
     color_to_rendr[ color_code ] = object;

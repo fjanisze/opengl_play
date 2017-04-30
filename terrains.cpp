@@ -19,8 +19,11 @@ long Terrains::load_terrain(const std::string &model_filename,
          model_filename,
          ". Provided ID: ",
          terrain_id);
-    models::model_loader_ptr new_model = models::model_loader::load(
-                model_filename);
+    auto new_model = factory< models::model_loader >::create(
+                model_filename );
+    if( false == new_model->load_model() ) {
+        PANIC("Not able to load the selected terrain!");
+    }
     if( terrain_id < 0 ) {
         terrain_id = ids< Terrain_lot >::create();
     }
@@ -56,8 +59,11 @@ long Terrains::load_highres_terrain(const std::string &model_filename,
             ". Not possible to load the highres model..");
         return -1;
     }
-    models::model_loader_ptr new_model = models::model_loader::load(
+    auto new_model = factory< models::model_loader >::create(
                 model_filename);
+    if( false == new_model->load_model() ) {
+        PANIC("Not able to load the highres terrain!");
+    }
     it->second.high_res_model = new_model;
     return terrain_id;
 }

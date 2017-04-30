@@ -30,6 +30,8 @@ using namespace textures;
 class my_mesh
 {
 public:
+    using pointer = std::unique_ptr< my_mesh >;
+    using meshes = std::vector< pointer >;
     using vertices_ptr = std::unique_ptr<std::vector<vertex_t>>;
     using indices_ptr  = std::unique_ptr<std::vector<GLuint>>;
     using textures_ptr = std::unique_ptr<std::vector<texture_t>>;
@@ -91,22 +93,15 @@ class model_loader
     my_mesh::textures_ptr process_texture(const aiMaterial *material,
                                           aiTextureType type);
 public:
-    model_loader(const std::string& path, z_axis revert_z);
+    using pointer = std::shared_ptr< model_loader >;
+    model_loader(const std::string& path, z_axis revert_z = models::z_axis::normal);
     bool load_model();
-    std::vector<mesh_ptr>& get_mesh();
+    my_mesh::meshes& get_mesh();
     GLfloat get_model_height();
-    static model_loader_ptr load(const std::string& path,
-                                 z_axis revert_z = z_axis::normal) {
-        auto model = std::make_shared<model_loader>( path, revert_z );
-        if( false == model->load_model() ) {
-            return nullptr;
-        }
-        return model;
-    }
 private:
     std::string model_path;
     std::string model_directory;
-    std::vector<mesh_ptr> meshes;
+    my_mesh::meshes meshes;
     GLfloat model_height;
     //For models which are 'reverted'
     bool revert_z_axis;

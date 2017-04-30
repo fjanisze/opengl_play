@@ -102,8 +102,8 @@ model_id entities_collection::load_entity(const std::string &model_path,
 {
     LOG3("Loading model: ", model_path,", name: ", pretty_name);
 
-    models::model_loader_ptr new_model = models::model_loader::load(
-                model_path );
+    models::model_loader_ptr new_model;/* = models::model_loader::load(
+                model_path );*/
 
     if( nullptr == new_model ) {
         ERR("Model loading failed!");
