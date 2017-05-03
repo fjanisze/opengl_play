@@ -64,7 +64,7 @@ void my_mesh::setup_mesh()
     glBindVertexArray(0);
 }
 
-void my_mesh::render(shaders::my_small_shaders* shader)
+void my_mesh::render(shaders::my_small_shaders* shader) const
 {
     glBindVertexArray(VAO);
     GLuint current_unit = 0;
@@ -261,7 +261,7 @@ my_model::my_model(const std::string &model_path,
     LOG3("Creating a new my_model. Model path: ",
          model_path.c_str());
 
-    default_color = def_object_color;
+    rendering_data.default_color = def_object_color;
     load_model();
 }
 

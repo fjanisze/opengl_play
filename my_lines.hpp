@@ -31,7 +31,7 @@ public:
     void prepare_for_render();
     void render();
     void clean_after_render();
-    std::string renderable_nice_name();
+    std::string nice_name();
     const single_line*const get_line_info( int id ) const;
     /*
      * Allows to modify the line 'from' and

@@ -1,41 +1,60 @@
+#ifndef UNITS_HPP
+#define UNITS_HPP
+
 #include <headers.hpp>
 #include <types.hpp>
 #include <factory.hpp>
 #include <models.hpp>
-
-#ifndef UNITS_HPP
-#define UNITS_HPP
+#include <renderable_object.hpp>
 
 namespace game_units
 {
-
-/*
- * Reponsible for loading and manipulating
- * a unit model
- */
-class Unit_models
-{
-public:
-    using pointer = std::shared_ptr< Unit_models >;
-    explicit Unit_models( const std::string& model_path,
-                 const types::color& default_color );
-    types::color get_color();
-    models::my_mesh::meshes& get_meshes();
-private:
-    models::model_loader::pointer model;
-    types::color color;
-};
 
 /*
  * Information about a unit
  * data file: Blender obj file, default
  * color and a pretty name (human readable)
  */
-struct Unit_data
+struct Unit_model_data
 {
-    const std::string model_path;
+    using container = std::vector< Unit_model_data >;
+    /*
+     * ID given by the configuration, shall uniquely
+     * identify a Model_unit_data
+     */
+    const uint64_t     id;
+    /*
+     * Path for the obj blender file
+     */
+    const std::string  model_path;
+    /*
+     * Color applicable to this unit
+     */
     const types::color default_color;
-    const std::string pretty_name;
+    /*
+     * Human readable name
+     */
+    const std::string  pretty_name;
+};
+
+/*
+ * Reponsible for loading and manipulating
+ * a unit model
+ */
+class Unit_model
+{
+public:
+    using pointer = std::shared_ptr< Unit_model >;
+    using container = std::vector< pointer >;
+    explicit Unit_model( const Unit_model_data& data );
+    models::my_mesh::meshes& get_meshes();
+    operator uint64_t() const {
+        return model_data.id;
+    }
+public:
+    Unit_model_data model_data;
+private:
+    models::model_loader::pointer model;
 };
 
 namespace internal
@@ -44,9 +63,11 @@ namespace internal
  * TODO: Replace this static list
  * with some config file
  */
-extern std::vector<Unit_data> units;
+extern std::vector<Unit_model_data> units;
 
 }
+
+class Units_container;
 
 /*
  * Object which model a unit, this actually
@@ -57,28 +78,30 @@ class Unit
 {
 public:
     using pointer = std::shared_ptr< Unit >;
-    using container = std::vector< pointer >;
-    Unit( const Unit_data unit_data,
-          Unit_models::pointer unit_model );
+    using container = std::shared_ptr< Units_container >;
+    Unit( Unit_model::pointer unit_model );
 public:
     const id_factory< Unit > id;
-    const Unit_data data;
 private:
-    Unit_models::pointer model;
+    Unit_model::pointer model;
 };
 
 /*
- * Object which handle the creation, destruction
- * of units. Units placement, movement etc..
+ * Wrapper for a real
+ * container of units
  */
-class Units
+class Units_container
 {
 public:
-    using pointer = std::shared_ptr< Units >;
-    Units();
-    uint64_t get_unit_id( const std::string& name );
+    using pointer = std::shared_ptr< Units_container >;
+    using container = std::vector< Unit::pointer >;
+    bool place_unit( Unit::pointer unit );
+    void remove_unit( Unit::pointer unit );
+    std::size_t size() const;
+    Unit::pointer find_unit( uint64_t id );
+    container get();
 private:
-    Unit::container available_units;
+    container units;
 };
 
 }

@@ -10,8 +10,9 @@
 #include <lights.hpp>
 #include <types.hpp>
 #include <renderable_object.hpp>
+#include <units.hpp>
 
-namespace terrains
+namespace game_terrains
 {
 
 /*
@@ -64,13 +65,12 @@ public:
     const long terrain_model_id;
     const glm::vec2 position;
     Lot_model_textures textures;
+    game_units::Unit::container units;
 
     /*
-     * Rendering functions
+     * Rendering function
      */
-    void prepare_for_render( shaders::shader_ptr& shader ) override;
     void render( shaders::shader_ptr& shader ) override;
-    void clean_after_render( shaders::shader_ptr& shader ) override;
 };
 
 /*
@@ -104,7 +104,6 @@ public:
     bool load_terrain_map(const terrain_map_t& map,
                           GLfloat lot_size, //Each lot is a square: lot_size X lot_size
                           glm::vec2 central_lot); //Position of the lot at the center (0,0)
-    glm::vec2 get_coord_origin() const;
 private:
     renderer::Core_renderer_proxy renderer;
 

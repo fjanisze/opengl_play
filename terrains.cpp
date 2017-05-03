@@ -2,7 +2,7 @@
 #include <logger/logger.hpp>
 #include <factory.hpp>
 
-namespace terrains
+namespace game_terrains
 {
 
 Terrains::Terrains(renderer::Core_renderer_proxy renderer ) :
@@ -112,8 +112,8 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
                         glm::vec2(x - central_lot.x, y - central_lot.y )
                         );
 
-            new_lot->model_matrix = get_lot_model_matrix( new_lot->position );
-            new_lot->default_color = terrain_container[ new_lot->terrain_model_id ].default_color;
+            new_lot->rendering_data.model_matrix = get_lot_model_matrix( new_lot->position );
+            new_lot->rendering_data.default_color = terrain_container[ new_lot->terrain_model_id ].default_color;
             new_lot->textures = it->second;
 
             long lot_idx = get_position_idx( new_lot->position );
@@ -122,7 +122,7 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
                     lot_idx, " number of loaded lots: ", terrain_map.size() );
             } else {
                 renderer.add_renderable( new_lot );
-                new_lot->set_rendering_state( renderer::renderable_state::rendering_enabled );
+                new_lot->rendering_state.enable();
                 terrain_map[ get_position_idx( new_lot->position ) ] = new_lot;
             }
         }
@@ -137,11 +137,6 @@ glm::mat4 Terrains::get_lot_model_matrix(const glm::vec2 &pos) const
                            glm::vec3( pos.x * lot_size,
                                       pos.y * lot_size,
                                       0.0) );
-}
-
-glm::vec2 Terrains::get_coord_origin() const
-{
-    return origins_lot;
 }
 
 GLfloat Terrains::get_position_idx(const glm::vec2 &pos) const
@@ -161,11 +156,7 @@ Terrain_lot::Terrain_lot(const long unique_id,
     terrain_model_id{ unique_id },
     position{ unique_position }
 {
-
-}
-
-void Terrain_lot::prepare_for_render( shaders::shader_ptr& shader )
-{
+    units = factory< game_units::Units_container >::create();
 }
 
 void Terrain_lot::render(shaders::shader_ptr &shader)
@@ -174,11 +165,5 @@ void Terrain_lot::render(shaders::shader_ptr &shader)
         mesh->render( &*shader );
     }
 }
-
-void Terrain_lot::clean_after_render( shaders::shader_ptr &shader )
-{
-
-}
-
 
 }

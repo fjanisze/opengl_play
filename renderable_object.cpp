@@ -7,35 +7,13 @@
 namespace renderer
 {
 
-Renderable::Renderable() :
-    state{ renderable_state::rendering_disabled },
-    id{ ids< Renderable >::create() }
+Renderable::Renderable()
 {
-    model_matrix = glm::mat4();
-    set_view_method( view_method::world_space_coord );
-    LOG1("New renderable, ID: ", id);
+    view_configuration.configure( View_config::supported_configs::world_space_coord );
+    LOG1("New renderable, ID: ", rendering_data.id);
 }
 
-void Renderable::set_rendering_state(const renderable_state new_state)
-{
-    state = new_state;
-}
-
-inline
-renderable_state Renderable::get_rendering_state() const
-{
-    return state;
-}
-
-void Renderable::set_view_method(const view_method new_method)
-{
-    type_of_view = new_method;
-    if( view_method::camera_space_coord == new_method ) {
-        model_matrix = glm::mat4();
-    }
-}
-
-std::string Renderable::renderable_nice_name()
+std::string Renderable::nice_name()
 {
     return "(nice name not provided)";
 }
@@ -91,7 +69,7 @@ renderable_id Core_renderer::add_renderable( Renderable::pointer object )
         return -1;
     }
     LOG1("Adding new renderable: ",
-         object->renderable_nice_name());
+         object->nice_name());
     rendr_ptr new_rendr = std::make_shared<Rendr>();
     new_rendr->id = next_rendr_id;
     new_rendr->object = object;
@@ -104,7 +82,7 @@ renderable_id Core_renderer::add_renderable( Renderable::pointer object )
         rendering_head = new_rendr;
         rendering_tail = new_rendr;
     } else {
-        if( renderer::view_method::camera_space_coord == object->get_view_method() ) {
+        if( object->view_configuration.is_camera_space() ) {
             rendering_tail->next = new_rendr;
             rendering_tail = new_rendr;
         } else {
@@ -140,18 +118,19 @@ long Core_renderer::render()
              cur != nullptr ;
              cur = cur->next )
         {
-            if( cur->object->get_rendering_state() == renderable_state::rendering_disabled ) {
+            if( Rendering_state::states::rendering_disabled ==
+                cur->object->rendering_state.current() ) {
                 continue;
             }
 
             switch_proper_perspective( cur->object );
 
             glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-                               glm::value_ptr( cur->object->model_matrix ) );
-            if( view_method::camera_space_coord == cur->object->get_view_method() ) {
+                               glm::value_ptr( cur->object->rendering_data.model_matrix ) );
+            if( cur->object->view_configuration.is_camera_space() ) {
                 glUniformMatrix4fv(view_loc, 1,
                                    GL_FALSE, glm::value_ptr(
-                                       cur->object->model_matrix
+                                       cur->object->rendering_data.model_matrix
                                        ));
                 def_view_matrix_loaded = false;
             } else if( false == def_view_matrix_loaded ){
@@ -166,14 +145,14 @@ long Core_renderer::render()
              * Second loop: Mouse picking
              */
             if( rendr_loop == 1 ) {
-                glm::vec4 color = cur->object->default_color;
+                glm::vec4 color = cur->object->rendering_data.default_color;
                 /*
                  * If this Renderable is currencly picked
                  * increase a little bit it's default color
                  * to increase it's visibility
                  */
                 if( model_picking->get_selected() ==
-                    cur->object->id ) {
+                    cur->object->rendering_data.id ) {
                     color *= 1.4f;
                     color.a = 1.0f;
                 }
@@ -232,8 +211,7 @@ void Core_renderer::switch_proper_perspective(
         const Renderable::pointer &obj
         )
 {
-    if( renderer::view_method::camera_space_coord ==
-        obj->get_view_method() &&
+    if( obj->view_configuration.is_camera_space() &&
         perspective_type::projection == cur_perspective ) {
         /*
          * Need to switch from projection to ortho
@@ -241,8 +219,7 @@ void Core_renderer::switch_proper_perspective(
         glUniformMatrix4fv(projection_loc, 1,
                            GL_FALSE, glm::value_ptr(ortho));
         cur_perspective = perspective_type::ortho;
-    } else if (renderer::view_method::world_space_coord ==
-               obj->get_view_method() &&
+    } else if ( obj->view_configuration.is_world_space() &&
                perspective_type::ortho == cur_perspective) {
         /*
          * Need to switch from ortho to projection
@@ -281,7 +258,7 @@ types::color Model_picking::add_model(
     }
     LOG1("Adding new object with color code: ", color_code,
          ", for the color: ", color_operations.denormalize_color( assigned_color ) );
-    rendrid_to_color[ object->id ] = color_code;
+    rendrid_to_color[ object->rendering_data.id ] = color_code;
     color_to_rendr[ color_code ] = object;
     return assigned_color;
 }
@@ -311,7 +288,7 @@ Renderable::pointer Model_picking::pick(
     auto it = color_to_rendr.find( color_code );
     //LOG3("Color: ", color, ". code: ", color_code, ". Found: ", ( it != color_to_rendr.end()) );
     if( color_to_rendr.end() != it ) {
-        cur_selected_renderable = it->second->id;
+        cur_selected_renderable = it->second->rendering_data.id;
         return it->second;
     }
     unpick();
@@ -332,7 +309,7 @@ void Model_picking::update(
         const Renderable::pointer &object
         )
 {
-    auto it = rendrid_to_color.find( object->id );
+    auto it = rendrid_to_color.find( object->rendering_data.id );
     if( rendrid_to_color.end() != it ) {
         //The object exist in our 'database'
         auto color = color_operations.get_color_rgba( it->second );

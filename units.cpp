@@ -6,72 +6,79 @@ namespace game_units
 namespace internal
 {
 
-std::vector<Unit_data> units= {
-    { "../models/SimpleCar/SimpleCar.obj", types::color(1.0f), "Poldek" }
+Unit_model_data::container units= {
+    { 1, "../models/SimpleCar/SimpleCar.obj", types::color(1.0f), "Poldek" }
 };
 
 }
 
-Unit_models::Unit_models(const std::string &model_path,
-                         const types::color &default_color) :
-    color{ default_color }
+Unit_model::Unit_model(const Unit_model_data& data ) :
+    model_data{ data }
 {
-    LOG3("Loading model, path: ", model_path,
-         ", default color: ", default_color );
+    LOG3("Loading model, path: ", data.model_path,
+         ", default color: ", data.default_color );
     model = factory< models::model_loader >::create(
-                model_path
+                data.model_path
                 );
     if( false == model->load_model() ) {
         PANIC("Not able to load the requested model!");
     }
 }
 
-types::color Unit_models::get_color()
-{
-    return color;
-}
-
-models::my_mesh::meshes &Unit_models::get_meshes()
+models::my_mesh::meshes &Unit_model::get_meshes()
 {
     return model->get_mesh();
 }
 
-
-Unit::Unit( const Unit_data unit_data,
-           Unit_models::pointer unit_model) :
-    data{ unit_data },
+Unit::Unit( Unit_model::pointer unit_model ) :
     model{ unit_model }
 {
     LOG3("New unit with ID: ",id,", created! Pretty name: ",
-         data.pretty_name );
+         unit_model->model_data.pretty_name );
 }
 
-Units::Units()
-{
 
-    LOG3("Loading ", internal::units.size()," units!");
-    for( auto&& unit : internal::units )
-    {
-        Unit_models::pointer model = factory< Unit_models >::create(
-                    unit.model_path,
-                    unit.default_color );
-        Unit::pointer new_unit = factory< Unit >::create(
-                    unit,
-                    model );
-        available_units.push_back( new_unit );
+bool Units_container::place_unit( Unit::pointer unit )
+{
+    LOG3( "Placing a new unit, ID:",unit->id );
+    if( nullptr != find_unit( unit->id ) ) {
+        WARN2("A unit of the same ID is already here!");
+        return false;
     }
-    LOG3("Completed! Amount of available units: ",
-         available_units.size() );
+    units.push_back( unit );
+    return true;
 }
 
-uint64_t Units::get_unit_id(const std::string &name)
+void Units_container::remove_unit( Unit::pointer unit )
 {
-    for( auto&& unit : available_units ) {
-        if( unit->data.pretty_name == name ) {
-            return unit->id;
+    LOG3("Removing unit with ID:", unit->id);
+    units.erase( std::remove_if(
+                     units.begin(),
+                     units.end(),
+                     [ &unit ]( const Unit::pointer& ptr ) {
+                         return ptr->id == unit->id;
+                     }),
+                 units.end());
+}
+
+std::size_t Units_container::size() const
+{
+    return units.size();
+}
+
+Unit::pointer Units_container::find_unit(uint64_t id)
+{
+    for( auto&& unit : units ) {
+        if( unit->id == id ) {
+            return unit;
         }
     }
-    return constants::INVALID_ID;
 }
+
+Units_container::container Units_container::get()
+{
+    return units;
+}
+
 
 }

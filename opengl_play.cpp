@@ -148,8 +148,8 @@ void opengl_ui::init_text()
     info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
     info_string->set_scale(0.7f);
     info_string->set_text("0 fps");
-    info_string->set_rendering_state( renderer::renderable_state::rendering_enabled );
-    info_string->set_view_method( renderer::view_method::camera_space_coord );
+    info_string->rendering_state.enable();
+    info_string->view_configuration.camera_space();
     renderer->add_renderable( info_string );
 }
 
@@ -267,7 +267,7 @@ void opengl_ui::setup_scene()
     movement_processor.register_movable_object(camera,camera_keys);
     movement_processor.register_movable_object(camera,camera_mouse);
 
-    game_terrain = factory< terrains::Terrains >::create(
+    game_terrain = factory< game_terrains::Terrains >::create(
                 renderer::Core_renderer_proxy( renderer ) );
 
 
@@ -301,7 +301,7 @@ void opengl_ui::setup_scene()
     std::mt19937_64 eng( rd() );
     std::uniform_int_distribution<long> dist(1,4);
 
-    terrains::terrain_map_t terrain_map;
+    game_terrains::terrain_map_t terrain_map;
     terrain_map.resize( map_size_y );
     for( int y{ 0 } ; y < map_size_y ; ++y ) {
         terrain_map[ y ].resize( map_size_x );

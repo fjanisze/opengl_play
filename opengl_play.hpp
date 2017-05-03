@@ -12,7 +12,7 @@
 #include <types.hpp>
 #include <map_entities.hpp>
 #include <framebuffers.hpp>
-#include <units.hpp>
+#include <units_manager.hpp>
 
 namespace opengl_play
 {
@@ -82,7 +82,7 @@ private:
                                   const GLfloat z_value );
 
     my_lines_ptr position_lines;
-    terrains::Terrains::pointer game_terrain;
+    game_terrains::Terrains::pointer game_terrain;
     game_units::Units::pointer units;
 
     map_entities::entity_collection_ptr game_map_entities;

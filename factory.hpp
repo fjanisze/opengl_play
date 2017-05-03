@@ -2,6 +2,9 @@
 #include <cstdint>
 #include <logger/logger.hpp>
 
+#ifndef FACTORY_HPP
+#define FACTORY_HPP
+
 template< typename T >
 struct factory
 {
@@ -53,3 +56,5 @@ public:
     }
     const uint64_t id;
 };
+
+#endif

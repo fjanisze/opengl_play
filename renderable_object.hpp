@@ -10,15 +10,12 @@
 #include <lights.hpp>
 #include <framebuffers.hpp>
 #include <types.hpp>
+#include <factory.hpp>
 
 namespace renderer
 {
 
-enum class renderable_state
-{
-    rendering_enabled,
-    rendering_disabled
-};
+
 
 /*
  * Specify how to calculate the position
@@ -31,46 +28,123 @@ enum class view_method
     camera_space_coord //Only X,Y are relevant. Draw in front of the camera
 };
 
+/*
+ * Small utility object used
+ * to track the Rendering status
+ * of the renderable objects.
+ *
+ * If the Rendering_state is set to
+ * enable then the Renderable will
+ * be processed by the Core_renderer
+ */
+class Rendering_state
+{
+public:
+    enum class states
+    {
+        rendering_enabled,
+        rendering_disabled
+    };
+public:
+    Rendering_state() :
+        current_state{ states::rendering_disabled }
+    {}
+    Rendering_state( const states cur_state ) :
+        current_state{ cur_state }
+    {}
+    void enable() {
+        current_state = states::rendering_enabled;
+    }
+    void disable() {
+        current_state = states::rendering_disabled;
+    }
+    states current() const {
+        return current_state;
+    }
+private:
+    states current_state;
+};
+
+/*
+ * Small utility object which
+ * handle the supported view methods
+ */
+class View_config
+{
+public:
+    /*
+     * Specify how to calculate the position
+     * of the object, if it should be in world position
+     * or always in front of the camera
+     */
+    enum class supported_configs
+    {
+        world_space_coord,
+        camera_space_coord //Only X,Y are relevant. Draw in front of the camera
+    };
+    void configure( supported_configs new_config ) {
+        current_setting = new_config;
+    }
+    supported_configs current() {
+        return current_setting;
+    }
+    bool is_world_space() {
+        return current_setting == supported_configs::world_space_coord;
+    }
+    bool is_camera_space() {
+        return current_setting == supported_configs::camera_space_coord;
+    }
+    void world_space() {
+        current_setting = supported_configs::world_space_coord;
+    }
+    void camera_space() {
+        current_setting = supported_configs::camera_space_coord;
+    }
+private:
+    supported_configs current_setting;
+};
+
+/*
+ * In one place all the rendering data
+ */
+struct Renderable_data
+{
+    /*
+     * Transformation matrices used
+     * for rendering purpose
+     */
+    glm::mat4 model_matrix;
+    /*
+     * Default color applicable to the model
+     */
+    types::color default_color;
+    /*
+     * Unique ID
+     */
+    const id_factory< Renderable_data > id;
+
+    Renderable_data() :
+        model_matrix{ glm::mat4() }
+    {}
+};
+
 class Renderable
 {
 public:
     using pointer = std::shared_ptr< Renderable >;
+    Renderable_data rendering_data;
+    Rendering_state rendering_state;
+    View_config     view_configuration;
 
     Renderable();
-    void set_rendering_state( const renderable_state new_state );
-    renderable_state get_rendering_state() const;
 
     virtual void prepare_for_render( shaders::shader_ptr& shader ) {}
     virtual void render( shaders::shader_ptr& shader ) {}
     virtual void clean_after_render( shaders::shader_ptr& shader ) {}
 
-    /*
-     * Handy function which permit to force the
-     * renderer to not apply the view transformation
-     * matrix during rendering.
-     */
-    void set_view_method( const view_method new_method );
-    view_method get_view_method() const {
-        return type_of_view;
-    }
-
-    virtual std::string renderable_nice_name();
+    virtual std::string nice_name();
 
     virtual ~Renderable() {}
-
-    glm::mat4 projection_matrix;
-    glm::mat4 view_matrix;
-    glm::mat4 model_matrix;
-    types::color default_color;
-
-    /*
-     * Each Renderable shall have its
-     * own unique identifiactor
-     */
-    const uint64_t id;
-private:
-    renderable_state state;
-    view_method type_of_view;
 };
 
 /*

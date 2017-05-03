@@ -106,7 +106,7 @@ void my_simple_lines::clean_after_render()
 
 }
 
-std::string my_simple_lines::renderable_nice_name()
+std::string my_simple_lines::nice_name()
 {
     return "static_line";
 }
