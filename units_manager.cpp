@@ -16,6 +16,8 @@ Units::Units()
     }
     LOG3("Completed! Amount of available units: ",
          available_models.size() );
+
+    units = factory< Units_container >::create();
 }
 
 Unit_model_data::container Units::buildable_units()
@@ -34,7 +36,7 @@ Unit::pointer Units::create_unit( uint64_t id )
     Unit::pointer new_unit = factory< Unit >::create(
                 model
                 );
-    units->place_unit( new_unit );
+    units->add_unit( new_unit );
     LOG3("New unit created, unit ID:", new_unit->id,
          ", total amount of units: ", units->size());
     return new_unit;

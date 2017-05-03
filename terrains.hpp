@@ -48,7 +48,7 @@ class Terrain_lot : public renderer::Renderable
 public:
     using pointer = std::shared_ptr< Terrain_lot >;
 
-    Terrain_lot( const long unique_id,
+    Terrain_lot( const long model_id,
                  const glm::vec2 unique_position );
 
     /*
@@ -63,6 +63,11 @@ public:
      * the look of the terrain on the map.
      */
     const long terrain_model_id;
+    /*
+     * This is the unique lot ID for this
+     * lot of terrain
+     */
+    const id_factory< Terrain_lot > id;
     const glm::vec2 position;
     Lot_model_textures textures;
     game_units::Unit::container units;
@@ -104,13 +109,17 @@ public:
     bool load_terrain_map(const terrain_map_t& map,
                           GLfloat lot_size, //Each lot is a square: lot_size X lot_size
                           glm::vec2 central_lot); //Position of the lot at the center (0,0)
+    /*
+     * Return the lot at the give coordinates
+     */
+    Terrain_lot::pointer find_lot( const glm::vec2 coord );
 private:
     renderer::Core_renderer_proxy renderer;
 
     std::unordered_map< long, Lot_model_textures > terrain_container;
 
     GLfloat lot_size;
-    GLfloat get_position_idx( const glm::vec2& pos ) const;
+    long get_position_idx( const glm::vec2& pos ) const;
     std::unordered_map< long, Terrain_lot::pointer > terrain_map;
     glm::vec2 view_center;
     /*

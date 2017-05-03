@@ -38,9 +38,15 @@ Unit::Unit( Unit_model::pointer unit_model ) :
 }
 
 
-bool Units_container::place_unit( Unit::pointer unit )
+Units_container::Units_container()
 {
-    LOG3( "Placing a new unit, ID:",unit->id );
+    LOG1("New container with ID:",id," Created!");
+}
+
+bool Units_container::add_unit( Unit::pointer unit )
+{
+    LOG3( "Placing a new unit, ID:",unit->id,
+          ", container ID:",id);
     if( nullptr != find_unit( unit->id ) ) {
         WARN2("A unit of the same ID is already here!");
         return false;
@@ -73,6 +79,7 @@ Unit::pointer Units_container::find_unit(uint64_t id)
             return unit;
         }
     }
+    return nullptr;
 }
 
 Units_container::container Units_container::get()

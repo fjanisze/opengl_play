@@ -95,12 +95,14 @@ class Units_container
 public:
     using pointer = std::shared_ptr< Units_container >;
     using container = std::vector< Unit::pointer >;
-    bool place_unit( Unit::pointer unit );
+    Units_container();
+    bool add_unit( Unit::pointer unit );
     void remove_unit( Unit::pointer unit );
     std::size_t size() const;
     Unit::pointer find_unit( uint64_t id );
     container get();
 private:
+    id_factory< Units_container > id;
     container units;
 };
 

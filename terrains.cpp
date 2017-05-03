@@ -130,6 +130,17 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
     return true;
 }
 
+Terrain_lot::pointer Terrains::find_lot(const glm::vec2 coord)
+{
+    long pos_idx = get_position_idx( coord );
+    auto it = terrain_map.find( pos_idx );
+    if( terrain_map.end() == it ) {
+        ERR("Lot at position ", coord," not found!");
+        return nullptr;
+    }
+    return it->second;
+}
+
 glm::mat4 Terrains::get_lot_model_matrix(const glm::vec2 &pos) const
 {
     glm::mat4 model;
@@ -139,23 +150,24 @@ glm::mat4 Terrains::get_lot_model_matrix(const glm::vec2 &pos) const
                                       0.0) );
 }
 
-GLfloat Terrains::get_position_idx(const glm::vec2 &pos) const
+long Terrains::get_position_idx(const glm::vec2 &pos) const
 {
     /*
      * Cantor Pairing function.
      * Make sure to not calculate the index
      * using negative values
      */
-    const GLfloat x = pos.x + origins_lot.x + 5;
-    const GLfloat y = pos.y + origins_lot.y + 5;
+    const long x = pos.x + origins_lot.x + 5;
+    const long y = pos.y + origins_lot.y + 5;
     return (1.0f/2.0f) * ( x + y ) * ( x + y + 1) + y;
 }
 
-Terrain_lot::Terrain_lot(const long unique_id,
+Terrain_lot::Terrain_lot(const long model_id,
                          const glm::vec2 unique_position) :
-    terrain_model_id{ unique_id },
+    terrain_model_id{ model_id },
     position{ unique_position }
 {
+    LOG1("New lot created, ID:",id);
     units = factory< game_units::Units_container >::create();
 }
 

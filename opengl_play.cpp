@@ -318,6 +318,16 @@ void opengl_ui::setup_scene()
 
     units = factory< game_units::Units >::create();
 
+    auto list_of_units = units->buildable_units();
+    uint64_t unit_id = list_of_units.front().id;
+    auto new_unit = units->create_unit( unit_id );
+    auto lot = game_terrain->find_lot( glm::vec2(0.0) );
+    if( lot != nullptr ) {
+        lot->units->add_unit( new_unit );
+    } else {
+        PANIC("LOT NOT FOUND!");
+    }
+
 /*
     game_map_entities = map_entities::entities_collection::create(
                                 frame_buffers,
