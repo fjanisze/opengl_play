@@ -3,7 +3,8 @@
 namespace game_units
 {
 
-Units::Units()
+Units::Units( renderer::Core_renderer_proxy renderer ) :
+    renderer{ renderer }
 {
     LOG3("Loading ", internal::units.size()," unit models!");
     for( auto&& unit : internal::units )
@@ -40,6 +41,27 @@ Unit::pointer Units::create_unit( uint64_t id )
     LOG3("New unit created, unit ID:", new_unit->id,
          ", total amount of units: ", units->size());
     return new_unit;
+}
+
+bool Units::place_unit(Unit::pointer unit,
+                       game_terrains::Terrain_lot::pointer lot)
+{
+    LOG3( "Placing unit ", unit->id," on lot ",lot->id );
+    /*
+     * Make sure this unit is not enabled for
+     * rendering, then attempt to add it to the lot
+     * and enable it back for rendering
+     */
+    unit->rendering_state.disable();
+    if( lot->units->add_unit( unit ) )
+    {
+        unit->rendering_data.model_matrix = lot->rendering_data.model_matrix;
+        renderer.add_renderable( unit );
+        unit->rendering_state.enable();
+    } else {
+        WARN2("Not possible to place!");
+    }
+    return false;
 }
 
 Unit_model::pointer Units::find_model(const uint64_t id)

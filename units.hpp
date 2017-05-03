@@ -74,12 +74,14 @@ class Units_container;
  * might be either a unit like a car or a
  * construction (building etc)
  */
-class Unit
+class Unit : public renderer::Renderable
 {
 public:
     using pointer = std::shared_ptr< Unit >;
     using container = std::shared_ptr< Units_container >;
     Unit( Unit_model::pointer unit_model );
+
+    void render( shaders::shader_ptr& shader ) override;
 public:
     const id_factory< Unit > id;
 private:

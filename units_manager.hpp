@@ -13,7 +13,7 @@ class Units
 {
 public:
     using pointer = std::shared_ptr< Units >;
-    Units();
+    explicit Units( renderer::Core_renderer_proxy renderer );
     /*
      * Return the set of units that Units is able
      * to build or recognize
@@ -21,6 +21,9 @@ public:
     Unit_model_data::container buildable_units();
 
     Unit::pointer create_unit( uint64_t id );
+
+    bool place_unit( Unit::pointer unit,
+                     game_terrains::Terrain_lot::pointer lot );
 private:
     /*
      * Those are the units we ca use for
@@ -34,6 +37,7 @@ private:
      * create by the user (possibly placed somewhere).
      */
     Unit::container units;
+    renderer::Core_renderer_proxy renderer;
 };
 
 }

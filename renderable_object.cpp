@@ -68,7 +68,8 @@ renderable_id Core_renderer::add_renderable( Renderable::pointer object )
         ERR("Invalid renderable provided");
         return -1;
     }
-    LOG1("Adding new renderable: ",
+    LOG3("Adding new renderable, ID ",
+         object->rendering_data.id, ", name: ",
          object->nice_name());
     rendr_ptr new_rendr = std::make_shared<Rendr>();
     new_rendr->id = next_rendr_id;
@@ -145,7 +146,7 @@ long Core_renderer::render()
              * Second loop: Mouse picking
              */
             if( rendr_loop == 1 ) {
-                glm::vec4 color = cur->object->rendering_data.default_color;
+                types::color color = cur->object->rendering_data.default_color;
                 /*
                  * If this Renderable is currencly picked
                  * increase a little bit it's default color

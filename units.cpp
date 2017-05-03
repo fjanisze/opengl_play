@@ -35,6 +35,14 @@ Unit::Unit( Unit_model::pointer unit_model ) :
 {
     LOG3("New unit with ID: ",id,", created! Pretty name: ",
          unit_model->model_data.pretty_name );
+    rendering_data.default_color = unit_model->model_data.default_color;
+}
+
+void Unit::render( shaders::shader_ptr &shader )
+{
+    for( auto&& mesh : model->get_meshes() ) {
+        mesh->render( &*shader );
+    }
 }
 
 

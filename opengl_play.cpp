@@ -286,7 +286,7 @@ void opengl_ui::setup_scene()
                                mountain_id);
 
     long forest_id = game_terrain->load_terrain("../models/Forest/Forest.obj",
-                               glm::vec4(1.2),
+                               glm::vec4(1.0),
                                4);
 
     game_terrain->load_highres_terrain("../models/Forest/Forest_complex.obj",
@@ -294,8 +294,8 @@ void opengl_ui::setup_scene()
 
 
     //Generate random terrain map
-    const int map_size_x{ 20 };
-    const int map_size_y{ 20 };
+    const int map_size_x{ 10 };
+    const int map_size_y{ 10 };
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );
@@ -316,14 +316,15 @@ void opengl_ui::setup_scene()
                                     glm::vec2(map_size_x / 2,
                                               map_size_y / 2) );
 
-    units = factory< game_units::Units >::create();
+    units = factory< game_units::Units >::create(
+                renderer::Core_renderer_proxy( renderer ) );
 
     auto list_of_units = units->buildable_units();
     uint64_t unit_id = list_of_units.front().id;
     auto new_unit = units->create_unit( unit_id );
     auto lot = game_terrain->find_lot( glm::vec2(0.0) );
     if( lot != nullptr ) {
-        lot->units->add_unit( new_unit );
+        units->place_unit( new_unit, lot );
     } else {
         PANIC("LOT NOT FOUND!");
     }
@@ -370,13 +371,6 @@ void opengl_ui::enter_main_loop()
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
 
-    /*models_back_buffer = frame_buffers->create_buffer();
-    if( models_back_buffer < 0 ) {
-        ERR("Quitting!");
-        return;
-    }*/
-
-    glm::vec3 last_cam_pos;
     LOG2("Entering main loop!");
     std::string current_fps_string = "0 fps";
     long num_of_rendering_cycles{ 0 };

@@ -10,7 +10,7 @@ typedef unsigned char byte_t;
 texture_t load_texture(const std::string &filename,
                        GLint wrapping_method)
 {
-    LOG1("load_texture: ",filename.c_str());
+    LOG2("load_texture: ",filename.c_str());
     texture_t TEX;
     //Load the texture image
     byte_t* image = SOIL_load_image(filename.c_str(),
@@ -19,11 +19,10 @@ texture_t load_texture(const std::string &filename,
                                     0,
                                     SOIL_LOAD_RGBA);
     if(image == nullptr){
-        ERR("Unable to load the texture! ",
-            filename.c_str());
-        throw std::runtime_error("Texture loading failed!");
+        PANIC("Unable to load the texture! ",
+              filename.c_str());
     }
-    LOG1("Loaded texture size: ",TEX.width,"/",TEX.height);
+    LOG2("Loaded texture size: ",TEX.width,"/",TEX.height);
     //Create the texture
     glGenTextures(1,&TEX.id);
     glBindTexture(GL_TEXTURE_2D,TEX.id);
