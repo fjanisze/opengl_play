@@ -352,14 +352,15 @@ void Renderable_text::render( shaders::shader_ptr &shader )
         GLfloat w = ch.Size.x;
         GLfloat h = ch.Size.y;
         // Update VBO for each character
-        GLfloat vertices[6][5] = {
-            { xpos,     ypos + h,  0.0 ,   0.0, 0.0 },
-            { xpos,     ypos,      0.0 ,   0.0, 1.0 },
-            { xpos + w, ypos,      0.0 ,   1.0, 1.0 },
 
-            { xpos,     ypos + h,  0.0 ,   0.0, 0.0 },
+        GLfloat vertices[6][5] = {
+            { xpos + w, ypos + h,  0.0 ,   1.0, 0.0 },
             { xpos + w, ypos,      0.0 ,   1.0, 1.0 },
-            { xpos + w, ypos + h,  0.0 ,   1.0, 0.0 }
+            { xpos,     ypos + h,  0.0 ,   0.0, 0.0 },
+
+            { xpos + w, ypos,      0.0 ,   1.0, 1.0 },
+            { xpos,     ypos,      0.0 ,   0.0, 1.0 },
+            { xpos,     ypos + h,  0.0 ,   0.0, 0.0 },
         };
 
         // Render glyph texture over quad

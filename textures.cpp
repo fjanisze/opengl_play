@@ -18,6 +18,7 @@ texture_t load_texture(const std::string &filename,
                                     &TEX.height,
                                     0,
                                     SOIL_LOAD_RGBA);
+
     if(image == nullptr){
         PANIC("Unable to load the texture! ",
               filename.c_str());
@@ -38,8 +39,9 @@ texture_t load_texture(const std::string &filename,
     glTexParameteri(GL_TEXTURE_2D,
                     GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D,	0,
-                 GL_RGBA,
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA8,
                  TEX.width,
                  TEX.height,
                  0,

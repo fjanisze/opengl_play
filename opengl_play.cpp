@@ -228,11 +228,10 @@ opengl_ui::opengl_ui(int win_width,
      * Enable face culling to avoid rendering
      * faces which are hidden behind other faces
      * from the camera view perspective.
-     * (WHEN ENABLED THE TEXT IS NOT RENDERED.. TODO)
      */
-/*   glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glFrontFace(GL_CW);*/
+    glFrontFace(GL_CW);
 }
 
 void opengl_ui::prepare_for_main_loop()
