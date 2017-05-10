@@ -106,7 +106,7 @@ vec4 calculate_lighting( vec4 tex )
 	}
 	//Common diffuse light calculations
 	float diff = max( dot( norm, light_dir ), 0.4);
-	vec4 diffuse = diff * light_color;
+	vec4 diffuse = vec4(diff * light_color.rgb, light_color.a);
 	if( false == skip_texture_calculations )
 	{
 	    diffuse *= tex;
@@ -117,10 +117,10 @@ vec4 calculate_lighting( vec4 tex )
 	vec3 view_dir = normalize( camera_pos - frag_pos );
 	vec3 reflect_dir = reflect(-light_dir, norm);
 	float spec = pow( max( dot(view_dir,reflect_dir), 0.0), 32);
-	vec4 specular = spec * light_color;
+	vec4 specular = vec4(spec * light_color.rgb, light_color.a);
 	if( false == skip_texture_calculations )
 	{
-	    specular *= (texture(loaded_texture_specular_map1,texture_coords) * .2 * attenuation);
+	    specular *= (texture(loaded_texture_specular_map1,texture_coords) * .3 * attenuation);
 	}
 	spec_res += specular;
     }
