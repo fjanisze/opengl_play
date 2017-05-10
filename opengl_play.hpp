@@ -3,7 +3,6 @@
 #include "shaders.hpp"
 #include "text_rendering.hpp"
 #include "my_camera.hpp"
-#include "my_lines.hpp"
 #include "lights.hpp"
 #include <movable_object.hpp>
 #include <random>
@@ -81,7 +80,6 @@ private:
     glm::vec2    ray_z_hit_point( const types::ray_t& ray,
                                   const GLfloat z_value );
 
-    my_lines_ptr position_lines;
     game_terrains::Terrains::pointer game_terrain;
     game_units::Units::pointer units;
 
