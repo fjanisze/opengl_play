@@ -72,7 +72,7 @@ private:
 
     int win_h,
     win_w;
-    camera_ptr		camera;
+    scene::Camera::pointer		camera;
     /*
      * Ray casting utility
      */

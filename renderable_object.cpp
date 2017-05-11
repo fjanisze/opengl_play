@@ -25,7 +25,7 @@ std::string Renderable::nice_name()
 Core_renderer::Core_renderer(const types::win_size &window,
                              const glm::mat4 &proj,
                              const glm::mat4& def_ortho,
-                             const opengl_play::camera_ptr cam ) :
+                             const scene::Camera::pointer cam ) :
     next_rendr_id{ 1 },
     projection{ proj },
     ortho{ def_ortho },

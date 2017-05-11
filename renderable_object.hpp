@@ -295,7 +295,7 @@ public:
             const types::win_size& window,
             const glm::mat4& proj,
             const glm::mat4 &def_ortho,
-            const opengl_play::camera_ptr cam );
+            const scene::Camera::pointer cam );
     renderable_id add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
@@ -315,7 +315,7 @@ public:
     void clear();
 private:
     shaders::Shader::pointer shader;
-    opengl_play::camera_ptr camera;
+    scene::Camera::pointer camera;
     lighting::lighting_pointer game_lights;
     buffers::Framebuffers::pointer framebuffers;
 

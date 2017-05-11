@@ -153,10 +153,10 @@ public:
  */
 class flash_light : public spot_light
 {
-    opengl_play::camera_ptr camera_ptr;
+    scene::Camera::pointer camera_ptr;
 public:
     flash_light() = default;
-    flash_light(opengl_play::camera_ptr camera,
+    flash_light(scene::Camera::pointer camera,
                 glm::vec4 color,
                 GLfloat   strength,
                 GLfloat cut_off_angle,

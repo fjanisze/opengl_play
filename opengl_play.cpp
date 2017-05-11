@@ -192,7 +192,10 @@ opengl_ui::opengl_ui(int win_width,
         throw std::runtime_error("GLEW Init failed!");
     }
 
-    camera = my_camera::create_camera({4.0,4.0,8},{0.0,0.0,0.0});
+    camera = factory< scene::Camera >::create(
+                glm::vec3(4.0,4.0,8),
+                glm::vec3(0.0,0.0,0.0)
+                );
     camera->eagle_mode();
 
     for(auto& elem:key_status)

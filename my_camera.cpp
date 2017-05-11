@@ -1,21 +1,11 @@
 #include "my_camera.hpp"
 #include <logger/logger.hpp>
 
-namespace opengl_play
+namespace scene
 {
 
-glm::vec3 get_vec_3( const glm::mat4& mat ) {
-    return glm::vec3( mat[3].x, mat[3].y, mat[3].z);
-}
-
-camera_ptr my_camera::create_camera(glm::vec3 pos, glm::vec3 target)
-{
-    return std::make_shared<my_camera>(pos,target);
-}
-
-my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
+Camera::Camera(glm::vec3 position, glm::vec3 target) :
     cam_front( glm::normalize( target - position ) ),
-    target_to_follow{ nullptr },
     mode{ camera_mode::space_mode }
 {
     set_position( position );
@@ -37,7 +27,7 @@ my_camera::my_camera(glm::vec3 position, glm::vec3 target) :
 }
 
 
-bool my_camera::eagle_mode(bool is_set)
+bool Camera::eagle_mode(bool is_set)
 {
     bool old = ( mode == camera_mode::eagle_mode );
     if( is_set ) {
@@ -62,7 +52,7 @@ bool my_camera::eagle_mode(bool is_set)
     return old;
 }
 
-void my_camera::rotate_around(GLfloat amount)
+void Camera::rotate_around(GLfloat amount)
 {
     if( amount == 0 ) {
         WARN1("rotate_around with argument 0 make no sense!");
@@ -142,12 +132,12 @@ void my_camera::rotate_around(GLfloat amount)
     update_angles();
 }
 
-void my_camera::update_cam_view()
+void Camera::update_cam_view()
 {
     cam_view = glm::lookAt( current_position, current_position + cam_front, cam_up );
 }
 
-bool my_camera::move(mov_direction direction, GLfloat amount)
+bool Camera::move(mov_direction direction, GLfloat amount)
 {
     bool ret = true;
     switch(direction) {
@@ -187,118 +177,69 @@ bool my_camera::move(mov_direction direction, GLfloat amount)
     return ret;
 }
 
-void my_camera::modify_angle(mov_angles angle,GLfloat amount)
+void Camera::modify_angle(mov_angles angle,GLfloat amount)
 {
-    /*
-     * If the camera is following a target then
-     * is not possible to perform rotation since
-     * this would mean not following anymore the target
-     */
-    if( nullptr == target_to_follow )
-    {
-        switch( angle ) {
-        case mov_angles::pitch:
-            current_pitch += amount;
-            break;
-        case mov_angles::yaw:
-            current_yaw += amount;
-            break;
-        case mov_angles::roll:
-            current_roll += amount;
-            break;
-        default:
-            ERR("my_camera::modify_angle: Invalid angle, type:",
-                static_cast<int>(angle));
-            return;
-        }
-
-        if( current_yaw >= 359.99 ) current_yaw = 0.01;
-        if( current_yaw <= 0.0 ) current_yaw = 359.99;
-        if( current_roll >= 359.99 ) current_roll = 0.01;
-        if( current_roll <= 0.0 ) current_roll = 359.99;
-        if( current_pitch >= 89.99 ) current_pitch = 89.99;
-        if( current_pitch <= -89.99 ) current_pitch = -89.99;
-
-        cam_front.x += sin( glm::radians( current_yaw ) ) * cos( glm::radians( current_pitch ) );
-        cam_front.y += cos( glm::radians( current_yaw ) ) * cos( glm::radians( current_pitch ) );
-        cam_front.z += sin( glm::radians( current_pitch ) );
-
-        cam_front = glm::normalize( cam_front );
-
-        cam_right = glm::normalize( glm::cross( cam_front, cam_up ) );
-
-        if( mode == camera_mode::space_mode ) {
-            cam_up = glm::normalize( glm::cross( cam_right, cam_front ) );
-        }
-
-        update_cam_view();
+    switch( angle ) {
+    case mov_angles::pitch:
+        current_pitch += amount;
+        break;
+    case mov_angles::yaw:
+        current_yaw += amount;
+        break;
+    case mov_angles::roll:
+        current_roll += amount;
+        break;
+    default:
+        ERR("my_camera::modify_angle: Invalid angle, type:",
+            static_cast<int>(angle));
+        return;
     }
+
+    if( current_yaw >= 359.99 ) current_yaw = 0.01;
+    if( current_yaw <= 0.0 ) current_yaw = 359.99;
+    if( current_roll >= 359.99 ) current_roll = 0.01;
+    if( current_roll <= 0.0 ) current_roll = 359.99;
+    if( current_pitch >= 89.99 ) current_pitch = 89.99;
+    if( current_pitch <= -89.99 ) current_pitch = -89.99;
+
+    cam_front.x += sin( glm::radians( current_yaw ) ) * cos( glm::radians( current_pitch ) );
+    cam_front.y += cos( glm::radians( current_yaw ) ) * cos( glm::radians( current_pitch ) );
+    cam_front.z += sin( glm::radians( current_pitch ) );
+
+    cam_front = glm::normalize( cam_front );
+
+    cam_right = glm::normalize( glm::cross( cam_front, cam_up ) );
+
+    if( mode == camera_mode::space_mode ) {
+        cam_up = glm::normalize( glm::cross( cam_right, cam_front ) );
+    }
+
+    update_cam_view();
 }
 
 /*
  * Those Euler coordinates can be extracted
  * from the current direction vector
  */
-void my_camera::update_angles()
+void Camera::update_angles()
 {
     current_pitch = glm::degrees( asin( cam_front.z ) );
     current_yaw = glm::degrees( atan2( cam_front.x, cam_front.y) );
     current_yaw = current_yaw > 0 ? current_yaw : 360 + current_yaw;
 }
 
-glm::mat4 my_camera::get_view()
+glm::mat4 Camera::get_view()
 {
     return cam_view;
 }
 
-void my_camera::set_position(const glm::vec3& pos)
+void Camera::set_position(const glm::vec3& pos)
 {
     current_position = pos;
     update_cam_view();
 }
 
-void my_camera::set_target(movable::mov_obj_ptr object)
-{
-    target_to_follow = object;
-}
-
-GLfloat my_camera::get_dist_from_target()
-{
-    if( nullptr != target_to_follow ) {
-        return glm::distance( target_to_follow->get_position(),
-                              current_position );
-    }
-    return -1;
-}
-
-void my_camera::follow_target()
-{
-    if( nullptr != target_to_follow ) {
-        auto position = get_position();
-        auto model_mtx = target_to_follow->get_model_matrix();
-        model_mtx = glm::translate( model_mtx,
-                                    glm::vec3(
-                                        -follow_opt.camera_pan,
-                                        -follow_opt.camera_tilt,
-                                        -follow_opt.target_max_distance) );
-        auto new_cam_pos = get_vec_3( model_mtx );
-        glm::vec3 delta = new_cam_pos - position;
-        delta /= 20;
-        position += delta;
-
-        set_position( position );
-
-        //Point somewhere in front of the object, not at the
-        //object itself
-        model_mtx = target_to_follow->get_model_matrix();
-        model_mtx = glm::translate( model_mtx, glm::vec3(0.0,0.0,50.0) ); //Should be an option
-        cam_front = glm::normalize( get_vec_3( model_mtx ) - position );
-        update_angles();
-        update_cam_view();
-    }
-}
-
-glm::vec3 my_camera::get_camera_front()
+glm::vec3 Camera::get_camera_front()
 {
     return cam_front;
 }
