@@ -43,7 +43,7 @@ public:
     my_mesh(vertices_ptr vertx,
             indices_ptr indx,
             textures_ptr texts);
-    void render( shaders::my_small_shaders* shader ) const;
+    void render( shaders::Shader* shader ) const;
 private:
     void setup_mesh();
 private:

@@ -75,7 +75,7 @@ public:
     /*
      * Rendering function
      */
-    void render( shaders::shader_ptr& shader ) override;
+    void render(shaders::Shader::pointer &shader ) override;
 };
 
 /*

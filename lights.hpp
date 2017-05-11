@@ -30,7 +30,7 @@ class Core_lighting
 {
 public:
     Core_lighting();
-    void calculate_lighting( shaders::shader_ptr& shader );
+    void calculate_lighting(shaders::Shader::pointer &shader );
     void add_light( light_ptr obj );
 private:
     std::vector< light_ptr > lights;

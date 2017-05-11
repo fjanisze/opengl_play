@@ -328,26 +328,6 @@ void opengl_ui::setup_scene()
         PANIC("LOT NOT FOUND!");
     }
 
-/*
-    game_map_entities = map_entities::entities_collection::create(
-                                frame_buffers,
-                                std::bind( &terrains::terrains::get_lot_top_model_matrix,
-                                           game_terrain,
-                                           std::placeholders::_1 ));
-
-    my_car = game_map_entities->load_entity("../models/SimpleCar/SimpleCar.obj",
-                                   types::color(1.0),
-                                   "Poldek");
-
-    //Add the cars
-    game_map_entities->add_entity( my_car, glm::vec2(1.0,1.0) );
-    game_map_entities->add_entity( my_car, glm::vec2(1.0,2.0) );
-    game_map_entities->add_entity( my_car, glm::vec2(-2.0,1.0) );
-    game_map_entities->add_entity( my_car, glm::vec2(-1.0,-1.0) );
-
-    game_map_entities->set_coord_origin( game_terrain->get_coord_origin() );
-*/
-
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
                 glm::vec4(0.9,0.8,0.7,1.0),
@@ -402,22 +382,6 @@ void opengl_ui::enter_main_loop()
           <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z<<", rendr cycles:"<<num_of_rendering_cycles;
 
         info_string->set_text(ss.str());
-
-        /*
-         * Update the visible part of the map
-         */
-    /*    if( last_cam_pos != pos ) {
-            types::ray_t ray = ray_cast( win_w / 2, win_h / 2 );
-            glm::vec2 center = ray_z_hit_point( ray, 0.0f );
-            /*
-             * How far the lots are visible is calculated
-             * by this simple formula. The higher is the camera (z)
-             * then much more lots we need to draw
-             */
-        /*    game_terrain->set_view_center( center, std::max( 4.0f,
-                                                             std::max(pos.z,6.0f) / 1.2f ) );
-            last_cam_pos = pos;
-        }*/
 
         glfwSwapBuffers(window_ctx);
     }

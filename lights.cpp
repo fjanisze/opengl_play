@@ -19,7 +19,7 @@ Core_lighting::Core_lighting()
  * load to the proper uniforms the position,color and strength
  * of all the lights in the scene.
  */
-void Core_lighting::calculate_lighting( shaders::shader_ptr& shader )
+void Core_lighting::calculate_lighting( shaders::Shader::pointer& shader )
 {
     int light_cnt = 0;
     std::size_t current_idx{ 0 };

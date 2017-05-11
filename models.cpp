@@ -64,7 +64,7 @@ void my_mesh::setup_mesh()
     glBindVertexArray(0);
 }
 
-void my_mesh::render(shaders::my_small_shaders* shader) const
+void my_mesh::render(shaders::Shader* shader) const
 {
     glBindVertexArray(VAO);
     GLuint current_unit = 0;

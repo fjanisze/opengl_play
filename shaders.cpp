@@ -3,7 +3,7 @@
 namespace shaders
 {
 
-void my_small_shaders::load_shader_generic(GLuint &shader_target,
+void Shader::load_shader_generic(GLuint &shader_target,
                                            const std::string &body,
                                            GLenum shader_type)
 {
@@ -30,27 +30,27 @@ void my_small_shaders::load_shader_generic(GLuint &shader_target,
     }
 }
 
-my_small_shaders::my_small_shaders()
+Shader::Shader()
 {
     LOG3("Creating the shader compiler");
 
 }
 
-void my_small_shaders::load_vertex_shader(const std::string &body)
+void Shader::load_vertex_shader(const std::string &body)
 {
     load_shader_generic(vertex_shader,
                         body,
                         GL_VERTEX_SHADER);
 }
 
-void my_small_shaders::load_fragment_shader(const std::string &body)
+void Shader::load_fragment_shader(const std::string &body)
 {
     load_shader_generic(fragment_shader,
                         body,
                         GL_FRAGMENT_SHADER);
 }
 
-std::string my_small_shaders::read_shader_body(const std::string &filename)
+std::string Shader::read_shader_body(const std::string &filename)
 {
     std::ifstream in_file(filename.c_str());
     std::string shader_body;
@@ -80,7 +80,7 @@ std::string my_small_shaders::read_shader_body(const std::string &filename)
     return shader_body;
 }
 
-bool my_small_shaders::create_shader_program()
+bool Shader::create_shader_program()
 {
     LOG3("Creating the shader program");
     shader_program = glCreateProgram();
@@ -111,17 +111,17 @@ bool my_small_shaders::create_shader_program()
     return true;
 }
 
-void my_small_shaders::use_shaders()
+void Shader::use_shaders()
 {
     glUseProgram(shader_program);
 }
 
-GLuint my_small_shaders::get_program()
+GLuint Shader::get_program()
 {
     return shader_program;
 }
 
-GLint my_small_shaders::load_location(const std::string &loc_name)
+GLint Shader::load_location(const std::string &loc_name)
 {
     LOG1("Loading location: ", loc_name );
     GLint loc = glGetUniformLocation( shader_program,
@@ -132,22 +132,22 @@ GLint my_small_shaders::load_location(const std::string &loc_name)
     return loc;
 }
 
-void my_small_shaders::enable_light_calculations()
+void Shader::enable_light_calculations()
 {
     glUniform1i(light_calc_uniform, 0);
 }
 
-void my_small_shaders::disable_light_calculations()
+void Shader::disable_light_calculations()
 {
     glUniform1i(light_calc_uniform, 1);
 }
 
-void my_small_shaders::enable_texture_calculations()
+void Shader::enable_texture_calculations()
 {
     glUniform1i(tex_calc_uniform, 0);
 }
 
-void my_small_shaders::disable_texture_calculations()
+void Shader::disable_texture_calculations()
 {
     glUniform1i(tex_calc_uniform, 1);
 }

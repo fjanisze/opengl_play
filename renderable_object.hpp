@@ -138,9 +138,9 @@ public:
 
     Renderable();
 
-    virtual void prepare_for_render( shaders::shader_ptr& shader ) {}
-    virtual void render( shaders::shader_ptr& shader ) {}
-    virtual void clean_after_render( shaders::shader_ptr& shader ) {}
+    virtual void prepare_for_render( shaders::Shader::pointer& shader ) {}
+    virtual void render( shaders::Shader::pointer& shader ) {}
+    virtual void clean_after_render( shaders::Shader::pointer& shader ) {}
 
     virtual std::string nice_name();
 
@@ -229,7 +229,7 @@ class Model_picking
 public:
     using pointer = std::shared_ptr< Model_picking >;
 
-    Model_picking( shaders::shader_ptr shader,
+    Model_picking(shaders::Shader::pointer shader,
                    buffers::Framebuffers::pointer framebuffers );
     /*
      * Add an additional model which might
@@ -264,7 +264,7 @@ public:
     void prepare_to_update();
     void cleanup_after_update();
 private:
-    shaders::shader_ptr game_shader;
+    shaders::Shader::pointer game_shader;
     GLuint shader_color_loc;
     buffers::Framebuffers::pointer framebuffers;
     buffers::Framebuffers::buffer_id_t picking_buffer_id;
@@ -314,7 +314,7 @@ public:
      */
     void clear();
 private:
-    shaders::shader_ptr shader;
+    shaders::Shader::pointer shader;
     opengl_play::camera_ptr camera;
     lighting::lighting_pointer game_lights;
     buffers::Framebuffers::pointer framebuffers;

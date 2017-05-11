@@ -33,7 +33,7 @@ Core_renderer::Core_renderer(const types::win_size &window,
     viewport_size{ window }
 {
     LOG3("Creating the core renderer!");
-    shader = shaders::my_small_shaders::create();
+    shader = factory< shaders::Shader >::create();
 
     shader->load_fragment_shader(shader->read_shader_body(
                                      "../model_shader.frag"));
@@ -235,7 +235,7 @@ void Core_renderer::switch_proper_perspective(
 /// Model_picking
 /////////////////////////////////////
 
-Model_picking::Model_picking(shaders::shader_ptr shader,
+Model_picking::Model_picking(shaders::Shader::pointer shader,
         buffers::Framebuffers::pointer framebuffers) :
     game_shader{ shader },
     framebuffers{ framebuffers },

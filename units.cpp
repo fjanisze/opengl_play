@@ -38,7 +38,7 @@ Unit::Unit( Unit_model::pointer unit_model ) :
     rendering_data.default_color = unit_model->model_data.default_color;
 }
 
-void Unit::render( shaders::shader_ptr &shader )
+void Unit::render( shaders::Shader::pointer &shader )
 {
     for( auto&& mesh : model->get_meshes() ) {
         mesh->render( &*shader );
