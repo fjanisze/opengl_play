@@ -30,6 +30,11 @@ struct window_size
 }
 
 using win_size = internal::window_size;
+
+using key_code_t = int;
+using scan_code_t = int;
+using act_code_t = int;
+
 }
 
 #endif

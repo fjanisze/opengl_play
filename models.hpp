@@ -113,7 +113,7 @@ private:
  */
 class my_model : public model_loader,
         public renderer::Renderable,
-        public movable::movable_object
+        public scene::Movable
 {
 public:
     my_model(const std::string& model_path,

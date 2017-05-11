@@ -3,24 +3,6 @@
 namespace map_entities
 {
 
-/*
-void map_entity::prepare_for_render()
-{
-
-}
-
-void map_entity::render()
-{
-
-}
-
-void map_entity::clean_after_render()
-{
-
-}
-
-*/
-
 map_entity_data::map_entity_data(model_id new_id,
                                  const std::string &name,
                                  models::model_loader_ptr model,

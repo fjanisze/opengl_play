@@ -83,14 +83,12 @@ private:
     game_terrains::Terrains::pointer game_terrain;
     game_units::Units::pointer units;
 
-    map_entities::entity_collection_ptr game_map_entities;
     lighting::light_ptr light_1,
                         light_2;
-    map_entities::model_id my_car;
     GLfloat mouse_x_pos;
     GLfloat mouse_y_pos;
 
-    movable::object_movement_processor movement_processor;
+    scene::Movement_processor movement_processor;
 };
 
 }

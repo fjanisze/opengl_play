@@ -84,7 +84,7 @@ void opengl_ui::ui_mouse_enter_window(int state)
 void opengl_ui::ui_wheel_move(GLdouble x, GLdouble y)
 {
     movement_processor.mouse_input(x, y,
-                                   movable::mouse_input_type::mouse_wheel);
+                                   scene::mouse_input_type::mouse_wheel);
 }
 
 void opengl_ui::ui_keyboard_press(GLint button,
@@ -251,19 +251,19 @@ void opengl_ui::prepare_for_main_loop()
 void opengl_ui::setup_scene()
 {
     //Register the camera as movable object
-    movable::key_mapping_vec camera_keys = {
-        { GLFW_KEY_W, { movable::mov_direction::top, { 0.5 } } },
-        { GLFW_KEY_S, { movable::mov_direction::down, { 0.5 } } },
-        { GLFW_KEY_A, { movable::mov_direction::left, { 0.3 } } },
-        { GLFW_KEY_D, { movable::mov_direction::right, { 0.3 } } },
-        { GLFW_KEY_Q, { movable::mov_direction::rotate_left, { 2.0 } } },
-        { GLFW_KEY_E, { movable::mov_direction::rotate_right, { 2.0 } } },
+    scene::key_mapping_vec camera_keys = {
+        { GLFW_KEY_W, { scene::movement::direction::top, { 0.5 } } },
+        { GLFW_KEY_S, { scene::movement::direction::down, { 0.5 } } },
+        { GLFW_KEY_A, { scene::movement::direction::left, { 0.3 } } },
+        { GLFW_KEY_D, { scene::movement::direction::right, { 0.3 } } },
+        { GLFW_KEY_Q, { scene::movement::direction::rotate_left, { 2.0 } } },
+        { GLFW_KEY_E, { scene::movement::direction::rotate_right, { 2.0 } } },
     };
 
 
-    movable::mouse_mapping_vec camera_mouse = {
-        { movable::mouse_movement_types::wheel_up, { movable::mov_direction::forward, { 0.05 } } },
-        { movable::mouse_movement_types::wheel_down, { movable::mov_direction::backward, { 0.05 } } },
+    scene::mouse_mapping_vec camera_mouse = {
+        { scene::mouse_movement_types::wheel_up, { scene::movement::direction::forward, { 0.05 } } },
+        { scene::mouse_movement_types::wheel_down, { scene::movement::direction::backward, { 0.05 } } },
     };
 
     movement_processor.register_movable_object(camera,camera_keys);

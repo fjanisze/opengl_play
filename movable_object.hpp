@@ -4,29 +4,28 @@
 #include <list>
 #include <vector>
 #include <unordered_map>
+#include <types.hpp>
 
-namespace movable
+namespace scene
 {
 
-using key_code_t = int;
-using scan_code_t = int;
-using act_code_t = int;
+using namespace types;
 
-class movable_object;
-using mov_obj_ptr = std::shared_ptr<movable_object>;
+namespace movement
+{
 
 /*
  * DO NOT CHANGE the order of the element
  * in this enum!!
  */
-enum class mov_angles
+enum class angle
 {
     roll,
     pitch,
     yaw
 };
 
-enum class mov_direction
+enum class direction
 {
     left,
     right,
@@ -44,17 +43,19 @@ enum class mov_direction
     rotate_right
 };
 
+}
+
 constexpr
-mov_angles to_mov_angle( const mov_direction dir ) {
-    mov_angles ret{ mov_angles::pitch };
+movement::angle to_mov_angle( const movement::direction dir ) {
+    movement::angle ret{ movement::angle::pitch };
     switch( dir ) {
-    case mov_direction::yaw_dec:
-    case mov_direction::yaw_inc:
-        ret = mov_angles::yaw;
+    case movement::direction::yaw_dec:
+    case movement::direction::yaw_inc:
+        ret = movement::angle::yaw;
         break;
-    case mov_direction::roll_inc:
-    case mov_direction::roll_dec:
-        ret = mov_angles::roll;
+    case movement::direction::roll_inc:
+    case movement::direction::roll_dec:
+        ret = movement::angle::roll;
     default:
         //CRAP!
         break;
@@ -70,7 +71,7 @@ mov_angles to_mov_angle( const mov_direction dir ) {
  */
 struct direction_details
 {
-    mov_direction direction;
+    movement::direction direction;
     /*
      * There might be different speed values,
      * for example a faster speed might be
@@ -84,7 +85,7 @@ struct direction_details
 //Mapping for the keyboard
 using mov_key_mapping = std::pair<key_code_t,direction_details>;
 using key_mapping_vec = std::vector<mov_key_mapping>;
-using movement_mapping = std::unordered_map< mov_direction, direction_details >;
+using movement_mapping = std::unordered_map< movement::direction, direction_details >;
 
 
 /*
@@ -93,19 +94,11 @@ using movement_mapping = std::unordered_map< mov_direction, direction_details >;
  * required to move the object (by the proper
  * transformation matrix) in the space
  */
-class movable_object
+class Movable
 {
-protected:
-    glm::mat4 model;
-    glm::vec3 current_position;
-    GLfloat current_yaw,
-    current_pitch,
-    current_roll,
-    current_scale;
-
-    movement_mapping movement_setup;
 public:
-    movable_object();
+    using pointer = std::shared_ptr< Movable >;
+    Movable();
     virtual void set_position(const glm::vec3& position);
     glm::vec3 get_position();
     virtual void set_yaw(GLfloat yaw);
@@ -117,26 +110,35 @@ public:
     virtual GLfloat get_roll();
     //Roll/Pitch/Yaw the object for the given
     //amount, it might be +-
-    virtual void modify_angle(mov_angles angle,GLfloat amount);
+    virtual void modify_angle(movement::angle angle,GLfloat amount);
     /*
      * move will attempt to move the movable_object
      * in certain direction, if any changes was made
      * to the position the function return true
      */
-    virtual bool move(mov_direction direction, GLfloat amount);
+    virtual bool move(movement::direction direction, GLfloat amount);
     virtual void rotate_around(GLfloat amount);
     virtual glm::mat4 get_model_matrix();
     movement_mapping& get_movement_setup();
+protected:
+    glm::mat4 model;
+    glm::vec3 current_position;
+    GLfloat current_yaw,
+    current_pitch,
+    current_roll,
+    current_scale;
+
+    movement_mapping movement_setup;
 };
 
 /*
  * This class implements the logic
  * which allow objects to follow each other
  */
-class tracking_processor
+class Tracking_processor
 {
 public:
-    tracking_processor() = default;
+    Tracking_processor() = default;
     /*
      * Setup a give object to follow a target object,
      * the argument distance_threshold provide
@@ -144,8 +146,8 @@ public:
      * the target and the follower, exceeding this
      * distance will trigger the tracking.
      */
-    bool new_tracking(mov_obj_ptr target,
-                      mov_obj_ptr object,
+    bool new_tracking(Movable::pointer target,
+                      Movable::pointer object,
                       GLfloat distance_threashold,
                       bool smooth_tracking = true);
     /*
@@ -158,11 +160,11 @@ public:
      * Return the last recorded distance from
      * the target for the given object
      */
-    GLfloat get_dist_from_target(mov_obj_ptr object);
+    GLfloat get_dist_from_target(Movable::pointer object);
 private:
     //Information needed to handle the object tracking
     struct tracking_info {
-        mov_obj_ptr target,
+        Movable::pointer target,
         object;
         glm::vec3 last_target_position,
         last_object_position;
@@ -171,7 +173,7 @@ private:
         bool smooth_tracking;
         tracking_info() = default;
     };
-    std::unordered_map<mov_obj_ptr,tracking_info> tracking_data;
+    std::unordered_map<Movable::pointer,tracking_info> tracking_data;
 };
 
 /*
@@ -180,7 +182,7 @@ private:
  */
 struct speed_sel_mapping {
     key_code_t    key;
-    mov_direction direction;
+    movement::direction direction;
     std::size_t	  idx;
 };
 
@@ -204,12 +206,12 @@ enum class mouse_movement_types {
  * to the function modify_angle
  */
 constexpr
-mov_angles to_mov_angles( const mouse_movement_types& mov )
+movement::angle to_mov_angle( const mouse_movement_types& mov )
 {
     if( mov == mouse_movement_types::pitch_decrease ||
         mov == mouse_movement_types::pitch_increse )
-        return mov_angles::pitch;
-    return mov_angles::yaw;
+        return movement::angle::pitch;
+    return movement::angle::yaw;
 }
 
 //Mapping for the mouse
@@ -227,10 +229,10 @@ enum class mouse_input_type {
  * for all the registered movable_objects for
  * the given movement.
  */
-class object_movement_processor
+class Movement_processor
 {
 public:
-    object_movement_processor();
+    Movement_processor();
     /*
      * Certain keys are mapped to movement
      * actions, those actions are used
@@ -257,19 +259,19 @@ public:
      * mapping that will trigger the change of
      * positioning of the movable_object
      */
-    void register_movable_object(mov_obj_ptr obj,
+    void register_movable_object(Movable::pointer obj,
                                  const key_mapping_vec& key_mapping);
-    void register_movable_object(mov_obj_ptr obj,
+    void register_movable_object(Movable::pointer obj,
                                  const mouse_mapping_vec& mapping);
-    void unregister_movable_object(mov_obj_ptr obj);
+    void unregister_movable_object(Movable::pointer obj);
     /*
      * If multiple speeds are possible, provide
      * the proper mappint throughout this function
      */
-    void register_speed_selectors(mov_obj_ptr obj,
+    void register_speed_selectors(Movable::pointer obj,
                                   const speed_selector& selector);
 
-    tracking_processor& tracking();
+    Tracking_processor& tracking();
 private:
     enum class key_status_t
     {
@@ -280,7 +282,7 @@ private:
     //Store the known value of the keys
     std::vector<key_status_t> key_status;
     //Registered mappings
-    using obj_dir_map = std::map<mov_obj_ptr, std::vector<mov_direction>>;
+    using obj_dir_map = std::map<Movable::pointer, std::vector<movement::direction>>;
     std::map<key_code_t,obj_dir_map> keyb_mapping;
 
     //Registered mapping for the mouse movements
@@ -296,11 +298,11 @@ private:
      * processed position (0 if no movements)
      */
     std::unordered_map<mouse_movement_types,GLfloat> mouse_status;
-    using obj_speed_sel = std::map<mov_obj_ptr,speed_selector>;
+    using obj_speed_sel = std::map<Movable::pointer,speed_selector>;
     std::map<key_code_t,obj_speed_sel> speed_selectors;
     void process_speed_selectors( key_code_t pressed_key );
     //To enable object tracking
-    tracking_processor object_tracking;
+    Tracking_processor object_tracking;
 };
 
 }

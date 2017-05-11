@@ -137,32 +137,32 @@ void Camera::update_cam_view()
     cam_view = glm::lookAt( current_position, current_position + cam_front, cam_up );
 }
 
-bool Camera::move(mov_direction direction, GLfloat amount)
+bool Camera::move(movement::direction direction, GLfloat amount)
 {
     bool ret = true;
     switch(direction) {
-    case mov_direction::right:
+    case movement::direction::right:
         current_position += cam_right * amount;
         break;
-    case mov_direction::left:
+    case movement::direction::left:
         current_position -= cam_right * amount;
         break;
-    case mov_direction::top:
+    case movement::direction::top:
         current_position +=  cam_up * amount;
         break;
-    case mov_direction::down:
+    case movement::direction::down:
         current_position -= cam_up * amount;
         break;
-    case mov_direction::forward:
+    case movement::direction::forward:
         if( current_position.z > 2 ) {
             current_position += cam_forward * amount;
-            modify_angle( mov_angles::pitch, 0.15 );
+            modify_angle( movement::angle::pitch, 0.15 );
         }
         break;
-    case mov_direction::backward:
+    case movement::direction::backward:
         if( current_position.z < 30 ) {
             current_position -= cam_forward * amount;
-            modify_angle( mov_angles::pitch, -0.15 );
+            modify_angle( movement::angle::pitch, -0.15 );
         }
         break;
     default:
@@ -177,16 +177,16 @@ bool Camera::move(mov_direction direction, GLfloat amount)
     return ret;
 }
 
-void Camera::modify_angle(mov_angles angle,GLfloat amount)
+void Camera::modify_angle(movement::angle angle,GLfloat amount)
 {
     switch( angle ) {
-    case mov_angles::pitch:
+    case movement::angle::pitch:
         current_pitch += amount;
         break;
-    case mov_angles::yaw:
+    case movement::angle::yaw:
         current_yaw += amount;
         break;
-    case mov_angles::roll:
+    case movement::angle::roll:
         current_roll += amount;
         break;
     default:

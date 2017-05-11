@@ -2,14 +2,14 @@
 #include "logger/logger.hpp"
 #include <algorithm>
 
-namespace movable
+namespace scene
 {
 
 //////////////////////////////////////
 /// movable_object implementation
 /////////////////////////////////////
 
-movable_object::movable_object() :
+Movable::Movable() :
     model{ glm::mat4() },
     current_position{ glm::vec3() },
     current_yaw{ 0 },
@@ -20,7 +20,7 @@ movable_object::movable_object() :
 
 }
 
-void movable_object::set_position(const glm::vec3 &position)
+void Movable::set_position(const glm::vec3 &position)
 {
     glm::vec3 translation_vector = position - current_position;
     model = glm::translate(model,
@@ -28,50 +28,50 @@ void movable_object::set_position(const glm::vec3 &position)
     current_position = position;
 }
 
-glm::vec3 movable_object::get_position()
+glm::vec3 Movable::get_position()
 {
     return current_position;
 }
 
-void movable_object::set_yaw(GLfloat yaw)
+void Movable::set_yaw(GLfloat yaw)
 {
-    modify_angle(mov_angles::yaw, current_yaw - yaw);
+    modify_angle(movement::angle::yaw, current_yaw - yaw);
     current_yaw = yaw;
 }
 
-void movable_object::set_pitch(GLfloat pitch)
+void Movable::set_pitch(GLfloat pitch)
 {
-    modify_angle(mov_angles::pitch, current_pitch - pitch);
+    modify_angle(movement::angle::pitch, current_pitch - pitch);
     current_pitch = pitch;
 }
 
-void movable_object::set_roll(GLfloat roll)
+void Movable::set_roll(GLfloat roll)
 {
-    modify_angle(mov_angles::roll, current_roll - roll);
+    modify_angle(movement::angle::roll, current_roll - roll);
     current_roll = roll;
 }
 
-void movable_object::set_scale(GLfloat scale)
+void Movable::set_scale(GLfloat scale)
 {
     current_scale = scale;
 }
 
-GLfloat movable_object::get_yaw()
+GLfloat Movable::get_yaw()
 {
     return current_yaw;
 }
 
-GLfloat movable_object::get_pitch()
+GLfloat Movable::get_pitch()
 {
     return current_pitch;
 }
 
-GLfloat movable_object::get_roll()
+GLfloat Movable::get_roll()
 {
     return current_roll;
 }
 
-void movable_object::modify_angle(mov_angles angle,
+void Movable::modify_angle(movement::angle angle,
                                   GLfloat amount)
 {
     static glm::vec3 rotation_angles[3] = {
@@ -83,13 +83,13 @@ void movable_object::modify_angle(mov_angles angle,
                         glm::radians(amount),
                         rotation_angles[static_cast<int>(angle)]);
     switch( angle ) {
-    case mov_angles::pitch:
+    case movement::angle::pitch:
         current_pitch += amount;
         break;
-    case mov_angles::yaw:
+    case movement::angle::yaw:
         current_yaw += amount;
         break;
-    case mov_angles::roll:
+    case movement::angle::roll:
         current_roll += amount;
         break;
     default:
@@ -98,7 +98,7 @@ void movable_object::modify_angle(mov_angles angle,
 }
 
 
-bool movable_object::move(mov_direction direction,
+bool Movable::move(movement::direction direction,
                           GLfloat amount)
 {
     if( amount < 0 ) {
@@ -109,19 +109,19 @@ bool movable_object::move(mov_direction direction,
     bool ret = true;
 
     switch( direction ) {
-    case mov_direction::right:
+    case movement::direction::right:
         amount *= -1;
-    case mov_direction::left:
+    case movement::direction::left:
         translation_vector.x = amount;
         break;
-    case mov_direction::down:
+    case movement::direction::down:
         amount *= -1;
-    case mov_direction::top:
+    case movement::direction::top:
         translation_vector.y = amount;
         break;
-    case mov_direction::backward:
+    case movement::direction::backward:
         amount *= -1;
-    case mov_direction::forward:
+    case movement::direction::forward:
         translation_vector.z = amount;
         break;
     default:
@@ -137,17 +137,17 @@ bool movable_object::move(mov_direction direction,
     return ret;
 }
 
-void movable_object::rotate_around(GLfloat amount)
+void Movable::rotate_around(GLfloat amount)
 {
     ERR("NOT IMPLEMENTED");
 }
 
-glm::mat4 movable_object::get_model_matrix()
+glm::mat4 Movable::get_model_matrix()
 {
     return model;
 }
 
-movement_mapping &movable_object::get_movement_setup()
+movement_mapping &Movable::get_movement_setup()
 {
     return movement_setup;
 }
@@ -156,7 +156,7 @@ movement_mapping &movable_object::get_movement_setup()
 /// object_movement_processor implementation
 /////////////////////////////////////
 
-object_movement_processor::object_movement_processor() :
+Movement_processor::Movement_processor() :
     last_mouse_x_position{ -1 },
     last_mouse_y_position{ -1 }
 {
@@ -165,7 +165,7 @@ object_movement_processor::object_movement_processor() :
     std::fill(key_status.begin(),key_status.end(),key_status_t::not_pressed);
 }
 
-void object_movement_processor::mouse_input(GLdouble new_x,
+void Movement_processor::mouse_input(GLdouble new_x,
                                             GLdouble new_y,
                                             mouse_input_type type)
 {
@@ -201,7 +201,7 @@ void object_movement_processor::mouse_input(GLdouble new_x,
     }
 }
 
-void object_movement_processor::keyboard_input(int key,
+void Movement_processor::keyboard_input(int key,
                                                int scan_code,
                                                int action)
 {
@@ -220,7 +220,7 @@ void object_movement_processor::keyboard_input(int key,
     }
 }
 
-void object_movement_processor::process_movements()
+void Movement_processor::process_movements()
 {
     /*
      * Process keyboard movements
@@ -237,7 +237,7 @@ void object_movement_processor::process_movements()
     object_tracking.process_tracking();
 }
 
-void object_movement_processor::register_movable_object(mov_obj_ptr obj,
+void Movement_processor::register_movable_object(Movable::pointer obj,
                                                         const key_mapping_vec& key_mapping)
 {
     movement_mapping& mov_setup = obj->get_movement_setup();
@@ -248,7 +248,7 @@ void object_movement_processor::register_movable_object(mov_obj_ptr obj,
     }
 }
 
-void object_movement_processor::register_movable_object(mov_obj_ptr obj,
+void Movement_processor::register_movable_object(Movable::pointer obj,
                                                         const mouse_mapping_vec &mapping)
 {
     movement_mapping& mov_setup = obj->get_movement_setup();
@@ -259,14 +259,14 @@ void object_movement_processor::register_movable_object(mov_obj_ptr obj,
     }
 }
 
-void object_movement_processor::unregister_movable_object(mov_obj_ptr obj)
+void Movement_processor::unregister_movable_object(Movable::pointer obj)
 {
     for( auto& elem : keyb_mapping ) {
         elem.second.erase(obj);
     }
 }
 
-void object_movement_processor::register_speed_selectors(mov_obj_ptr obj,
+void Movement_processor::register_speed_selectors(Movable::pointer obj,
                                                          const speed_selector &selector)
 {
     for( auto& elem : selector )
@@ -280,7 +280,7 @@ void object_movement_processor::register_speed_selectors(mov_obj_ptr obj,
  * a trigger for a speed selection. If that's the case,
  * the modify the current selector accordingly
  */
-void object_movement_processor::process_speed_selectors( key_code_t pressed_key )
+void Movement_processor::process_speed_selectors( key_code_t pressed_key )
 {
     /*
      * Anybody registered a selector for this key?
@@ -293,7 +293,7 @@ void object_movement_processor::process_speed_selectors( key_code_t pressed_key 
          * for this key
          */
         for( auto& objects : it->second ) {
-            mov_obj_ptr obj = objects.first;
+            Movable::pointer obj = objects.first;
             movement_mapping& mov_setup = obj->get_movement_setup();
             /*
              * Any speed selector corresponding to the
@@ -314,12 +314,12 @@ void object_movement_processor::process_speed_selectors( key_code_t pressed_key 
 }
 
 
-tracking_processor &object_movement_processor::tracking()
+Tracking_processor &Movement_processor::tracking()
 {
     return object_tracking;
 }
 
-void object_movement_processor::process_impl_keyboard()
+void Movement_processor::process_impl_keyboard()
 {
     for( int key = 0 ; key < key_status.size() ; ++key ) {
         if( key_status[ key ] == key_status_t::pressed ) {
@@ -340,7 +340,7 @@ void object_movement_processor::process_impl_keyboard()
     }
 }
 
-void object_movement_processor::process_impl_mouse()
+void Movement_processor::process_impl_mouse()
 {
     for( auto& movement : mouse_status ) {
         if( movement.second != 0 ) {
@@ -365,42 +365,42 @@ void object_movement_processor::process_impl_mouse()
     }
 }
 
-void object_movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
+void Movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
                                                         GLfloat speed_amount)
 {
     for( auto& movable : dir_map ) {
-        mov_obj_ptr obj = movable.first;
+        Movable::pointer obj = movable.first;
         movement_mapping& mov_setup = obj->get_movement_setup();
         for( auto& dir : movable.second ) {
             auto sp_setup = mov_setup[ dir ];
             GLfloat speed = sp_setup.speed[ sp_setup.current_speed ] * speed_amount;
             switch( dir ) {
-            case mov_direction::left:
-            case mov_direction::right:
-            case mov_direction::top:
-            case mov_direction::down:
-            case mov_direction::forward:
-            case mov_direction::backward:
+            case movement::direction::left:
+            case movement::direction::right:
+            case movement::direction::top:
+            case movement::direction::down:
+            case movement::direction::forward:
+            case movement::direction::backward:
                 obj->move(dir, speed);
                 break;
-            case mov_direction::yaw_inc:
+            case movement::direction::yaw_inc:
                 speed *= -1;
-            case mov_direction::yaw_dec:
-                obj->modify_angle(mov_angles::yaw, speed);
+            case movement::direction::yaw_dec:
+                obj->modify_angle(movement::angle::yaw, speed);
                 break;
-            case mov_direction::pitch_dec:
+            case movement::direction::pitch_dec:
                 speed *= -1;
-            case mov_direction::pitch_inc:
-                obj->modify_angle(mov_angles::pitch, speed);
+            case movement::direction::pitch_inc:
+                obj->modify_angle(movement::angle::pitch, speed);
                 break;
-            case mov_direction::roll_dec:
+            case movement::direction::roll_dec:
                 speed *= -1;
-            case mov_direction::roll_inc:
-                obj->modify_angle(mov_angles::roll, speed);
+            case movement::direction::roll_inc:
+                obj->modify_angle(movement::angle::roll, speed);
                 break;
-            case mov_direction::rotate_right:
+            case movement::direction::rotate_right:
                 speed *= -1;
-            case mov_direction::rotate_left:
+            case movement::direction::rotate_left:
                 obj->rotate_around( speed );
                 break;
             default:
@@ -415,8 +415,8 @@ void object_movement_processor::trigger_proper_movement(obj_dir_map& dir_map,
 /// tracking_processor implementation
 /////////////////////////////////////
 
-bool tracking_processor::new_tracking(mov_obj_ptr target,
-                                      mov_obj_ptr object,
+bool Tracking_processor::new_tracking(Movable::pointer target,
+                                      Movable::pointer object,
                                       GLfloat distance_threashold,
                                       bool smooth_tracking)
 {
@@ -439,7 +439,7 @@ bool tracking_processor::new_tracking(mov_obj_ptr target,
     return ret.second;
 }
 
-void tracking_processor::process_tracking()
+void Tracking_processor::process_tracking()
 {
     for( auto& entry : tracking_data ) {
         auto target_pos = entry.second.target->get_position();
@@ -460,7 +460,7 @@ void tracking_processor::process_tracking()
     }
 }
 
-GLfloat tracking_processor::get_dist_from_target(mov_obj_ptr object)
+GLfloat Tracking_processor::get_dist_from_target(Movable::pointer object)
 {
     auto it = tracking_data.find(object);
     if( it != tracking_data.end() ) {

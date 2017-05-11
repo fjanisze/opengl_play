@@ -9,8 +9,8 @@
 namespace scene
 {
 
-using movable::mov_angles;
-using movable::mov_direction;
+using scene::movement::angle;
+using scene::movement::direction;
 
 /*
  * Available camera working modes
@@ -21,17 +21,17 @@ enum class camera_mode {
 };
 
 
-class Camera : public movable::movable_object
+class Camera : public scene::Movable
 {
 public:
     using pointer = std::shared_ptr< Camera >;
     Camera(glm::vec3 position,glm::vec3 target);
     void update_cam_view();
-    bool move(mov_direction direction, GLfloat amount) override;
-    void modify_angle(mov_angles angle,GLfloat amount) override;
+    bool move(movement::direction direction, GLfloat amount) override;
+    void modify_angle(movement::angle angle,GLfloat amount) override;
     glm::mat4 get_view();
     void set_position(const glm::vec3& pos) override;
-    void set_target(movable::mov_obj_ptr object);
+    void set_target(scene::Movable::pointer object);
 
     glm::vec3 get_camera_front();
     /*
