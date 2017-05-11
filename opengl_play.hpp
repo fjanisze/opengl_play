@@ -9,7 +9,6 @@
 #include <models.hpp>
 #include <terrains.hpp>
 #include <types.hpp>
-#include <map_entities.hpp>
 #include <framebuffers.hpp>
 #include <units_manager.hpp>
 
