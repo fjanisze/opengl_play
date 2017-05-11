@@ -20,8 +20,16 @@ public:
      */
     Unit_model_data::container buildable_units();
 
+    /*
+     * Return a new instance of a buildable
+     * unit, the provided id must be for one
+     * of the available model
+     */
     Unit::pointer create_unit( uint64_t id );
 
+    /*
+     * Place a unit on a given terrain lot
+     */
     bool place_unit( Unit::pointer unit,
                      game_terrains::Terrain_lot::pointer lot );
 private:
