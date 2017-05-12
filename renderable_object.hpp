@@ -318,6 +318,7 @@ private:
     scene::Camera::pointer camera;
     lighting::lighting_pointer game_lights;
     buffers::Framebuffers::pointer framebuffers;
+    scene::Frustum::pointer frustum;
 
     types::win_size viewport_size;
     perspective_type cur_perspective;

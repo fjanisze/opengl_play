@@ -60,6 +60,12 @@ Core_renderer::Core_renderer(const types::win_size &window,
                 window );
     game_lights = std::make_shared< lighting::Core_lighting >();
     model_picking = factory< Model_picking >::create( shader, framebuffers );
+
+    frustum = factory< scene::Frustum >::create( camera,
+                            45.0f,
+                            (GLfloat)window.width / (GLfloat)window.height,
+                            1.0f,
+                            100.0f);
 }
 
 renderable_id Core_renderer::add_renderable( Renderable::pointer object )
@@ -101,6 +107,7 @@ long Core_renderer::render()
 {
     long num_of_render_op{ 0 };
     game_lights->calculate_lighting( shader );
+    frustum->update();
     glm::mat4 view = camera->get_view();
 
     bool def_view_matrix_loaded{ true };
@@ -113,6 +120,7 @@ long Core_renderer::render()
      * the second time in order to update the mouse picking
      * data
      */
+    bool inside = false;
     for( int rendr_loop{1} ; rendr_loop <= 2 ; ++rendr_loop )
     {
         for( rendr_ptr cur = rendering_head ;
@@ -159,8 +167,21 @@ long Core_renderer::render()
                 }
 
                 const glm::mat4& model = cur->object->rendering_data.model_matrix;
-                const glm::vec3 pos(glm::normalize(glm::vec3(model[3].x,model[3].y,model[3].z)));
+                const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
 
+                if( cur->id == 102 ) {
+                    bool test = frustum->is_inside( pos );
+                    if( test != inside ) {
+                        inside = test;
+
+                        if( inside ) {
+                            std::cout<<"Inside: "<<cur->id<<std::endl;
+                        } else {
+                            std::cout<<"Outside: "<<cur->id<<std::endl;
+                        }
+                    }
+
+                }
 
                 glUniform4f(color_loc,
                             color.r,

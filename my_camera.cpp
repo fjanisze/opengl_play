@@ -270,11 +270,10 @@ Frustum::Frustum(Camera::pointer cam,
 void Frustum::update()
 {
     //Height / Width calculations
-    const GLfloat sin_half_fov = glm::sin( fov / 2 );
-    const GLfloat cos_half_fov = glm::cos( fov / 2 );
-    geometry.far_height = 2 * sin_half_fov * geometry.far_distance / cos_half_fov;
+    const GLfloat tan_half_fov = glm::tan( fov / 2.0f );
+    geometry.far_height = 2.0f * tan_half_fov * geometry.far_distance;
     geometry.far_width = geometry.far_height * ratio;
-    geometry.near_height = 2 * sin_half_fov * geometry.near_distance / cos_half_fov;
+    geometry.near_height = 2.0f * tan_half_fov * geometry.near_distance;
     geometry.near_width = geometry.near_height * ratio;
 
     auto cam_vecs = camera->get_vectors();
@@ -282,16 +281,17 @@ void Frustum::update()
 
     //Calculate the relevant frustum points and planes
 
-    //FAR plane
+    //FAR points
     const types::point far_val_h{ cam_vecs.up * geometry.far_height / 2.0f };
     const types::point far_val_w{ cam_vecs.right * geometry.far_width / 2.0f };
     geometry.far_center = cam_pos + cam_vecs.front * geometry.far_distance;
+    LOG3("Center: ", geometry.far_center);
     geometry.far_top_left = geometry.far_center + far_val_h - far_val_w;
     geometry.far_top_right = geometry.far_center + far_val_h + far_val_w;
     geometry.far_bottom_left = geometry.far_center - far_val_h - far_val_w;
     geometry.far_bottom_right = geometry.far_center - far_val_h + far_val_w;
 
-    //NEAR plane
+    //NEAR points
     const types::point near_val_h{ cam_vecs.up * geometry.near_height / 2.0f };
     const types::point near_val_w{ cam_vecs.right * geometry.near_width / 2.0f };
     geometry.near_center = cam_pos + cam_vecs.front * geometry.near_distance;
@@ -299,6 +299,59 @@ void Frustum::update()
     geometry.near_top_right = geometry.near_center + near_val_h + near_val_w;
     geometry.near_bottom_left = geometry.near_center - near_val_h - near_val_w;
     geometry.near_bottom_right = geometry.near_center - near_val_h + near_val_w;
+
+    //Planes
+    //TOP
+    geometry.planes[ 0 ].create( geometry.near_top_right,
+                                 geometry.near_top_left,
+                                 geometry.far_top_right );
+    //BOTTOM
+    geometry.planes[ 1 ].create( geometry.near_bottom_left,
+                                 geometry.near_bottom_right,
+                                 geometry.far_bottom_right );
+    //LEFT
+    geometry.planes[ 2 ].create( geometry.near_top_left,
+                                 geometry.near_bottom_left,
+                                 geometry.far_bottom_left );
+    //RIGHT
+    geometry.planes[ 3 ].create( geometry.near_bottom_right,
+                                 geometry.near_top_right,
+                                 geometry.far_bottom_right );
+    //NEAR PLANE
+    geometry.planes[ 4 ].create( geometry.near_top_left,
+                                 geometry.near_top_right,
+                                 geometry.near_bottom_right );
+
+    //FAR PLANE
+    geometry.planes[ 5 ].create( geometry.far_top_right,
+                                 geometry.far_top_left,
+                                 geometry.far_bottom_left );
+}
+
+bool Frustum::is_inside( const point &pt ) const
+{
+    for( int i{ 0 } ; i < 6 ; ++i ) {
+        if( geometry.planes[ i ].distance( pt ) < 0 ) {
+            std::cout<<"PLANE: "<<i<<std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+void Plane::create( const types::point p0,
+                    const types::point p1,
+                    const types::point p2 )
+{
+    const types::vector n = glm::normalize( glm::cross( p1 - p0, p2 - p0 ) );
+    const GLfloat coef_d = -glm::dot( n, p0 );
+    plane_coef = glm::vec4( n, coef_d );
+}
+
+GLfloat Plane::distance(const point &pt) const
+{
+    return plane_coef.x * pt.x + plane_coef.y * pt.y +
+           plane_coef.z * pt.z + plane_coef.w;
 }
 
 }

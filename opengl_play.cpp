@@ -354,14 +354,6 @@ void opengl_ui::enter_main_loop()
     auto ref_time = std::chrono::system_clock::now();
     int  current_fps = 0;
 
-    scene::Frustum frustum( camera,
-                            45.0f,
-                            (GLfloat)win_w / (GLfloat)win_h,
-                            1.0f,
-                            100.0f);
-
-    frustum.update();
-
     LOG2("Entering main loop!");
     std::string current_fps_string = "0 fps";
     long num_of_rendering_cycles{ 0 };

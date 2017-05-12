@@ -65,6 +65,20 @@ private:
     GLfloat rotation_angle;
 };
 
+//TODO: Place in the right.. place
+class Plane
+{
+public:
+    Plane() = default;
+    void create( const point p0,
+                 const point p1,
+                 const point p2);
+    GLfloat distance( const point& pt ) const;
+private:
+    //Ax + By + Cz + D = 0, plane_coef contains A,B..
+    glm::vec4 plane_coef;
+};
+
 /*
  * Maintain the information about
  * the shape and size of the frustun
@@ -80,7 +94,7 @@ struct Frustum_geometry
     GLfloat near_distance;
 
     /*
-     * Frustum planes
+     * Frustum points
      */
     types::point far_center;
     types::point far_top_left;
@@ -93,6 +107,11 @@ struct Frustum_geometry
     types::point near_top_right;
     types::point near_bottom_left;
     types::point near_bottom_right;
+
+    /*
+     * Frustum planes
+     */
+    Plane planes[6];
 
     Frustum_geometry() = default;
 };
@@ -111,6 +130,10 @@ public:
      * the geometric data
      */
     void update();
+    /*
+     * Return true if the point is inside the frustum
+     */
+    bool is_inside( const types::point& pt ) const;
 private:
     Camera::pointer camera;
     Frustum_geometry geometry;
