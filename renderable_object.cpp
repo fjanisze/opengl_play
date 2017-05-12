@@ -157,13 +157,19 @@ long Core_renderer::render()
                     color *= 1.4f;
                     color.a = 1.0f;
                 }
+
+                const glm::mat4& model = cur->object->rendering_data.model_matrix;
+                const glm::vec3 pos(glm::normalize(glm::vec3(model[3].x,model[3].y,model[3].z)));
+
+
                 glUniform4f(color_loc,
                             color.r,
                             color.g,
                             color.b,
                             color.a);
 
-                cur->object->render( shader );
+               cur->object->render( shader );
+
             } else {
                 model_picking->update( cur->object );
             }

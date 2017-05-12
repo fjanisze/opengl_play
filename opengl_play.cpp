@@ -213,6 +213,7 @@ opengl_ui::opengl_ui(int win_width,
     projection = glm::perspective(glm::radians(45.0f),
                                   (GLfloat)win_w / (GLfloat)win_h,
                                   1.0f, 100.0f);
+
     glm::mat4 def_ortho = glm::ortho(0.0,
                             (double)win_w,
                             0.0,
@@ -379,10 +380,12 @@ void opengl_ui::enter_main_loop()
                 pitch = camera->get_pitch(),
                 roll = camera->get_roll();
         glm::vec3 pos = camera->get_position();
+        uint64_t selected = renderer->get_selected_model();
 
         std::stringstream ss;
         ss <<current_fps_string<<" - "<<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
-          <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z<<", rendr cycles:"<<num_of_rendering_cycles;
+          <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z<<", rendr cycles:"
+          <<num_of_rendering_cycles<<", sel: "<<selected;
 
         info_string->set_text(ss.str());
 
