@@ -79,6 +79,7 @@ public:
     void rotate_around(GLfloat amount) override;
 private:
     void update_angles();
+    void recalculate_vectors();
 private:
     Plane xy_plane;
     Camera_vectors vectors;
@@ -144,9 +145,12 @@ public:
      */
     void update();
     /*
-     * Return true if the point is inside the frustum
+     * if the returned value is positive, the
+     * point is inside the frustum. otherwise outside.
+     * The returned value represents the min distance
+     * of the point from a frustum plane
      */
-    bool is_inside( const types::point& pt ) const;
+    GLfloat is_inside( const types::point& pt ) const;
 private:
     Camera::pointer camera;
     Frustum_geometry geometry;

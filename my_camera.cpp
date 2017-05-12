@@ -11,16 +11,11 @@ Camera::Camera(glm::vec3 position, glm::vec3 target) :
     set_position( position );
     update_angles();
 
-    vectors.up = glm::vec3(0.0f,0.0f,1.0f);
-    vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up) );
+    const glm::vec3 world_up = glm::vec3(0.0f,0.0f,1.0f);
+    vectors.right = glm::normalize( glm::cross( vectors.front, world_up ) );
+    vectors.up = glm::normalize( glm::cross( vectors.right, vectors.front ) );
 
     update_view_matrix();
-    /*
-     * Let's move foward always in the direction
-     * of the map terrain. vectors.front will change
-     * the attitude of the camera
-     */
-    vectors.forward = glm::vec3(0.0,0.0,-1.0);
 
     const GLfloat distance = glm::distance( target,
                                             glm::vec3( position.x,
@@ -39,7 +34,11 @@ Camera::Camera(glm::vec3 position, glm::vec3 target) :
                      types::point(10.0f,-10.0f,0.0f) );
 }
 
-
+/*
+ * When running in 'eagle mode' the Y axis
+ * is perpendicular to the 'ground'. To move
+ * toward the ground the front vector is used.
+ */
 bool Camera::eagle_mode(bool is_set)
 {
     bool old = ( mode == camera_mode::eagle_mode );
@@ -50,19 +49,8 @@ bool Camera::eagle_mode(bool is_set)
          */
         update_angles();
         mode = camera_mode::eagle_mode;
-        /*
-         * When running in 'eagle mode' the Y axis
-         * is perpendicular to the 'ground'. To move
-         * toward the ground the front vector is used.
-         */
-        vectors.up = glm::normalize( glm::vec3(
-                            glm::sin( glm::radians( current_yaw ) ), //x
-                            glm::cos( glm::radians( current_yaw ) ), //y
-                            0.0) ); //z
+        recalculate_vectors();
 
-
-        vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
-        vectors.right.z = 0;
         update_view_matrix();
     } else {
         mode = camera_mode::space_mode;
@@ -107,12 +95,7 @@ void Camera::rotate_around(GLfloat amount)
      * we point in the right direction
     */
     vectors.front = glm::normalize( target - new_pos );
-
-    vectors.up = glm::normalize( glm::vec3( target.x,
-                                            target.y,
-                                            cam_pos.z) - new_pos );
-
-    vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
+    recalculate_vectors();
 
     set_position( new_pos );
     update_angles();
@@ -195,11 +178,7 @@ void Camera::modify_angle(movement::angle angle,GLfloat amount)
 
     vectors.front = glm::normalize( vectors.front );
 
-    vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
-
-    if( mode == camera_mode::space_mode ) {
-        vectors.up = glm::normalize( glm::cross( glm::vec3(0.0,1.0,0.0), vectors.front ) );
-    }
+    recalculate_vectors();
 
     update_view_matrix();
 }
@@ -213,6 +192,32 @@ void Camera::update_angles()
     current_pitch = glm::degrees( glm::asin( vectors.front.z ) );
     current_yaw = glm::degrees( glm::atan( vectors.front.x, vectors.front.y) );
     current_yaw = current_yaw > 0 ? current_yaw : 360 + current_yaw;
+}
+
+/*
+ * Recalculate the up and right vector
+ * on the base of the current front vector
+ */
+void Camera::recalculate_vectors()
+{
+    if( mode == camera_mode::eagle_mode ) {
+        const types::point position = get_position();
+        const types::point target = xy_plane.intersection( vectors.front, position );
+
+        vectors.up = glm::normalize( glm::vec3( target.x,
+                                                target.y,
+                                                position.z ) - position );
+
+
+        vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
+    } else {
+        vectors.right = glm::normalize( glm::cross(
+                                            vectors.front,
+                                            glm::vec3(0.0f,0.0f,1.0f)
+                                             ) );
+        vectors.up = glm::normalize( glm::cross( vectors.right,
+                                                 vectors.front ) );
+    }
 }
 
 glm::mat4 Camera::get_view()
@@ -268,8 +273,15 @@ void Frustum::update()
 
     //Calculate the relevant frustum points and planes
 
+    /*
+     * We need to calculate the 'real' up vector,
+     * the one provided by the camera might have
+     * been altered to permit specific camera movements
+     * (see eagle mode)
+     */
+    const glm::vec3 up_vector = glm::cross( cam_vecs.right, cam_vecs.front );
     //FAR points
-    const types::point far_val_h{ cam_vecs.up * geometry.far_height / 2.0f };
+    const types::point far_val_h{ up_vector * geometry.far_height / 2.0f };
     const types::point far_val_w{ cam_vecs.right * geometry.far_width / 2.0f };
     geometry.far_center = cam_pos + cam_vecs.front * geometry.far_distance;
     geometry.far_top_left = geometry.far_center + far_val_h - far_val_w;
@@ -278,7 +290,7 @@ void Frustum::update()
     geometry.far_bottom_right = geometry.far_center - far_val_h + far_val_w;
 
     //NEAR points
-    const types::point near_val_h{ cam_vecs.up * geometry.near_height / 2.0f };
+    const types::point near_val_h{ up_vector * geometry.near_height / 2.0f };
     const types::point near_val_w{ cam_vecs.right * geometry.near_width / 2.0f };
     geometry.near_center = cam_pos + cam_vecs.front * geometry.near_distance;
     geometry.near_top_left = geometry.near_center + near_val_h - near_val_w;
@@ -314,14 +326,18 @@ void Frustum::update()
                                  geometry.far_bottom_left );
 }
 
-bool Frustum::is_inside( const point &pt ) const
+GLfloat Frustum::is_inside( const point &pt ) const
 {
+    GLfloat min_dist{ 0 };
     for( int i{ 0 } ; i < 6 ; ++i ) {
-        if( geometry.planes[ i ].distance( pt ) < 0 ) {
-            return false;
+        const GLfloat dist = geometry.planes[ i ].distance( pt );
+        if( dist < 0 ) {
+            return dist;
+        } else {
+            min_dist = glm::min( min_dist, dist );
         }
     }
-    return true;
+    return min_dist;
 }
 
 void Plane::create( const types::point p0,

@@ -136,7 +136,14 @@ long Core_renderer::render()
             const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
             const bool is_camera_space = cur->object->view_configuration.is_camera_space();
 
-            if( false == is_camera_space && false == frustum->is_inside( pos ) ) {
+            /*
+             * The value of is_inside is used to tune the amount of objects
+             * rendered. The problem is that the rendered is stupid, to consider
+             * an object out of the frustum is sufficient that the border point
+             * if out of it! To avoid 'holes' of non rendered object on the border
+             * of the frustum the renderer render a little behing the frustum planes.
+             */
+            if( false == is_camera_space && frustum->is_inside( pos ) < -2.0f ) {
                 continue;
             }
 
