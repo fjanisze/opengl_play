@@ -73,10 +73,21 @@ public:
     void create( const point p0,
                  const point p1,
                  const point p2);
+
+    /*
+     * Return the intersection point of
+     * the vector with the plane
+     */
+    types::point intersection(const glm::vec3& direction,
+            const types::point& position ) const;
+    /*
+     * Return the distance of the point pt
+     * from the plane
+     */
     GLfloat distance( const point& pt ) const;
 private:
     //Ax + By + Cz + D = 0, plane_coef contains A,B..
-    glm::vec4 plane_coef;
+    glm::vec4 coefs;
 };
 
 /*

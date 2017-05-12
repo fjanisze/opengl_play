@@ -11,7 +11,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 target) :
     set_position( position );
     update_angles();
 
-    vectors.up = glm::vec3( 0.0, 0.0, cos( glm::degrees( current_pitch ) ) );//Point upward
+    vectors.up = glm::vec3(0.0f,0.0f,1.0f);
     vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up) );
 
     update_view_matrix();
@@ -22,8 +22,16 @@ Camera::Camera(glm::vec3 position, glm::vec3 target) :
      */
     vectors.forward = glm::vec3(0.0,0.0,-1.0);
 
-    //Will be initialized when needed.
-    rotation_angle = -1;
+    const GLfloat distance = glm::distance( target,
+                                            glm::vec3( position.x,
+                                                       position.y,
+                                                       0.0f ) );
+    rotation_angle = glm::degrees( glm::acos( position.x / distance ) );
+    if( position.y < 0 ) {
+        rotation_angle = 360 - rotation_angle;
+    }
+    LOG3("Initial value of the rotation angle ",
+         rotation_angle);
 }
 
 
@@ -37,13 +45,18 @@ bool Camera::eagle_mode(bool is_set)
          */
         update_angles();
         mode = camera_mode::eagle_mode;
-        vectors.up = glm::vec3(
-                    sin( glm::radians( current_yaw ) ), //x
-                    (current_position.y < 0 ? 1 : +1 ) * cos( glm::radians( current_yaw ) ), //y
-                    0.0); //z
+        /*
+         * When running in 'eagle mode' the Y axis
+         * is perpendicular to the 'ground'. To move
+         * toward the ground the front vector is used.
+         */
+        vectors.up = glm::normalize( glm::vec3(
+                            glm::sin( glm::radians( current_yaw ) ), //x
+                            glm::cos( glm::radians( current_yaw ) ), //y
+                            0.0) ); //z
 
-        vectors.right = glm::normalize( glm::cross( vectors.front,
-                                                glm::vec3(0.0,0.0,1.0)) );
+
+        vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
         vectors.right.z = 0;
         update_view_matrix();
     } else {
@@ -64,7 +77,7 @@ void Camera::rotate_around(GLfloat amount)
      * the camera is looking at: vectors.front
      * TODO: Improve..
      */
-    glm::vec3 cam_pos = get_position();
+    const glm::vec3 cam_pos = get_position();
     glm::vec3 target = cam_pos;
     GLfloat l = 0,
             r = 1024; //Hopefully is big enough!
@@ -84,19 +97,10 @@ void Camera::rotate_around(GLfloat amount)
     //make sure it's zero and not some very small value :)
     target.z = 0.0f;
     //When rotating the distance do not change
-    GLfloat distance = glm::distance( glm::vec3(cam_pos.x,cam_pos.y,0.0),
-                                      target );
+    const GLfloat distance = glm::distance(
+                glm::vec3(cam_pos.x,cam_pos.y,0.0f),
+                target );
 
-    //Eventually set the initial rotation angle
-    if( rotation_angle < 0 ) {
-        glm::vec3 deltas = glm::vec3(cam_pos.x,cam_pos.y,cam_pos.z) - target;
-        rotation_angle = glm::degrees( std::acos( deltas.x / distance ) );
-        if( cam_pos.y < 0 ) {
-            rotation_angle = 360 - rotation_angle;
-        }
-        LOG3("Initial value of the rotation angle ",
-             rotation_angle);
-    }
     //Make sure that 0<rotation_angle<360
     rotation_angle += amount;
     if( rotation_angle >= 359.99 ) {
@@ -109,11 +113,10 @@ void Camera::rotate_around(GLfloat amount)
      * Calculate the new position on the base
      * of the amount of rotation
      */
-    GLfloat angle = glm::radians( rotation_angle );
 
     glm::vec3 new_pos(
-                target.x + cos( angle ) * distance,
-                target.y + sin( angle ) * distance,
+                target.x + glm::cos( glm::radians( rotation_angle ) ) * distance,
+                target.y + glm::sin( glm::radians( rotation_angle ) ) * distance,
                 cam_pos.z
                 );
     /*
@@ -122,11 +125,15 @@ void Camera::rotate_around(GLfloat amount)
     */
     vectors.front = glm::normalize( target - new_pos );
 
-    vectors.up = vectors.front;
-    vectors.up.z = 0;
+    vectors.up = glm::normalize(
+                glm::vec3(
+                    glm::sin( glm::radians( current_yaw ) ), //x
+                    glm::cos( glm::radians( current_yaw ) ), //y
+                    0.0) ); //z
 
     vectors.right = glm::normalize( glm::cross( vectors.front,
-                                            glm::vec3( 0.0, 0.0, 1.0 ) ) );
+                                            vectors.up ) );
+    vectors.right.z = 0.0f;
 
     set_position( new_pos );
     update_angles();
@@ -155,13 +162,13 @@ bool Camera::move(movement::direction direction, GLfloat amount)
         break;
     case movement::direction::forward:
         if( current_position.z > 2 ) {
-            current_position += vectors.forward * amount;
+            current_position += vectors.front * amount;
             modify_angle( movement::angle::pitch, 0.15 );
         }
         break;
     case movement::direction::backward:
         if( current_position.z < 30 ) {
-            current_position -= vectors.forward * amount;
+            current_position -= vectors.front * amount;
             modify_angle( movement::angle::pitch, -0.15 );
         }
         break;
@@ -211,7 +218,7 @@ void Camera::modify_angle(movement::angle angle,GLfloat amount)
     vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
 
     if( mode == camera_mode::space_mode ) {
-        vectors.up = glm::normalize( glm::cross( vectors.right, vectors.front ) );
+        vectors.up = glm::normalize( glm::cross( glm::vec3(0.0,1.0,0.0), vectors.front ) );
     }
 
     update_view_matrix();
@@ -223,8 +230,8 @@ void Camera::modify_angle(movement::angle angle,GLfloat amount)
  */
 void Camera::update_angles()
 {
-    current_pitch = glm::degrees( asin( vectors.front.z ) );
-    current_yaw = glm::degrees( atan2( vectors.front.x, vectors.front.y) );
+    current_pitch = glm::degrees( glm::asin( vectors.front.z ) );
+    current_yaw = glm::degrees( glm::atan( vectors.front.x, vectors.front.y) );
     current_yaw = current_yaw > 0 ? current_yaw : 360 + current_yaw;
 }
 
@@ -343,13 +350,33 @@ void Plane::create( const types::point p0,
 {
     const types::vector n = glm::normalize( glm::cross( p1 - p0, p2 - p0 ) );
     const GLfloat coef_d = -glm::dot( n, p0 );
-    plane_coef = glm::vec4( n, coef_d );
+    coefs = glm::vec4( n, coef_d );
+}
+
+types::point Plane::intersection(
+        const glm::vec3 &direction,
+        const point &position ) const
+{
+    const GLfloat t_value = - //Mind the -
+                      ( coefs.x * position.x +
+                        coefs.y * position.y +
+                        coefs.z * position.z +
+                        coefs.w )
+                        /
+                       ( coefs.x * direction.x +
+                         coefs.y * direction.y +
+                         coefs.z * direction.z );
+    return types::point(
+                position.x + direction.x * t_value,
+                position.y + direction.y * t_value,
+                position.z + direction.z * t_value
+                );
 }
 
 GLfloat Plane::distance(const point &pt) const
 {
-    return plane_coef.x * pt.x + plane_coef.y * pt.y +
-           plane_coef.z * pt.z + plane_coef.w;
+    return coefs.x * pt.x + coefs.y * pt.y +
+           coefs.z * pt.z + coefs.w;
 }
 
 }
