@@ -5,6 +5,7 @@
 #include <movable_object.hpp>
 #include <logger/logger.hpp>
 #include <optional>
+#include <types.hpp>
 
 namespace scene
 {
@@ -40,8 +41,7 @@ public:
     void modify_angle(movement::angle angle,GLfloat amount) override;
     glm::mat4 get_view();
     void set_position(const glm::vec3& pos) override;
-    void set_target(scene::Movable::pointer object);
-
+    const Camera_vectors& get_vectors();
     glm::vec3 get_camera_front();
     /*
      * When set the camera will maintain a fixed
@@ -69,13 +69,53 @@ private:
  * Maintain the information about
  * the shape and size of the frustun
  */
+
+struct Frustum_geometry
+{
+    GLfloat far_height;
+    GLfloat far_width;
+    GLfloat far_distance;
+    GLfloat near_height;
+    GLfloat near_width;
+    GLfloat near_distance;
+
+    /*
+     * Frustum planes
+     */
+    types::point far_center;
+    types::point far_top_left;
+    types::point far_top_right;
+    types::point far_bottom_left;
+    types::point far_bottom_right;
+
+    types::point near_center;
+    types::point near_top_left;
+    types::point near_top_right;
+    types::point near_bottom_left;
+    types::point near_bottom_right;
+
+    Frustum_geometry() = default;
+};
+
 class Frustum
 {
 public:
     using pointer = std::shared_ptr< Frustum >;
-    explicit Frustum( Camera::pointer cam );
+    explicit Frustum( Camera::pointer cam ,
+                      const GLfloat fov_angle,
+                      const GLfloat aspect_ratio,
+                      const GLfloat near_plane,
+                      const GLfloat far_plane );
+    /*
+     * Update the frustum information and update
+     * the geometric data
+     */
+    void update();
 private:
     Camera::pointer camera;
+    Frustum_geometry geometry;
+    GLfloat fov;
+    GLfloat ratio;
 };
 
 }

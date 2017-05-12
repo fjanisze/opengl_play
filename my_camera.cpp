@@ -241,12 +241,64 @@ void Camera::set_position(const glm::vec3& pos)
 
 const Camera_vectors &Camera::get_vectors()
 {
-    return vector;
+    return vectors;
 }
 
 glm::vec3 Camera::get_camera_front()
 {
     return vectors.front;
+}
+
+//////////////////////////////////////
+/// Frustum implementation
+/////////////////////////////////////
+
+Frustum::Frustum(Camera::pointer cam,
+                 const GLfloat fov_angle,
+                 const GLfloat aspect_ratio,
+                 const GLfloat near_plane,
+                 const GLfloat far_plane) :
+    camera{ cam },
+    fov{ glm::radians( fov_angle ) },
+    ratio{ aspect_ratio }
+{
+    LOG3("Creating a new Frustum object!");
+    geometry.far_distance = far_plane;
+    geometry.near_distance = near_plane;
+}
+
+void Frustum::update()
+{
+    //Height / Width calculations
+    const GLfloat sin_half_fov = glm::sin( fov / 2 );
+    const GLfloat cos_half_fov = glm::cos( fov / 2 );
+    geometry.far_height = 2 * sin_half_fov * geometry.far_distance / cos_half_fov;
+    geometry.far_width = geometry.far_height * ratio;
+    geometry.near_height = 2 * sin_half_fov * geometry.near_distance / cos_half_fov;
+    geometry.near_width = geometry.near_height * ratio;
+
+    auto cam_vecs = camera->get_vectors();
+    const types::point cam_pos = camera->get_position();
+
+    //Calculate the relevant frustum points and planes
+
+    //FAR plane
+    const types::point far_val_h{ cam_vecs.up * geometry.far_height / 2.0f };
+    const types::point far_val_w{ cam_vecs.right * geometry.far_width / 2.0f };
+    geometry.far_center = cam_pos + cam_vecs.front * geometry.far_distance;
+    geometry.far_top_left = geometry.far_center + far_val_h - far_val_w;
+    geometry.far_top_right = geometry.far_center + far_val_h + far_val_w;
+    geometry.far_bottom_left = geometry.far_center - far_val_h - far_val_w;
+    geometry.far_bottom_right = geometry.far_center - far_val_h + far_val_w;
+
+    //NEAR plane
+    const types::point near_val_h{ cam_vecs.up * geometry.near_height / 2.0f };
+    const types::point near_val_w{ cam_vecs.right * geometry.near_width / 2.0f };
+    geometry.near_center = cam_pos + cam_vecs.front * geometry.near_distance;
+    geometry.near_top_left = geometry.near_center + near_val_h - near_val_w;
+    geometry.near_top_right = geometry.near_center + near_val_h + near_val_w;
+    geometry.near_bottom_left = geometry.near_center - near_val_h - near_val_w;
+    geometry.near_bottom_right = geometry.near_center - near_val_h + near_val_w;
 }
 
 }

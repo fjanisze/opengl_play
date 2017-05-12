@@ -11,6 +11,8 @@ using ray_t = std::pair<glm::vec3,glm::vec3>;
 
 using color = glm::vec4; //RGBA
 
+using point = glm::vec3;
+
 namespace internal
 {
 
