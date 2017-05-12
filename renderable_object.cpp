@@ -132,11 +132,19 @@ long Core_renderer::render()
                 continue;
             }
 
+            const glm::mat4& model = cur->object->rendering_data.model_matrix;
+            const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
+            const bool is_camera_space = cur->object->view_configuration.is_camera_space();
+
+            if( false == is_camera_space && false == frustum->is_inside( pos ) ) {
+                continue;
+            }
+
             switch_proper_perspective( cur->object );
 
             glUniformMatrix4fv(model_loc, 1, GL_FALSE,
                                glm::value_ptr( cur->object->rendering_data.model_matrix ) );
-            if( cur->object->view_configuration.is_camera_space() ) {
+            if( is_camera_space ) {
                 glUniformMatrix4fv(view_loc, 1,
                                    GL_FALSE, glm::value_ptr(
                                        cur->object->rendering_data.model_matrix
@@ -164,23 +172,6 @@ long Core_renderer::render()
                     cur->object->rendering_data.id ) {
                     color *= 1.4f;
                     color.a = 1.0f;
-                }
-
-                const glm::mat4& model = cur->object->rendering_data.model_matrix;
-                const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
-
-                if( cur->id == 102 ) {
-                    bool test = frustum->is_inside( pos );
-                    if( test != inside ) {
-                        inside = test;
-
-                        if( inside ) {
-                            std::cout<<"Inside: "<<cur->id<<std::endl;
-                        } else {
-                            std::cout<<"Outside: "<<cur->id<<std::endl;
-                        }
-                    }
-
                 }
 
                 glUniform4f(color_loc,

@@ -297,8 +297,8 @@ void opengl_ui::setup_scene()
 
 
     //Generate random terrain map
-    const int map_size_x{ 10 };
-    const int map_size_y{ 10 };
+    const int map_size_x{ 30 };
+    const int map_size_y{ 30 };
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );

@@ -285,7 +285,6 @@ void Frustum::update()
     const types::point far_val_h{ cam_vecs.up * geometry.far_height / 2.0f };
     const types::point far_val_w{ cam_vecs.right * geometry.far_width / 2.0f };
     geometry.far_center = cam_pos + cam_vecs.front * geometry.far_distance;
-    LOG3("Center: ", geometry.far_center);
     geometry.far_top_left = geometry.far_center + far_val_h - far_val_w;
     geometry.far_top_right = geometry.far_center + far_val_h + far_val_w;
     geometry.far_bottom_left = geometry.far_center - far_val_h - far_val_w;
@@ -332,7 +331,6 @@ bool Frustum::is_inside( const point &pt ) const
 {
     for( int i{ 0 } ; i < 6 ; ++i ) {
         if( geometry.planes[ i ].distance( pt ) < 0 ) {
-            std::cout<<"PLANE: "<<i<<std::endl;
             return false;
         }
     }
