@@ -30,8 +30,13 @@ Camera::Camera(glm::vec3 position, glm::vec3 target) :
     if( position.y < 0 ) {
         rotation_angle = 360 - rotation_angle;
     }
+
     LOG3("Initial value of the rotation angle ",
          rotation_angle);
+
+    xy_plane.create( types::point(10.0f,10.0f,0.0f),
+                     types::point(-10.0f,-10.0f,0.0f),
+                     types::point(10.0f,-10.0f,0.0f) );
 }
 
 
@@ -71,31 +76,9 @@ void Camera::rotate_around(GLfloat amount)
         WARN1("rotate_around with argument 0 make no sense!");
         return;
     }
-    /*
-     * Calculate the target position, it is
-     * the point at Z=0 in the direction where
-     * the camera is looking at: vectors.front
-     * TODO: Improve..
-     */
-    const glm::vec3 cam_pos = get_position();
-    glm::vec3 target = cam_pos;
-    GLfloat l = 0,
-            r = 1024; //Hopefully is big enough!
-    while( l < r ) {
-        GLfloat mid = ( r + l ) / 2;
-        target = cam_pos + vectors.front * mid;
-        if( glm::abs( target.z ) <= 0.00001 ) {
-            //Looks like 0 :)
-            break;
-        }
-        if( target.z > 0 ) {
-            l = mid + 0.0001;
-        } else {
-            r = mid - 0.0001;
-        }
-    }
-    //make sure it's zero and not some very small value :)
-    target.z = 0.0f;
+    const types::point cam_pos = get_position();
+    const types::point target = xy_plane.intersection( vectors.front, cam_pos );
+
     //When rotating the distance do not change
     const GLfloat distance = glm::distance(
                 glm::vec3(cam_pos.x,cam_pos.y,0.0f),
@@ -114,7 +97,7 @@ void Camera::rotate_around(GLfloat amount)
      * of the amount of rotation
      */
 
-    glm::vec3 new_pos(
+    const glm::vec3 new_pos(
                 target.x + glm::cos( glm::radians( rotation_angle ) ) * distance,
                 target.y + glm::sin( glm::radians( rotation_angle ) ) * distance,
                 cam_pos.z
@@ -125,18 +108,15 @@ void Camera::rotate_around(GLfloat amount)
     */
     vectors.front = glm::normalize( target - new_pos );
 
-    vectors.up = glm::normalize(
-                glm::vec3(
-                    glm::sin( glm::radians( current_yaw ) ), //x
-                    glm::cos( glm::radians( current_yaw ) ), //y
-                    0.0) ); //z
+    vectors.up = glm::normalize( glm::vec3( target.x,
+                                            target.y,
+                                            cam_pos.z) - new_pos );
 
-    vectors.right = glm::normalize( glm::cross( vectors.front,
-                                            vectors.up ) );
-    vectors.right.z = 0.0f;
+    vectors.right = glm::normalize( glm::cross( vectors.front, vectors.up ) );
 
     set_position( new_pos );
     update_angles();
+    update_view_matrix();
 }
 
 void Camera::update_view_matrix()

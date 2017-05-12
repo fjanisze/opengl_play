@@ -257,8 +257,8 @@ void opengl_ui::setup_scene()
         { GLFW_KEY_S, { scene::movement::direction::down, { 0.3 } } },
         { GLFW_KEY_A, { scene::movement::direction::left, { 0.3 } } },
         { GLFW_KEY_D, { scene::movement::direction::right, { 0.3 } } },
-        { GLFW_KEY_Q, { scene::movement::direction::rotate_left, { 10.0 } } },
-        { GLFW_KEY_E, { scene::movement::direction::rotate_right, { 10.0 } } },
+        { GLFW_KEY_Q, { scene::movement::direction::rotate_left, { 2.0 } } },
+        { GLFW_KEY_E, { scene::movement::direction::rotate_right, { 2.0 } } },
     };
 
 

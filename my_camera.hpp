@@ -13,6 +13,32 @@ namespace scene
 using scene::movement::angle;
 using scene::movement::direction;
 
+//TODO: Place in the right.. place
+class Plane
+{
+public:
+    Plane() = default;
+    void create( const point p0,
+                 const point p1,
+                 const point p2);
+
+    /*
+     * Return the intersection point of
+     * the vector with the plane
+     */
+    types::point intersection(const glm::vec3& direction,
+            const types::point& position ) const;
+    /*
+     * Return the distance of the point pt
+     * from the plane
+     */
+    GLfloat distance( const point& pt ) const;
+private:
+    //Ax + By + Cz + D = 0, plane_coef contains A,B..
+    glm::vec4 coefs;
+};
+
+
 /*
  * Available camera working modes
  */
@@ -54,6 +80,7 @@ public:
 private:
     void update_angles();
 private:
+    Plane xy_plane;
     Camera_vectors vectors;
     glm::mat4 view;
     camera_mode mode;
@@ -63,31 +90,6 @@ private:
      * rotations around the target
      */
     GLfloat rotation_angle;
-};
-
-//TODO: Place in the right.. place
-class Plane
-{
-public:
-    Plane() = default;
-    void create( const point p0,
-                 const point p1,
-                 const point p2);
-
-    /*
-     * Return the intersection point of
-     * the vector with the plane
-     */
-    types::point intersection(const glm::vec3& direction,
-            const types::point& position ) const;
-    /*
-     * Return the distance of the point pt
-     * from the plane
-     */
-    GLfloat distance( const point& pt ) const;
-private:
-    //Ax + By + Cz + D = 0, plane_coef contains A,B..
-    glm::vec4 coefs;
 };
 
 /*
