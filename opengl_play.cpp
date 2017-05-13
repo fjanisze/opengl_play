@@ -236,6 +236,12 @@ opengl_ui::opengl_ui(int win_width,
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
+
+    /*
+     * Disable the forcefully disable vsync which
+     * limit the FPS to 60.
+     */
+    glfwSwapInterval(0);
 }
 
 void opengl_ui::prepare_for_main_loop()

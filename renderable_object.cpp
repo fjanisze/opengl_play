@@ -190,7 +190,7 @@ long Core_renderer::render()
                cur->object->render( shader );
 
             } else {
-                model_picking->update( cur->object );
+               model_picking->update( cur->object );
             }
             ++num_of_render_op;
             cur->object->clean_after_render( shader );
