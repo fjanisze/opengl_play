@@ -304,7 +304,7 @@ public:
      * functionality
      */
     Renderable::pointer select_model( const GLuint x,
-                                         const GLuint y );
+                                      const GLuint y );
     /*
      * Return the currently selected model
      */

@@ -68,6 +68,7 @@ private:
     int			  mouse_line_idx;
     text_renderer::rendr_text info_string;
     renderer::Core_renderer::pointer renderer;
+    uint64_t unit_id;
 
     int win_h,
     win_w;

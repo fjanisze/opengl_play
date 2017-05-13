@@ -123,7 +123,9 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
             } else {
                 renderer.add_renderable( new_lot );
                 new_lot->rendering_state.enable();
-                terrain_map[ get_position_idx( new_lot->position ) ] = new_lot;
+                long idx = get_position_idx( new_lot->position );
+                terrain_map[ idx ] = new_lot;
+                rendr_id_to_idx[ new_lot->rendering_data.id ] = idx;
             }
         }
     }
@@ -139,6 +141,20 @@ Terrain_lot::pointer Terrains::find_lot(const glm::vec2 coord)
         return nullptr;
     }
     return it->second;
+}
+
+Terrain_lot::pointer Terrains::selected_lot()
+{
+    uint64_t rendr_id = renderer.get_selected_renderable();
+    auto it = rendr_id_to_idx.find( rendr_id );
+    if( it == rendr_id_to_idx.end() ) {
+        return nullptr;
+    }
+    auto lot = terrain_map.find( it->second );
+    if( lot == terrain_map.end() ) {
+        return nullptr;
+    }
+    return lot->second;
 }
 
 glm::mat4 Terrains::get_lot_model_matrix(const glm::vec2 &pos) const

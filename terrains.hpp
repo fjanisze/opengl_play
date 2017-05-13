@@ -113,6 +113,10 @@ public:
      * Return the lot at the give coordinates
      */
     Terrain_lot::pointer find_lot( const glm::vec2 coord );
+    /*
+     * Return the currently selected lot, if any
+     */
+    Terrain_lot::pointer selected_lot();
 private:
     renderer::Core_renderer_proxy renderer;
 
@@ -120,7 +124,14 @@ private:
 
     GLfloat lot_size;
     long get_position_idx( const glm::vec2& pos ) const;
+    /*
+     * Map a position index to a Terrain_lot
+     */
     std::unordered_map< long, Terrain_lot::pointer > terrain_map;
+    /*
+     * Map a renderable ID to a position index
+     */
+    std::unordered_map< long , long > rendr_id_to_idx;
     glm::vec2 view_center;
     /*
      * The origins lot is the lot from which

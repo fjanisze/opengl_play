@@ -344,6 +344,7 @@ void Plane::create( const types::point p0,
                     const types::point p1,
                     const types::point p2 )
 {
+    //Plane equation: Ax+By+Cz+D=0
     const types::vector n = glm::normalize( glm::cross( p1 - p0, p2 - p0 ) );
     const GLfloat coef_d = -glm::dot( n, p0 );
     coefs = glm::vec4( n, coef_d );
@@ -353,6 +354,16 @@ types::point Plane::intersection(
         const glm::vec3 &direction,
         const point &position ) const
 {
+    /*
+     * Line defined by:
+     *  x = X0 + a*t
+     *  y = Y0 + b*t
+     *  z = Z0 + c*t
+     *
+     * given t = -( Ax0+By0+Cz0+D ) / ( Aa + Bb + Cc )
+     *
+     * where a,b,c are the coef of the dir vector
+     */
     const GLfloat t_value = - //Mind the -
                       ( coefs.x * position.x +
                         coefs.y * position.y +
@@ -362,6 +373,7 @@ types::point Plane::intersection(
                        ( coefs.x * direction.x +
                          coefs.y * direction.y +
                          coefs.z * direction.z );
+    //Intersection point:
     return types::point(
                 position.x + direction.x * t_value,
                 position.y + direction.y * t_value,

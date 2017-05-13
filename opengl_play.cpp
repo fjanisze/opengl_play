@@ -61,6 +61,11 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
     if( button == GLFW_MOUSE_BUTTON_LEFT &&
         action == GLFW_PRESS ) {
+        auto lot = game_terrain->selected_lot();
+        if( lot != nullptr ) {
+            auto new_unit = units->create_unit( unit_id );
+            units->place_unit( new_unit, lot );
+        }
     }
 }
 
@@ -238,8 +243,8 @@ opengl_ui::opengl_ui(int win_width,
     glFrontFace(GL_CW);
 
     /*
-     * Disable the forcefully disable vsync which
-     * limit the FPS to 60.
+     * Disable vsync, which in turns disable the
+     * 60fps limit.
      */
     glfwSwapInterval(0);
 }
@@ -329,14 +334,7 @@ void opengl_ui::setup_scene()
                 renderer::Core_renderer_proxy( renderer ) );
 
     auto list_of_units = units->buildable_units();
-    uint64_t unit_id = list_of_units.front().id;
-    auto new_unit = units->create_unit( unit_id );
-    auto lot = game_terrain->find_lot( glm::vec2(0.0) );
-    if( lot != nullptr ) {
-        units->place_unit( new_unit, lot );
-    } else {
-        PANIC("LOT NOT FOUND!");
-    }
+    unit_id = list_of_units.front().id;
 
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                 glm::vec3(30,30,30),
