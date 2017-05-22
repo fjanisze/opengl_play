@@ -38,6 +38,8 @@ using key_code_t = int;
 using scan_code_t = int;
 using act_code_t = int;
 
+using id_type = uint64_t;
+
 }
 
 #endif

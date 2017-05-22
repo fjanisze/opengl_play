@@ -26,14 +26,12 @@ Core_renderer::Core_renderer(const types::win_size &window,
                              const glm::mat4 &proj,
                              const glm::mat4& def_ortho,
                              const scene::Camera::pointer cam ) :
-    next_rendr_id{ 1 },
-    projection{ proj },
-    ortho{ def_ortho },
-    camera{ cam },
-    viewport_size{ window },
-    def_view_matrix_loaded{ false }
+    config( window ),
+    camera{ cam }
 {
     LOG3("Creating the core renderer!");
+    config.projection = proj;
+    config.ortho = def_ortho;
     shader = factory< shaders::Shader >::create();
 
     shader->load_fragment_shader(shader->read_shader_body(
@@ -47,15 +45,15 @@ Core_renderer::Core_renderer(const types::win_size &window,
 
     shader->use_shaders();
 
-    view_loc = shader->load_location("view");
-    projection_loc = shader->load_location("projection");
+    config.view_loc = shader->load_location("view");
+    config.projection_loc = shader->load_location("projection");
 
-    cur_perspective = perspective_type::projection;
-    glUniformMatrix4fv(projection_loc, 1,
-                       GL_FALSE, glm::value_ptr(projection));
+    config.cur_perspective = perspective_type::projection;
+    glUniformMatrix4fv(config.projection_loc, 1,
+                       GL_FALSE, glm::value_ptr(config.projection));
 
-    model_loc = shader->load_location("model");
-    color_loc = shader->load_location("object_color");
+    config.model_loc = shader->load_location("model");
+    config.color_loc = shader->load_location("object_color");
 
     framebuffers = factory< buffers::Framebuffers >::create(
                 window );
@@ -69,7 +67,7 @@ Core_renderer::Core_renderer(const types::win_size &window,
                             100.0f);
 }
 
-renderable_id Core_renderer::add_renderable( Renderable::pointer object )
+types::id_type Core_renderer::add_renderable( Renderable::pointer object )
 {
     if( nullptr == object ) {
         ERR("Invalid renderable provided");
@@ -78,10 +76,9 @@ renderable_id Core_renderer::add_renderable( Renderable::pointer object )
     LOG3("Adding new renderable, ID ",
          object->rendering_data.id, ", name: ",
          object->nice_name());
-    rendr_ptr new_rendr = std::make_shared<Rendr>();
-    new_rendr->id = next_rendr_id;
+    Rendr::pointer new_rendr = factory< Rendr >::create();
     new_rendr->object = object;
-    renderables[ next_rendr_id ] = new_rendr;
+    renderables[ new_rendr->id ] = new_rendr;
     /*
      * object with view mode set to camera_space_coord
      * should be rendered last (tail of the rendering list)
@@ -98,7 +95,6 @@ renderable_id Core_renderer::add_renderable( Renderable::pointer object )
             rendering_head = new_rendr;
         }
     }
-    ++next_rendr_id;
     LOG1("Assigned ID: ", new_rendr->id );
     model_picking->add_model( object );
     return new_rendr->id;
@@ -109,11 +105,11 @@ long Core_renderer::render()
     long num_of_render_op{ 0 };
     game_lights->calculate_lighting( shader );
     frustum->update();
-    view_matrix = camera->get_view();
+    config.view_matrix = camera->get_view();
 
-    def_view_matrix_loaded = true;
-    glUniformMatrix4fv(view_loc, 1,
-                       GL_FALSE, glm::value_ptr(view_matrix));
+    config.is_def_view_matrix_loaded = true;
+    glUniformMatrix4fv(config.view_loc, 1,
+                       GL_FALSE, glm::value_ptr(config.view_matrix));
 
     /*
      * The rendering loop is performed twice,
@@ -124,7 +120,7 @@ long Core_renderer::render()
     bool inside = false;
     for( int rendr_loop{1} ; rendr_loop <= 2 ; ++rendr_loop )
     {
-        for( rendr_ptr cur = rendering_head ;
+        for( Rendr::pointer cur = rendering_head ;
              cur != nullptr ;
              cur = cur->next )
         {
@@ -186,7 +182,7 @@ void Core_renderer::clear()
     framebuffers->clear();
 }
 
-bool Core_renderer::prepare_for_rendering( rendr_ptr &cur )
+bool Core_renderer::prepare_for_rendering( Rendr::pointer &cur )
 {
     if( Rendering_state::states::rendering_disabled ==
         cur->object->rendering_state.current() ) {
@@ -210,25 +206,25 @@ bool Core_renderer::prepare_for_rendering( rendr_ptr &cur )
 
     switch_proper_perspective( cur->object );
 
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE,
+    glUniformMatrix4fv(config.model_loc, 1, GL_FALSE,
                        glm::value_ptr( cur->object->rendering_data.model_matrix ) );
     if( is_camera_space ) {
-        glUniformMatrix4fv(view_loc, 1,
+        glUniformMatrix4fv(config.view_loc, 1,
                            GL_FALSE, glm::value_ptr(
                                cur->object->rendering_data.model_matrix
                                ));
-        def_view_matrix_loaded = false;
-    } else if( false == def_view_matrix_loaded ){
-        glUniformMatrix4fv(view_loc, 1,
-                           GL_FALSE, glm::value_ptr(view_matrix));
-        def_view_matrix_loaded = true;
+        config.is_def_view_matrix_loaded = false;
+    } else if( false == config.is_def_view_matrix_loaded ){
+        glUniformMatrix4fv(config.view_loc, 1,
+                           GL_FALSE, glm::value_ptr(config.view_matrix));
+        config.is_def_view_matrix_loaded = true;
     }
 
     cur->object->prepare_for_render( shader );
     return true;
 }
 
-void Core_renderer::prepare_rendr_color( rendr_ptr& cur )
+void Core_renderer::prepare_rendr_color( Rendr::pointer& cur )
 {
     types::color color = cur->object->rendering_data.default_color;
     /*
@@ -242,7 +238,7 @@ void Core_renderer::prepare_rendr_color( rendr_ptr& cur )
         color.a = 1.0f;
     }
 
-    glUniform4f(color_loc,
+    glUniform4f(config.color_loc,
                 color.r,
                 color.g,
                 color.b,
@@ -254,21 +250,21 @@ void Core_renderer::switch_proper_perspective(
         )
 {
     if( obj->view_configuration.is_camera_space() &&
-        perspective_type::projection == cur_perspective ) {
+        perspective_type::projection == config.cur_perspective ) {
         /*
          * Need to switch from projection to ortho
          */
-        glUniformMatrix4fv(projection_loc, 1,
-                           GL_FALSE, glm::value_ptr(ortho));
-        cur_perspective = perspective_type::ortho;
+        glUniformMatrix4fv(config.projection_loc, 1,
+                           GL_FALSE, glm::value_ptr(config.ortho));
+        config.cur_perspective = perspective_type::ortho;
     } else if ( obj->view_configuration.is_world_space() &&
-               perspective_type::ortho == cur_perspective) {
+               perspective_type::ortho == config.cur_perspective) {
         /*
          * Need to switch from ortho to projection
          */
-        glUniformMatrix4fv(projection_loc, 1,
-                           GL_FALSE, glm::value_ptr(projection));
-        cur_perspective = perspective_type::projection;
+        glUniformMatrix4fv(config.projection_loc, 1,
+                           GL_FALSE, glm::value_ptr(config.projection));
+        config.cur_perspective = perspective_type::projection;
     }
 }
 

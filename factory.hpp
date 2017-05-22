@@ -1,6 +1,7 @@
 #include <new>
 #include <cstdint>
 #include <logger/logger.hpp>
+#include <types.hpp>
 
 #ifndef FACTORY_HPP
 #define FACTORY_HPP
@@ -29,16 +30,16 @@ constexpr uint64_t INVALID_ID{ 0 };
 template< typename T >
 struct ids
 {
-    static uint64_t create() {
+    static types::id_type create() {
         return next_id++;
     }
 
 private:
-    static uint64_t next_id;
+    static types::id_type next_id;
 };
 
 template< typename T >
-uint64_t ids< T >::next_id{ constants::INVALID_ID + 1 };
+types::id_type ids< T >::next_id{ constants::INVALID_ID + 1 };
 
 /*
  * A class that generate unique IDs'
@@ -51,10 +52,10 @@ public:
     id_factory() :
         id{ ids< T >::create() }
     { }
-    operator uint64_t() const {
+    operator types::id_type() const {
         return id;
     }
-    const uint64_t id;
+    const types::id_type id;
 };
 
 #endif

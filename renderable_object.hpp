@@ -150,14 +150,10 @@ public:
 /*
  * Implementes the rendering functionality
  */
-
-using renderable_id = long;
-
-struct Rendr;
-using rendr_ptr = std::shared_ptr<Rendr>;
 struct Rendr
 {
-    renderable_id id;
+    using pointer = std::shared_ptr< Rendr >;
+    id_factory< Rendr > id;
     Renderable::pointer object;
     /*
      * For rendering purpose we have those
@@ -165,11 +161,9 @@ struct Rendr
      * elements should be rendered first, the tail
      * last..
      */
-    rendr_ptr next;
+    pointer next;
 
-    Rendr():
-        id{ -1 }
-    {}
+    Rendr() = default;
 };
 
 /*
@@ -281,13 +275,27 @@ private:
 };
 
 /*
- * Container for all the data used
- * by the core renderer.
- * Everything is here to avoid too much mess
- * in Core_renderer
+ * Container for all the configuration settings
+ * that do not need to spam the name space
+ * of Core_renderer
  */
-struct Core_renderer_setup
+struct Core_renderer_config
 {
+    bool             is_def_view_matrix_loaded;
+    glm::mat4        view_matrix;
+    types::win_size  viewport_size;
+    perspective_type cur_perspective;
+    glm::mat4        projection;
+    glm::mat4        ortho;
+    GLint            color_loc;
+    GLint            view_loc;
+    GLint            projection_loc;
+    GLint            model_loc;
+
+    Core_renderer_config( types::win_size win_size ) :
+        is_def_view_matrix_loaded{ false },
+        viewport_size{ win_size }
+    {}
 };
 
 /*
@@ -306,7 +314,7 @@ public:
             const glm::mat4& proj,
             const glm::mat4 &def_ortho,
             const scene::Camera::pointer cam );
-    renderable_id add_renderable( Renderable::pointer object );
+    types::id_type add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
     /*
@@ -333,46 +341,34 @@ private:
      * The function returns false if the Rendering
      * of the Renderable should be interrupted
      */
-    bool prepare_for_rendering( rendr_ptr& cur );
+    bool prepare_for_rendering( Rendr::pointer &cur );
     /*
      * Setup the proper color for the Renderable and
      * load it to the shader
      */
-    void prepare_rendr_color(rendr_ptr &cur);
-    bool def_view_matrix_loaded;
-    glm::mat4 view_matrix;
+    void prepare_rendr_color(Rendr::pointer &cur);
+    Core_renderer_config     config;
     shaders::Shader::pointer shader;
-    scene::Camera::pointer camera;
-    lighting::lighting_pointer game_lights;
+    scene::Camera::pointer   camera;
+    scene::Frustum::pointer  frustum;
+    lighting::lighting_pointer     game_lights;
     buffers::Framebuffers::pointer framebuffers;
-    scene::Frustum::pointer frustum;
-
-    types::win_size viewport_size;
-    perspective_type cur_perspective;
-    glm::mat4 projection;
-    glm::mat4 ortho;
-    renderable_id next_rendr_id;
     /*
      * Used for rendering the rendr objects based
      * on their priority (head first, tail last)
      */
-    rendr_ptr rendering_head;
-    rendr_ptr rendering_tail;
+    Rendr::pointer rendering_head;
+    Rendr::pointer rendering_tail;
     /*
      * For fast retrieval of renderable objects
      * by their ID
      */
-    std::unordered_map< renderable_id, rendr_ptr > renderables;
+    std::unordered_map< types::id_type, Rendr::pointer > renderables;
     /*
      * Load the proper perspective matrix
      * to the shader
      */
     void switch_proper_perspective(const Renderable::pointer &obj );
-
-    GLint color_loc;
-    GLint view_loc;
-    GLint projection_loc;
-    GLint model_loc;
 
     Model_picking::pointer model_picking;
 };
