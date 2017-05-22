@@ -281,6 +281,16 @@ private:
 };
 
 /*
+ * Container for all the data used
+ * by the core renderer.
+ * Everything is here to avoid too much mess
+ * in Core_renderer
+ */
+struct Core_renderer_setup
+{
+};
+
+/*
  * The core rendering object, given a properly
  * configured context it render the models
  * which are selected for rendering
@@ -314,6 +324,23 @@ public:
      */
     void clear();
 private:
+    /*
+     * This function prepare the current model for
+     * rendering, setup model matrix, view matrix
+     * and performs any other step needed to render
+     * the Renderable.
+     *
+     * The function returns false if the Rendering
+     * of the Renderable should be interrupted
+     */
+    bool prepare_for_rendering( rendr_ptr& cur );
+    /*
+     * Setup the proper color for the Renderable and
+     * load it to the shader
+     */
+    void prepare_rendr_color(rendr_ptr &cur);
+    bool def_view_matrix_loaded;
+    glm::mat4 view_matrix;
     shaders::Shader::pointer shader;
     scene::Camera::pointer camera;
     lighting::lighting_pointer game_lights;

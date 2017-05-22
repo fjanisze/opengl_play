@@ -30,7 +30,8 @@ Core_renderer::Core_renderer(const types::win_size &window,
     projection{ proj },
     ortho{ def_ortho },
     camera{ cam },
-    viewport_size{ window }
+    viewport_size{ window },
+    def_view_matrix_loaded{ false }
 {
     LOG3("Creating the core renderer!");
     shader = factory< shaders::Shader >::create();
@@ -108,11 +109,11 @@ long Core_renderer::render()
     long num_of_render_op{ 0 };
     game_lights->calculate_lighting( shader );
     frustum->update();
-    glm::mat4 view = camera->get_view();
+    view_matrix = camera->get_view();
 
-    bool def_view_matrix_loaded{ true };
+    def_view_matrix_loaded = true;
     glUniformMatrix4fv(view_loc, 1,
-                       GL_FALSE, glm::value_ptr(view));
+                       GL_FALSE, glm::value_ptr(view_matrix));
 
     /*
      * The rendering loop is performed twice,
@@ -127,69 +128,22 @@ long Core_renderer::render()
              cur != nullptr ;
              cur = cur->next )
         {
-            if( Rendering_state::states::rendering_disabled ==
-                cur->object->rendering_state.current() ) {
+            if( false == prepare_for_rendering( cur ) ) {
                 continue;
             }
-
-            const glm::mat4& model = cur->object->rendering_data.model_matrix;
-            const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
-            const bool is_camera_space = cur->object->view_configuration.is_camera_space();
-
-            /*
-             * The value of is_inside is used to tune the amount of objects
-             * rendered. The problem is that the rendered is stupid, to consider
-             * an object out of the frustum is sufficient that the border point
-             * if out of it! To avoid 'holes' of non rendered object on the border
-             * of the frustum the renderer render a little behing the frustum planes.
-             */
-            if( false == is_camera_space && frustum->is_inside( pos ) < -2.0f ) {
-                continue;
-            }
-
-            switch_proper_perspective( cur->object );
-
-            glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-                               glm::value_ptr( cur->object->rendering_data.model_matrix ) );
-            if( is_camera_space ) {
-                glUniformMatrix4fv(view_loc, 1,
-                                   GL_FALSE, glm::value_ptr(
-                                       cur->object->rendering_data.model_matrix
-                                       ));
-                def_view_matrix_loaded = false;
-            } else if( false == def_view_matrix_loaded ){
-                glUniformMatrix4fv(view_loc, 1,
-                                   GL_FALSE, glm::value_ptr(view));
-                def_view_matrix_loaded = true;
-            }
-
-            cur->object->prepare_for_render( shader );
             /*
              * First loop: Default framebuffer rendering,
              * Second loop: Mouse picking
              */
             if( rendr_loop == 1 ) {
-                types::color color = cur->object->rendering_data.default_color;
-                /*
-                 * If this Renderable is currencly picked
-                 * increase a little bit it's default color
-                 * to increase it's visibility
-                 */
-                if( model_picking->get_selected() ==
-                    cur->object->rendering_data.id ) {
-                    color *= 1.4f;
-                    color.a = 1.0f;
-                }
+                prepare_rendr_color( cur );
 
-                glUniform4f(color_loc,
-                            color.r,
-                            color.g,
-                            color.b,
-                            color.a);
-
-               cur->object->render( shader );
-
+                cur->object->render( shader );
             } else {
+                /*
+                 * Update the framebuffer for the
+                 * model picking mechanism
+                 */
                model_picking->update( cur->object );
             }
             ++num_of_render_op;
@@ -232,6 +186,68 @@ void Core_renderer::clear()
     framebuffers->clear();
 }
 
+bool Core_renderer::prepare_for_rendering( rendr_ptr &cur )
+{
+    if( Rendering_state::states::rendering_disabled ==
+        cur->object->rendering_state.current() ) {
+        return false;
+    }
+
+    const glm::mat4& model = cur->object->rendering_data.model_matrix;
+    const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
+    const bool is_camera_space = cur->object->view_configuration.is_camera_space();
+
+    /*
+     * The value of is_inside is used to tune the amount of objects
+     * rendered. The problem is that the rendered is stupid, to consider
+     * an object out of the frustum is sufficient that the border point
+     * if out of it! To avoid 'holes' of non rendered object on the border
+     * of the frustum the renderer render a little behing the frustum planes.
+     */
+    if( false == is_camera_space && frustum->is_inside( pos ) < -2.0f ) {
+        return false;
+    }
+
+    switch_proper_perspective( cur->object );
+
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE,
+                       glm::value_ptr( cur->object->rendering_data.model_matrix ) );
+    if( is_camera_space ) {
+        glUniformMatrix4fv(view_loc, 1,
+                           GL_FALSE, glm::value_ptr(
+                               cur->object->rendering_data.model_matrix
+                               ));
+        def_view_matrix_loaded = false;
+    } else if( false == def_view_matrix_loaded ){
+        glUniformMatrix4fv(view_loc, 1,
+                           GL_FALSE, glm::value_ptr(view_matrix));
+        def_view_matrix_loaded = true;
+    }
+
+    cur->object->prepare_for_render( shader );
+    return true;
+}
+
+void Core_renderer::prepare_rendr_color( rendr_ptr& cur )
+{
+    types::color color = cur->object->rendering_data.default_color;
+    /*
+     * If this Renderable is currencly picked
+     * increase a little bit it's default color
+     * to increase it's visibility
+     */
+    if( model_picking->get_selected() ==
+        cur->object->rendering_data.id ) {
+        color *= 1.4f;
+        color.a = 1.0f;
+    }
+
+    glUniform4f(color_loc,
+                color.r,
+                color.g,
+                color.b,
+                color.a);
+}
 
 void Core_renderer::switch_proper_perspective(
         const Renderable::pointer &obj
