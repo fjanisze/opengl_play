@@ -117,46 +117,32 @@ long Core_renderer::render()
      * the second time in order to update the mouse picking
      * data
      */
-    bool inside = false;
-    for( int rendr_loop{1} ; rendr_loop <= 2 ; ++rendr_loop )
+    for( Rendr::pointer cur = rendering_head ;
+         cur != nullptr ;
+         cur = cur->next )
     {
-        for( Rendr::pointer cur = rendering_head ;
-             cur != nullptr ;
-             cur = cur->next )
-        {
-            if( false == prepare_for_rendering( cur ) ) {
-                continue;
-            }
-            /*
-             * First loop: Default framebuffer rendering,
-             * Second loop: Mouse picking
-             */
-            if( rendr_loop == 1 ) {
-                prepare_rendr_color( cur );
-
-                cur->object->render( shader );
-            } else {
-                /*
-                 * Update the framebuffer for the
-                 * model picking mechanism
-                 */
-               model_picking->update( cur->object );
-            }
-            ++num_of_render_op;
-            cur->object->clean_after_render( shader );
+        if( false == prepare_for_rendering( cur ) ) {
+            continue;
         }
-        /*
-         * After the first loop we're going to
-         * repeat the process to update the mouse
-         * picking information
-         */
-        model_picking->prepare_to_update();
+        prepare_rendr_color( cur );
+        cur->object->render( shader );
+        cur->object->clean_after_render( shader );
+        ++num_of_render_op;
     }
     /*
-     * Model_picking is the last rendering
-     * stuff, we nee to tell him to clean up
-     * after he's done.
+     * Second loop.
      */
+    model_picking->prepare_to_update();
+    for( Rendr::pointer cur = rendering_head ;
+         cur != nullptr ;
+         cur = cur->next )
+    {
+        if( false == prepare_for_rendering( cur ) ) {
+            continue;
+        }
+        model_picking->update( cur->object );
+        cur->object->clean_after_render( shader );
+    }
     model_picking->cleanup_after_update();
     return num_of_render_op;
 }
