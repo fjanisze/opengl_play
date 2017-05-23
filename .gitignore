@@ -9,6 +9,7 @@
 *.moc
 *.o
 *.obj
+!models/**/*.obj
 *.orig
 *.rej
 *.so
