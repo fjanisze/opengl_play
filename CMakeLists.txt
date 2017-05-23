@@ -87,12 +87,6 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 link_directories(${FREETYPE_LIBRARIES})
 
 #########################################################
-# FIND SOIL
-#########################################################
-add_subdirectory("./SOIL/")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/SOIL/")
-
-#########################################################
 # FIND ASSIMP
 #########################################################
 
