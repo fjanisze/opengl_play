@@ -1,18 +1,7 @@
 # Blender MTL File: 'grass.blend'
-# Material Count: 2
+# Material Count: 1
 
-newmtl Grass1
-Ns 96.078431
-Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
-Ks 0.767516 0.767516 0.767516
-Ke 0.000000 0.000000 0.000000
-Ni 1.000000
-d 1.000000
-illum 2
-map_Kd -s 0.000000 0.000000 0.000000 grass-texture-03.png
-
-newmtl Grass2
+newmtl Material.001
 Ns 96.078431
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
@@ -21,4 +10,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd  grass-texture-04.png
+map_Kd  /home/fjanisze/Progetti/opengl_play/models/textures/grass-texture-03.png
