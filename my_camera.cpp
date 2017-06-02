@@ -329,12 +329,20 @@ void Frustum::update()
 GLfloat Frustum::is_inside( const point &pt ) const
 {
     GLfloat min_dist{ 0 };
+    /*
+     * Tuning the admitted distance from the plane,
+     * this is needed to avoid models on the border
+     * or very close to the border to be stil rendered.
+     */
+    static const GLfloat plane_threshold_dist[] = {
+        -0.8f, -2.0f, -1.2f, -1.2f, 0.0f, 0.0f
+    };
     for( int i{ 0 } ; i < 6 ; ++i ) {
         const GLfloat dist = geometry.planes[ i ].distance( pt );
-        if( dist < 0 ) {
+        if( dist < plane_threshold_dist[ i ] ) {
             return dist;
         } else {
-            min_dist = glm::min( min_dist, dist );
+            min_dist = glm::min( min_dist, glm::max( 0.0f, dist ) );
         }
     }
     return min_dist;

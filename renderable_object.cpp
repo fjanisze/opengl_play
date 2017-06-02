@@ -186,7 +186,7 @@ bool Core_renderer::prepare_for_rendering( Rendr::pointer &cur )
      * if out of it! To avoid 'holes' of non rendered object on the border
      * of the frustum the renderer render a little behing the frustum planes.
      */
-    if( false == is_camera_space && frustum->is_inside( pos ) < -2.0f ) {
+    if( false == is_camera_space && frustum->is_inside( pos ) < 0.0f ) {
         return false;
     }
 
