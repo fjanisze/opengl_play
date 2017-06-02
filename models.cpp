@@ -68,28 +68,40 @@ void my_mesh::render(shaders::Shader* shader) const
 {
     glBindVertexArray(VAO);
     GLuint current_unit = 0;
-    GLuint diffuse_nr = 1;
-    GLuint specular_nr = 1;
+    GLuint diffuse_nr = 0;
+    GLuint specular_nr = 0;
 
+    static const char* texture_sampler_name[2][3] = {
+        { "loaded_texture1",
+          "loaded_texture2",
+          "loaded_texture3" },
+        { "loaded_texture_specular_map1",
+          "loaded_texture_specular_map2",
+          "loaded_texture_specular_map3" }
+    };
+
+    uint_fast8_t texture_type{ 0 }, texture_nr{ 0 };
     for( auto& current_tex : *textures )
     {
         glActiveTexture(GL_TEXTURE0 + current_unit);
-        std::string name;
         if( current_tex.type == texture_type::diffuse )
         {
-            name = "loaded_texture" + std::to_string(diffuse_nr++);
+            texture_type = 0;
+            texture_nr = diffuse_nr++;
         }
         else if( current_tex.type == texture_type::specular )
         {
-            name = "loaded_texture_specular_map" + std::to_string(specular_nr++);
+            texture_type = 1;
+            texture_nr = specular_nr++;
         }
+        const char* name = texture_sampler_name[ texture_type ][ texture_nr ];
         GLint map = glGetUniformLocation(shader->get_program(),
-                                         name.c_str());
+                                         name);
         if( map >= 0 ) {
             glUniform1f(map,current_unit);
         } else {
             ERR("Unable to setup the texture unit! ",
-                name.c_str());
+                name);
         }
 
         glBindTexture(GL_TEXTURE_2D, current_tex.id);
