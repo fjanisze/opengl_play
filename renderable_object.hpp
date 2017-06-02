@@ -253,7 +253,7 @@ public:
     /*
      * Update the picking information for the provided model
      */
-    void update( const Renderable::pointer& object );
+    void update( const Renderable::pointer& object ) const;
     /*
      * Two functions which ask Model_picking to be ready
      * for rendering next, or to cleanup after the rendering

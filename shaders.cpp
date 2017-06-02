@@ -116,7 +116,7 @@ void Shader::use_shaders()
     glUseProgram(shader_program);
 }
 
-GLuint Shader::get_program()
+GLuint Shader::get_program( ) const
 {
     return shader_program;
 }

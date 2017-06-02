@@ -332,9 +332,9 @@ uint64_t Model_picking::get_selected() const
 
 void Model_picking::update(
         const Renderable::pointer &object
-        )
+        ) const
 {
-    auto it = rendrid_to_color.find( object->rendering_data.id );
+    const auto it = rendrid_to_color.find( object->rendering_data.id );
     if( rendrid_to_color.end() != it ) {
         //The object exist in our 'database'
         auto color = color_operations.get_color_rgba( it->second );

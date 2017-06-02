@@ -64,6 +64,13 @@ void my_mesh::setup_mesh()
     glBindVertexArray(0);
 }
 
+my_mesh::~my_mesh()
+{
+    glDeleteBuffers( 1, &EBO );
+    glDeleteBuffers( 1, &VBO );
+    glDeleteBuffers( 1, &VAO );
+}
+
 void my_mesh::render(shaders::Shader* shader) const
 {
     glBindVertexArray(VAO);

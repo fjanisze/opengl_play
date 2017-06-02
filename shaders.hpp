@@ -27,7 +27,7 @@ public:
     std::string read_shader_body(const std::string& filename);
     bool create_shader_program();
     void use_shaders();
-    GLuint get_program();
+    GLuint get_program() const;
 
     operator GLuint(){
         return shader_program;
