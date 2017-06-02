@@ -13,6 +13,11 @@ Renderable::Renderable()
     LOG1("New renderable, ID: ", rendering_data.id);
 }
 
+void Renderable::set_shader(shaders::Shader::raw_poiner shader)
+{
+    rendering_data.shader = shader;
+}
+
 std::string Renderable::nice_name()
 {
     return "(nice name not provided)";
@@ -78,22 +83,16 @@ types::id_type Core_renderer::add_renderable( Renderable::pointer object )
          object->nice_name());
     Rendr::pointer new_rendr = factory< Rendr >::create();
     new_rendr->object = object;
+    new_rendr->object->set_shader( shader.get() );
     renderables[ new_rendr->id ] = new_rendr;
     /*
      * object with view mode set to camera_space_coord
-     * should be rendered last (tail of the rendering list)
+     * should be rendered last.
      */
-    if( nullptr == rendering_head ) {
-        rendering_head = new_rendr;
-        rendering_tail = new_rendr;
+    if( object->view_configuration.is_camera_space() ) {
+        rendering_content.insert( rendering_content.begin() , new_rendr.get() );
     } else {
-        if( object->view_configuration.is_camera_space() ) {
-            rendering_tail->next = new_rendr;
-            rendering_tail = new_rendr;
-        } else {
-            new_rendr->next = rendering_head;
-            rendering_head = new_rendr;
-        }
+        rendering_content.push_back( new_rendr.get() );
     }
     LOG1("Assigned ID: ", new_rendr->id );
     model_picking->add_model( object );
@@ -117,31 +116,33 @@ long Core_renderer::render()
      * the second time in order to update the mouse picking
      * data
      */
-    for( Rendr::pointer cur = rendering_head ;
-         cur != nullptr ;
-         cur = cur->next )
+    for( int_fast64_t idx = rendering_content.size() - 1;
+         idx >= 0 ;
+         --idx )
     {
+        Rendr::raw_pointer cur = rendering_content[ idx ];
         if( false == prepare_for_rendering( cur ) ) {
             continue;
         }
         prepare_rendr_color( cur );
-        cur->object->render( shader );
-        cur->object->clean_after_render( shader );
+        cur->object->render( );
+        cur->object->clean_after_render( );
         ++num_of_render_op;
     }
     /*
      * Second loop.
      */
     model_picking->prepare_to_update();
-    for( Rendr::pointer cur = rendering_head ;
-         cur != nullptr ;
-         cur = cur->next )
+    for( int_fast64_t idx = rendering_content.size() - 1;
+         idx > 0 ;
+         --idx )
     {
+        Rendr::raw_pointer cur = rendering_content[ idx ];
         if( false == prepare_for_rendering( cur ) ) {
             continue;
         }
         model_picking->update( cur->object );
-        cur->object->clean_after_render( shader );
+        cur->object->clean_after_render( );
     }
     model_picking->cleanup_after_update();
     return num_of_render_op;
@@ -168,7 +169,7 @@ void Core_renderer::clear()
     framebuffers->clear();
 }
 
-bool Core_renderer::prepare_for_rendering( Rendr::pointer &cur )
+bool Core_renderer::prepare_for_rendering( Rendr::raw_pointer cur )
 {
     if( Rendering_state::states::rendering_disabled ==
         cur->object->rendering_state.current() ) {
@@ -206,11 +207,11 @@ bool Core_renderer::prepare_for_rendering( Rendr::pointer &cur )
         config.is_def_view_matrix_loaded = true;
     }
 
-    cur->object->prepare_for_render( shader );
+    cur->object->prepare_for_render( );
     return true;
 }
 
-void Core_renderer::prepare_rendr_color( Rendr::pointer& cur )
+void Core_renderer::prepare_rendr_color( Rendr::raw_pointer cur )
 {
     types::color color = cur->object->rendering_data.default_color;
     /*
@@ -345,7 +346,7 @@ void Model_picking::update(
                     color.b,
                     color.a);
 
-        object->render( game_shader );
+        object->render( );
     }
 }
 
@@ -442,12 +443,10 @@ uint64_t Color_creator::get_color_code(const types::color &color)
 
 types::color Color_creator::get_color_rgba(const uint64_t color_code) const
 {
-    types::color color;
-    color.r = ( color_code >> 16 ) & 0xFF;
-    color.g = ( color_code >> 8 ) & 0xFF;
-    color.b = ( color_code ) & 0xFF;
-    color.a = 1.0f;
-    return color;
+    return types::color( ( color_code >> 16 ) & 0xFF,
+                         ( color_code >> 8 ) & 0xFF,
+                         ( color_code ) & 0xFF,
+                         1.0f );
 }
 
 

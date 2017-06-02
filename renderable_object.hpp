@@ -109,6 +109,7 @@ private:
  */
 struct Renderable_data
 {
+    shaders::Shader::raw_poiner shader;
     /*
      * Transformation matrices used
      * for rendering purpose
@@ -132,15 +133,17 @@ class Renderable
 {
 public:
     using pointer = std::shared_ptr< Renderable >;
+    using raw_pointer = Renderable*;
     Renderable_data rendering_data;
     Rendering_state rendering_state;
     View_config     view_configuration;
 
     Renderable();
 
-    virtual void prepare_for_render( shaders::Shader::pointer& shader ) {}
-    virtual void render( shaders::Shader::pointer& shader ) {}
-    virtual void clean_after_render( shaders::Shader::pointer& shader ) {}
+    void set_shader( shaders::Shader::raw_poiner shader );
+    virtual void prepare_for_render( ) {}
+    virtual void render( ) {}
+    virtual void clean_after_render( ) {}
 
     virtual std::string nice_name();
 
@@ -153,6 +156,7 @@ public:
 struct Rendr
 {
     using pointer = std::shared_ptr< Rendr >;
+    using raw_pointer = Rendr*;
     id_factory< Rendr > id;
     Renderable::pointer object;
     /*
@@ -341,12 +345,12 @@ private:
      * The function returns false if the Rendering
      * of the Renderable should be interrupted
      */
-    bool prepare_for_rendering( Rendr::pointer &cur );
+    bool prepare_for_rendering( Rendr::raw_pointer cur );
     /*
      * Setup the proper color for the Renderable and
      * load it to the shader
      */
-    void prepare_rendr_color(Rendr::pointer &cur);
+    void prepare_rendr_color(Rendr::raw_pointer cur);
     Core_renderer_config     config;
     shaders::Shader::pointer shader;
     scene::Camera::pointer   camera;
@@ -357,8 +361,7 @@ private:
      * Used for rendering the rendr objects based
      * on their priority (head first, tail last)
      */
-    Rendr::pointer rendering_head;
-    Rendr::pointer rendering_tail;
+    std::vector< Rendr::raw_pointer > rendering_content;
     /*
      * For fast retrieval of renderable objects
      * by their ID

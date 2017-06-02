@@ -190,10 +190,10 @@ Terrain_lot::Terrain_lot(const long model_id,
     units = factory< game_units::Units_container >::create();
 }
 
-void Terrain_lot::render(shaders::Shader::pointer &shader)
+void Terrain_lot::render( )
 {
     for( auto&& mesh : textures.high_res_model->get_mesh() ) {
-        mesh->render( &*shader );
+        mesh->render( rendering_data.shader );
     }
 }
 

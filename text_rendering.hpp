@@ -82,9 +82,9 @@ public:
     void set_scale(GLfloat scale);
     void set_color(glm::vec4 color);
 
-    void prepare_for_render(shaders::Shader::pointer &shader ) override;
-    void render(shaders::Shader::pointer &shader ) override;
-    void clean_after_render(shaders::Shader::pointer &shader ) override;
+    void prepare_for_render( ) override;
+    void render( ) override;
+    void clean_after_render( ) override;
 private:
     GLuint VAO,VBO;
 

@@ -81,7 +81,7 @@ public:
     using container = std::shared_ptr< Units_container >;
     Unit( Unit_model::pointer unit_model );
 
-    void render(shaders::Shader::pointer &shader ) override;
+    void render( ) override;
 public:
     const id_factory< Unit > id;
 private:

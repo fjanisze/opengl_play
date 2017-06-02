@@ -82,7 +82,7 @@ public:
     /*
      * Rendering function
      */
-    void render(shaders::Shader::pointer &shader ) override;
+    void render( ) override;
 };
 
 /*

@@ -20,6 +20,7 @@ class Shader
 {
 public:
     using pointer = std::shared_ptr< Shader >;
+    using raw_poiner = Shader*;
     Shader();
     void load_vertex_shader(const std::string& body);
     void load_fragment_shader(const std::string& body);

@@ -323,12 +323,12 @@ void Renderable_text::set_color(glm::vec4 color)
     rendering_data.default_color = color;
 }
 
-void Renderable_text::prepare_for_render( shaders::Shader::pointer &shader )
+void Renderable_text::prepare_for_render( )
 {
-    shader->disable_light_calculations();
+    rendering_data.shader->disable_light_calculations();
 }
 
-void Renderable_text::render( shaders::Shader::pointer &shader )
+void Renderable_text::render()
 {
     glBindVertexArray(VAO);
 
@@ -383,9 +383,9 @@ void Renderable_text::render( shaders::Shader::pointer &shader )
 
 }
 
-void Renderable_text::clean_after_render( shaders::Shader::pointer &shader )
+void Renderable_text::clean_after_render( )
 {
-    shader->enable_light_calculations();
+    rendering_data.shader->enable_light_calculations();
 }
 
 
