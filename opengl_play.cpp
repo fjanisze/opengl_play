@@ -393,7 +393,6 @@ void opengl_ui::enter_main_loop()
 
         info_string->set_text(ss.str());
 
-
         glfwSwapBuffers(window_ctx);
     }
 }

@@ -109,7 +109,8 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
 
             Terrain_lot::pointer new_lot = factory< Terrain_lot >::create(
                         id,
-                        glm::vec2(x - central_lot.x, y - central_lot.y )
+                        glm::vec2(x - central_lot.x, y - central_lot.y ),
+                        it->second.low_res_model->get_model_height()
                         );
 
             new_lot->rendering_data.model_matrix = get_lot_model_matrix( new_lot->position );
@@ -179,9 +180,11 @@ long Terrains::get_position_idx(const glm::vec2 &pos) const
 }
 
 Terrain_lot::Terrain_lot(const long model_id,
-                         const glm::vec2 unique_position) :
+                         const glm::vec2 unique_position,
+                         const GLfloat lot_altitude) :
     terrain_model_id{ model_id },
-    position{ unique_position }
+    position{ unique_position },
+    altitude{ lot_altitude }
 {
     LOG1("New lot created, ID:",id);
     units = factory< game_units::Units_container >::create();

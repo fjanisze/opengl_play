@@ -49,7 +49,8 @@ public:
     using pointer = std::shared_ptr< Terrain_lot >;
 
     Terrain_lot( const long model_id,
-                 const glm::vec2 unique_position );
+                 const glm::vec2 unique_position ,
+                 const GLfloat lot_altitude );
 
     /*
      * This is the ID corresponding to one
@@ -68,7 +69,13 @@ public:
      * lot of terrain
      */
     const id_factory< Terrain_lot > id;
-    const glm::vec2 position;
+    const glm::vec2    position;
+    /*
+     * The altitude (+Z) of a lot is important
+     * to avoid units and other stuff to accidentally
+     * end up 'inside' the lot
+     */
+    const GLfloat      altitude;
     Lot_model_textures textures;
     game_units::Unit::container units;
 

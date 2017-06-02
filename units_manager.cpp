@@ -55,7 +55,21 @@ bool Units::place_unit(Unit::pointer unit,
     unit->rendering_state.disable();
     if( lot->units->add_unit( unit ) )
     {
-        unit->rendering_data.model_matrix = lot->rendering_data.model_matrix;
+        const glm::mat4 lot_mod_matx = lot->rendering_data.model_matrix;
+        unit->rendering_data.model_matrix = lot_mod_matx;
+        /*
+         * In order to avoid units to be 'inside'
+         * the terrain model, we need to translate the
+         * model matrix of an amount equal to the 'altitude'
+         * of the terrain'
+         */
+        unit->rendering_data.model_matrix = glm::translate(
+                    unit->rendering_data.model_matrix,
+                    glm::vec3(
+                        0.0,
+                        0.0,
+                        lot->altitude
+                        ));
         renderer.add_renderable( unit );
         unit->rendering_state.enable();
     } else {
