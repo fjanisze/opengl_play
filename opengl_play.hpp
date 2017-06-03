@@ -66,7 +66,7 @@ private:
     glm::vec4     viewport;
     GLFWcursor*   cursor;
     int			  mouse_line_idx;
-    text_renderer::rendr_text info_string;
+    text_renderer::Renderable_text::pointer info_string;
     renderer::Core_renderer::pointer renderer;
     uint64_t unit_id;
 

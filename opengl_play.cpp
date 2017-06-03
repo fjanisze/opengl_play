@@ -148,7 +148,7 @@ void opengl_ui::get_current_ctx_viewport()
 
 void opengl_ui::init_text()
 {
-    info_string = std::make_shared<text_renderer::Renderable_text>();
+    info_string = factory< text_renderer::Renderable_text >::create();
     info_string->set_position(glm::vec3(10.0,10.0,0.0));
     info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
     info_string->set_scale(0.7f);
@@ -246,7 +246,7 @@ opengl_ui::opengl_ui(int win_width,
      * Disable vsync, which in turns disable the
      * 60fps limit.
      */
-    glfwSwapInterval(0);
+    //glfwSwapInterval(0);
 }
 
 void opengl_ui::prepare_for_main_loop()

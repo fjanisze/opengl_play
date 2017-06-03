@@ -167,6 +167,7 @@ long Core_renderer::render()
         }
         model_picking->update( cur->object );
         cur->object->clean_after_render( );
+        ++num_of_render_op;
     }
     model_picking->cleanup_after_update();
     return num_of_render_op;

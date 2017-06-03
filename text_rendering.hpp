@@ -31,13 +31,12 @@ struct character_data {
 /*
  * Contains the information required to render a font set
  */
-struct font_texture
+struct Font_texture
 {
+    using pointer = std::shared_ptr< Font_texture >;
     std::string font_name;
     std::unordered_map<GLchar,character_data> charset;
 };
-
-using font_texture_ptr = std::shared_ptr<font_texture>;
 
 /*
  * Instead of passing everywhere the font name
@@ -46,13 +45,14 @@ using font_texture_ptr = std::shared_ptr<font_texture>;
  */
 using font_type_id = int;
 
-class font_texture_loader
+class Font_texture_loader
 {
 public:
-    font_texture_loader();
-    ~font_texture_loader();
-    std::pair<font_type_id,font_texture_ptr> load_new_textureset(const std::string& font_name);
-    font_texture_ptr get_texture(font_type_id id);
+    using pointer = std::shared_ptr< Font_texture_loader >;
+    Font_texture_loader();
+    ~Font_texture_loader();
+    std::pair< font_type_id, Font_texture::pointer > load_new_textureset(const std::string& font_name);
+    Font_texture::pointer get_texture(font_type_id id);
     font_type_id get_default_font_id();
 private:
     using glyph_buffer_ptr = std::unique_ptr<GLuint[]>;
@@ -60,18 +60,16 @@ private:
     GLuint create_texture( glyph_buffer_ptr glyph_buffer, const FT_Face& font_face );
     FT_Library freetype_lib;
     font_type_id next_id;
-    std::unordered_map<font_type_id,font_texture_ptr> fonts;
+    std::unordered_map<font_type_id,Font_texture::pointer> fonts;
     font_type_id default_font_id;
 };
-
-class Renderable_text;
-
-using rendr_text = std::shared_ptr<Renderable_text>;
 
 class Renderable_text : public renderer::Renderable
 {
 public:
+    using pointer = std::shared_ptr< Renderable_text >;
     Renderable_text();
+    ~Renderable_text();
     Renderable_text(const std::string& text,
                     const glm::vec3 &position,
                     GLfloat scale,
@@ -88,16 +86,13 @@ public:
 private:
     GLuint VAO,VBO;
 
-    font_texture_loader  font_loader;
-    font_texture_ptr     font_texture;
+    Font_texture_loader   font_loader;
+    Font_texture::pointer font_texture;
 
     std::string text_string;
     glm::vec3   text_position;
     GLfloat     text_scale;
     glm::mat4   text_projection;
-    GLint       light_calc_uniform;
-    int window_height,
-    window_width;
 
     void init();
     void check_for_errors();

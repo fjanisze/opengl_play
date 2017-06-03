@@ -3,7 +3,7 @@
 namespace text_renderer
 {
 
-font_texture_loader::font_texture_loader() :
+Font_texture_loader::Font_texture_loader() :
     next_id{ 1 }
 {
     LOG3("Creating the font loader object.");
@@ -26,10 +26,15 @@ font_texture_loader::font_texture_loader() :
     }
 }
 
-font_texture_loader::~font_texture_loader()
+Font_texture_loader::~Font_texture_loader()
 {
-    if(freetype_lib != 0){
+    if(freetype_lib != 0) {
         FT_Done_FreeType(freetype_lib);
+    }
+    for( auto font : fonts ) {
+        for( auto ch : font.second->charset ) {
+            glDeleteTextures( 1, &ch.second.TextureID );
+        }
     }
 }
 
@@ -38,12 +43,12 @@ font_texture_loader::~font_texture_loader()
  * font_name. Return nullptr if the operations fails
  */
 
-std::pair<font_type_id,font_texture_ptr>
-font_texture_loader::load_new_textureset(const std::string &font_name)
+std::pair<font_type_id,Font_texture::pointer>
+Font_texture_loader::load_new_textureset(const std::string &font_name)
 {
     LOG3("Attempt to load the font: ",
          font_name);
-    font_texture_ptr new_font = nullptr;
+    Font_texture::pointer new_font = nullptr;
     font_type_id     new_font_id = 0;
     FT_Face          font_face;
     FT_Error error = FT_New_Face(freetype_lib,
@@ -57,7 +62,7 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
     }
     else
     {
-        new_font = std::make_shared<font_texture>();
+        new_font = std::make_shared<Font_texture>();
         new_font->font_name = font_name;
         // Set size to load glyphs as
         FT_Set_Pixel_Sizes(font_face, 0, 48);
@@ -84,7 +89,8 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
             // Generate the RGBA information
             auto glyph_buffer = create_glyph_buffer( font_face );
             // Generate texture
-            GLuint texture = create_texture( std::move( glyph_buffer ), font_face );
+            GLuint texture = create_texture( std::move( glyph_buffer ),
+                                             font_face );
 
             // Now store character for later use
             character_data character = {
@@ -116,8 +122,8 @@ font_texture_loader::load_new_textureset(const std::string &font_name)
  * Create a buffer of RGBA pixels on the base of the
  * information in the FT_Face
  */
-font_texture_loader::glyph_buffer_ptr
-font_texture_loader::create_glyph_buffer(
+Font_texture_loader::glyph_buffer_ptr
+Font_texture_loader::create_glyph_buffer(
         const FT_Face &font_face)
 {
     LOG1("Create the RGBA glyph buffer.");
@@ -155,8 +161,8 @@ font_texture_loader::create_glyph_buffer(
     return glyph_buffer;
 }
 
-GLuint font_texture_loader::create_texture(
-        font_texture_loader::glyph_buffer_ptr glyph_buffer,
+GLuint Font_texture_loader::create_texture(
+        Font_texture_loader::glyph_buffer_ptr glyph_buffer,
         const FT_Face &font_face)
 {
     LOG1("Creating the font texture.");
@@ -207,7 +213,7 @@ GLuint font_texture_loader::create_texture(
  *
  * font_name is actually a path.
  */
-font_texture_ptr font_texture_loader::get_texture(font_type_id id)
+Font_texture::pointer Font_texture_loader::get_texture(font_type_id id)
 {
     auto it = fonts.find(id);
     if(it == fonts.end()){
@@ -217,7 +223,7 @@ font_texture_ptr font_texture_loader::get_texture(font_type_id id)
     return it->second;
 }
 
-font_type_id font_texture_loader::get_default_font_id()
+font_type_id Font_texture_loader::get_default_font_id()
 {
     return default_font_id;
 }
@@ -251,7 +257,6 @@ void Renderable_text::init()
     font_texture = font_loader.get_texture(
                 font_loader.get_default_font_id()
                 );
-    light_calc_uniform = -1;
 }
 
 void Renderable_text::check_for_errors()
@@ -286,6 +291,12 @@ Renderable_text::Renderable_text(const std::string &text,
     set_position( position );
     set_color( color );
     init();
+}
+
+Renderable_text::~Renderable_text()
+{
+    glDeleteVertexArrays( 1, &VAO );
+    glDeleteVertexArrays( 1, &VBO );
 }
 
 void Renderable_text::set_window_size(int height,
