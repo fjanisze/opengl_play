@@ -123,7 +123,7 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
                     lot_idx, " number of loaded lots: ", terrain_map.size() );
             } else {
                 renderer.add_renderable( new_lot );
-                new_lot->rendering_state.enable();
+                new_lot->rendering_state.set_enable();
                 long idx = get_position_idx( new_lot->position );
                 terrain_map[ idx ] = new_lot;
                 rendr_id_to_idx[ new_lot->rendering_data.id ] = idx;

@@ -52,7 +52,7 @@ bool Units::place_unit(Unit::pointer unit,
      * rendering, then attempt to add it to the lot
      * and enable it back for rendering
      */
-    unit->rendering_state.disable();
+    unit->rendering_state.set_disable();
     if( lot->units->add_unit( unit ) )
     {
         const glm::mat4 lot_mod_matx = lot->rendering_data.model_matrix;
@@ -71,7 +71,7 @@ bool Units::place_unit(Unit::pointer unit,
                         lot->altitude
                         ));
         renderer.add_renderable( unit );
-        unit->rendering_state.enable();
+        unit->rendering_state.set_enable();
     } else {
         WARN2("Not possible to place!");
     }

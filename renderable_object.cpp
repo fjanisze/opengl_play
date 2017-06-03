@@ -121,7 +121,17 @@ long Core_renderer::render()
          --idx )
     {
         Rendr::raw_pointer cur = rendering_content[ idx ];
+        if( Rendering_state::states::rendering_enabled !=
+            cur->object->rendering_state.current() ) {
+            return false;
+        }
         if( false == prepare_for_rendering( cur ) ) {
+            /*
+             * To avoid a second check on whether the object
+             * is inside the frustum (during the second loop)
+             * set the state of the Renderable to not_visible.
+             */
+            cur->object->rendering_state.set_not_visible();
             continue;
         }
         prepare_rendr_color( cur );
@@ -138,6 +148,20 @@ long Core_renderer::render()
          --idx )
     {
         Rendr::raw_pointer cur = rendering_content[ idx ];
+        if( renderer::Rendering_state::states::not_visible ==
+            cur->object->rendering_state.current() ) {
+            /*
+             * Set the state back to enabled, in
+             * the next rendering iteration we will know
+             * if the object is still not visible.
+             */
+            cur->object->rendering_state.set_enable();
+            continue;
+        }
+        if( Rendering_state::states::rendering_enabled !=
+            cur->object->rendering_state.current() ) {
+            return false;
+        }
         if( false == prepare_for_rendering( cur ) ) {
             continue;
         }
@@ -171,11 +195,6 @@ void Core_renderer::clear()
 
 bool Core_renderer::prepare_for_rendering( Rendr::raw_pointer cur )
 {
-    if( Rendering_state::states::rendering_disabled ==
-        cur->object->rendering_state.current() ) {
-        return false;
-    }
-
     const glm::mat4& model = cur->object->rendering_data.model_matrix;
     const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
     const bool is_camera_space = cur->object->view_configuration.is_camera_space();

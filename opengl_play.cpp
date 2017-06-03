@@ -153,7 +153,7 @@ void opengl_ui::init_text()
     info_string->set_color(glm::vec4(1.0,1.0,1.0,1.0));
     info_string->set_scale(0.7f);
     info_string->set_text("0 fps");
-    info_string->rendering_state.enable();
+    info_string->rendering_state.set_enable();
     info_string->view_configuration.camera_space();
     renderer->add_renderable( info_string );
 }

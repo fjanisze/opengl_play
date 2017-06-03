@@ -43,7 +43,8 @@ public:
     enum class states
     {
         rendering_enabled,
-        rendering_disabled
+        rendering_disabled,
+        not_visible, //The rendering is enabled but the Renderable is not visible
     };
 public:
     Rendering_state() :
@@ -52,11 +53,14 @@ public:
     Rendering_state( const states cur_state ) :
         current_state{ cur_state }
     {}
-    void enable() {
+    void set_enable() {
         current_state = states::rendering_enabled;
     }
-    void disable() {
+    void set_disable() {
         current_state = states::rendering_disabled;
+    }
+    void set_not_visible() {
+        current_state = states::not_visible;
     }
     states current() const {
         return current_state;
@@ -159,13 +163,6 @@ struct Rendr
     using raw_pointer = Rendr*;
     id_factory< Rendr > id;
     Renderable::pointer object;
-    /*
-     * For rendering purpose we have those
-     * rendr objects inside a list, the head
-     * elements should be rendered first, the tail
-     * last..
-     */
-    pointer next;
 
     Rendr() = default;
 };
