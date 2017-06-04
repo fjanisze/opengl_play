@@ -178,15 +178,9 @@ lighting::lighting_pointer Core_renderer::scene_lights()
     return game_lights;
 }
 
-Renderable::pointer Core_renderer::select_model(const GLuint x,
-                                                   const GLuint y)
+Model_picking::pointer Core_renderer::picking()
 {
-    return model_picking->pick( x, y );
-}
-
-uint64_t Core_renderer::get_selected_model() const
-{
-    return model_picking->get_selected();
+    return model_picking;
 }
 
 void Core_renderer::clear()
@@ -231,19 +225,9 @@ bool Core_renderer::prepare_for_rendering( Rendr::raw_pointer cur )
     return true;
 }
 
-void Core_renderer::prepare_rendr_color( Rendr::raw_pointer cur )
+void Core_renderer::prepare_rendr_color( Rendr::raw_pointer cur ) const
 {
     types::color color = cur->object->rendering_data.default_color;
-    /*
-     * If this Renderable is currencly picked
-     * increase a little bit it's default color
-     * to increase it's visibility
-     */
-    if( model_picking->get_selected() ==
-        cur->object->rendering_data.id ) {
-        color *= 1.4f;
-        color.a = 1.0f;
-    }
 
     glUniform4f(config.color_loc,
                 color.r,
@@ -282,8 +266,7 @@ void Core_renderer::switch_proper_perspective(
 Model_picking::Model_picking(shaders::Shader::pointer shader,
         buffers::Framebuffers::pointer framebuffers) :
     game_shader{ shader },
-    framebuffers{ framebuffers },
-    cur_selected_renderable{ 0 }
+    framebuffers{ framebuffers }
 {
     LOG3("Creating a new Model_picking object");
     picking_buffer_id = framebuffers->create_buffer();
@@ -312,29 +295,12 @@ Renderable::pointer Model_picking::pick(
         const GLuint x,
         const GLuint y)
 {
-    /*
-     * Read the color from the model picking
-     * frame buffer
-     */
-    framebuffers->bind( picking_buffer_id );
-    GLubyte pixels[3] = { 0,0,0 };
-    glReadPixels( x, y,
-                  1, 1,
-                  GL_RGB,
-                  GL_UNSIGNED_BYTE,
-                  &pixels);
-    framebuffers->unbind();
-    /*
-     * Attempt to find the model corresponding
-     * to the color
-     */
-    types::color color( pixels[0], pixels[1], pixels[2], 1.0f );
-    uint64_t color_code = color_operations.get_color_code( color );
-    auto it = color_to_rendr.find( color_code );
-    //LOG3("Color: ", color, ". code: ", color_code, ". Found: ", ( it != color_to_rendr.end()) );
-    if( color_to_rendr.end() != it ) {
-        cur_selected_renderable = it->second->rendering_data.id;
-        return it->second;
+    auto obj = find( x, y );
+    if( obj != nullptr )
+    {
+        LOG3("Found: ", obj->rendering_data.id );
+        selected.add( obj );
+        return obj;
     }
     unpick();
     return nullptr;
@@ -342,12 +308,7 @@ Renderable::pointer Model_picking::pick(
 
 void Model_picking::unpick()
 {
-    cur_selected_renderable = 0;
-}
-
-uint64_t Model_picking::get_selected() const
-{
-    return cur_selected_renderable;
+    selected.removel_all();
 }
 
 void Model_picking::update(
@@ -391,6 +352,41 @@ void Model_picking::cleanup_after_update()
      * return to default framebuffer
      */
     framebuffers->unbind();
+}
+
+Renderable::pointer Model_picking::find(const GLuint x, const GLuint y)
+{
+    /*
+     * Read the color from the model picking
+     * frame buffer
+     */
+    framebuffers->bind( picking_buffer_id );
+    GLubyte pixels[3] = { 0,0,0 };
+    glReadPixels( x, y,
+                  1, 1,
+                  GL_RGB,
+                  GL_UNSIGNED_BYTE,
+                  &pixels);
+    framebuffers->unbind();
+    /*
+     * Attempt to find the model corresponding
+     * to the color
+     */
+    const types::color color( pixels[0], pixels[1], pixels[2], 1.0f );
+    const uint64_t color_code = color_operations.get_color_code( color );
+    return color_to_rendr.find( color_code )->second;
+}
+
+Renderable::pointer Model_picking::pointed_model( const GLuint x,
+                                                        const GLuint y )
+{
+    pointed = find( x, y );
+    return pointed;
+}
+
+Renderable::pointer Model_picking::get_pointed_model()
+{
+    return pointed;
 }
 
 //////////////////////////////////////
@@ -467,6 +463,68 @@ types::color Color_creator::get_color_rgba(const uint64_t color_code) const
                          ( color_code >> 8 ) & 0xFF,
                          ( color_code ) & 0xFF,
                          1.0f );
+}
+
+void Selected_models::add( Renderable::pointer object )
+{
+    LOG3("Adding new selected model, ID: ",
+         object->rendering_data.id,
+         ", current size: ", selected.size() );
+    if( find( object ) != nullptr ) {
+        LOG3("Object already selected, cannot select twice!");
+        return;
+    }
+    Selected_model_info model_info = {
+        object->rendering_data.default_color,
+        object
+    };
+    selected.push_back( model_info );
+    /*
+     * Change the default color
+     * to highlight the model
+     */
+    object->rendering_data.default_color *= 1.4f;
+    object->rendering_data.default_color.a *= 1.0f;
+}
+
+bool Selected_models::remove( Renderable::pointer object )
+{
+    for( auto it = selected.begin() ; it != selected.end() ; ++it ) {
+        if( it->object == object ) {
+            LOG3("Removing selected model, ID:",
+                 object->rendering_data.id);
+            object->rendering_data.default_color = it->original_color;
+            selected.erase( it );
+            return true;
+        }
+    }
+    return false;
+}
+
+std::size_t Selected_models::removel_all()
+{
+    for( auto&& obj : selected ) {
+        obj.object->rendering_data.default_color = obj.original_color;
+    }
+    const auto cnt = selected.size();
+    selected.clear();
+    return cnt;
+}
+
+Selected_model_info::raw_pointer Selected_models::find(
+        const Renderable::pointer &obj)
+{
+    for( auto& elem : selected ) {
+        if( elem.object == obj ) {
+            return &elem;
+        }
+    }
+    return nullptr;
+}
+
+Renderable::pointer Core_renderer_proxy::pointed_model()
+{
+    return nullptr;
 }
 
 

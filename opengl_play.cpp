@@ -61,11 +61,15 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
     if( button == GLFW_MOUSE_BUTTON_LEFT &&
         action == GLFW_PRESS ) {
-        auto lot = game_terrain->selected_lot();
+        GLdouble x,y;
+        glfwGetCursorPos( window_ctx, &x, &y );
+        renderer->picking()->pick( x, win_h - y );
+
+   /*     auto lot = game_terrain->selected_lot();
         if( lot != nullptr ) {
             auto new_unit = units->create_unit( unit_id );
             units->place_unit( new_unit, lot );
-        }
+        }*/
     }
 }
 
@@ -74,7 +78,7 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
     mouse_x_pos = x;
     mouse_y_pos = y;
     movement_processor.mouse_input(x, win_h - y);
-    auto it = renderer->select_model( x, win_h - y );
+    renderer->picking()->pointed_model( x, win_h - y );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)
@@ -246,7 +250,7 @@ opengl_ui::opengl_ui(int win_width,
      * Disable vsync, which in turns disable the
      * 60fps limit.
      */
-    //glfwSwapInterval(0);
+    glfwSwapInterval(0);
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -308,8 +312,8 @@ void opengl_ui::setup_scene()
 
 
     //Generate random terrain map
-    const int map_size_x{ 30 };
-    const int map_size_y{ 30 };
+    const int map_size_x{ 100 };
+    const int map_size_y{ 100 };
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );
@@ -384,12 +388,16 @@ void opengl_ui::enter_main_loop()
                 pitch = camera->get_pitch(),
                 roll = camera->get_roll();
         glm::vec3 pos = camera->get_position();
-        uint64_t selected = renderer->get_selected_model();
+        auto pointed = renderer->picking()->get_pointed_model();
+        types::id_type pointed_id = 0;
+        if( pointed != nullptr ) {
+            pointed_id = pointed->rendering_data.id;
+        }
 
         std::stringstream ss;
         ss <<current_fps_string<<" - "<<std::setprecision(2)<<std::fixed<< "yaw:"<<yaw<<", pitch:"<<pitch<<", roll:"<<roll
           <<". x:"<<pos.x<<",y:"<<pos.y<<",z:"<<pos.z<<", rendr cycles:"
-          <<num_of_rendering_cycles<<", sel: "<<selected;
+          <<num_of_rendering_cycles<<", Sel: "<<pointed_id;
 
         info_string->set_text(ss.str());
 

@@ -120,10 +120,6 @@ public:
      * Return the lot at the give coordinates
      */
     Terrain_lot::pointer find_lot( const glm::vec2 coord );
-    /*
-     * Return the currently selected lot, if any
-     */
-    Terrain_lot::pointer selected_lot();
 private:
     renderer::Core_renderer_proxy renderer;
 

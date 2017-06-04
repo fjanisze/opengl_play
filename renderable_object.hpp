@@ -216,6 +216,37 @@ private:
 };
 
 /*
+ * Information about a selected
+ * model
+ */
+struct Selected_model_info
+{
+    using container = std::vector< Selected_model_info >;
+    using raw_pointer = Selected_model_info*;
+    /*
+     * Selected models have a slightly different
+     * color, the original color is stored here in order
+     * to restore it when the model is unselected
+     */
+    types::color        original_color;
+    Renderable::pointer object;
+};
+
+/*
+ * Manage all the selected models
+ */
+class Selected_models
+{
+public:
+    void add( Renderable::pointer object );
+    bool remove( Renderable::pointer object );
+    std::size_t removel_all();
+private:
+    Selected_model_info::raw_pointer find( const Renderable::pointer& obj );
+    Selected_model_info::container selected;
+};
+
+/*
  * Implements the 'mouse picking' functionality,
  * allows for highlighting of a specific model.
  */
@@ -233,20 +264,25 @@ public:
      */
     types::color add_model(Renderable::pointer object );
     /*
+     * Return the pointed model, which is the model
+     * currently at position x,y
+     */
+    Renderable::pointer find( const GLuint x, const GLuint y );
+    /*
+     * Set and Get the currently pointed model
+     */
+    Renderable::pointer pointed_model( const GLuint x, const GLuint y );
+    Renderable::pointer get_pointed_model();
+    /*
      * Given the position x,y returns the selected model
-     * (if any), also set the renderable as 'selected' in
-     * the Renderable object
+     * (if any), the model will have the default color
+     * changed
      */
     Renderable::pointer pick( const GLuint x, const GLuint y );
     /*
      * If any model is currently selected, unselect it
      */
     void unpick();
-    /*
-     * Return the ID of the currently selected
-     * Renderable, if any
-     */
-    uint64_t get_selected() const;
     /*
      * Update the picking information for the provided model
      */
@@ -263,8 +299,12 @@ private:
     GLuint shader_color_loc;
     buffers::Framebuffers::pointer framebuffers;
     buffers::Framebuffers::buffer_id_t picking_buffer_id;
-    uint64_t cur_selected_renderable;
-    Color_creator color_operations;
+    /*
+     * Container of currently selected models
+     */
+    Selected_models     selected;
+    Renderable::pointer pointed;
+    Color_creator       color_operations;
     /*
      * Map a renderable ID to a color code
      */
@@ -318,16 +358,7 @@ public:
     types::id_type add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
-    /*
-     * This is the wrapper for the mouse picking
-     * functionality
-     */
-    Renderable::pointer select_model( const GLuint x,
-                                      const GLuint y );
-    /*
-     * Return the currently selected model
-     */
-    uint64_t get_selected_model() const;
+    Model_picking::pointer picking();
     /*
      * Clean the rendering buffers
      */
@@ -347,7 +378,7 @@ private:
      * Setup the proper color for the Renderable and
      * load it to the shader
      */
-    void prepare_rendr_color(Rendr::raw_pointer cur);
+    void prepare_rendr_color(Rendr::raw_pointer cur) const;
     Core_renderer_config     config;
     shaders::Shader::pointer shader;
     scene::Camera::pointer   camera;
@@ -388,9 +419,11 @@ public:
     auto add_renderable( Renderable::pointer&& object ) {
         return core_renderer->add_renderable( std::forward< Renderable::pointer >( object ) );
     }
-    uint64_t get_selected_renderable() const {
-        return core_renderer->get_selected_model();
-    }
+    /*
+     * The pointed mode is everything which is
+     * currently 'under' the mouse
+     */
+    Renderable::pointer pointed_model();
 
 private:
     Core_renderer::pointer core_renderer;

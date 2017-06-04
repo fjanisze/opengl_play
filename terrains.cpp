@@ -144,20 +144,6 @@ Terrain_lot::pointer Terrains::find_lot(const glm::vec2 coord)
     return it->second;
 }
 
-Terrain_lot::pointer Terrains::selected_lot()
-{
-    uint64_t rendr_id = renderer.get_selected_renderable();
-    auto it = rendr_id_to_idx.find( rendr_id );
-    if( it == rendr_id_to_idx.end() ) {
-        return nullptr;
-    }
-    auto lot = terrain_map.find( it->second );
-    if( lot == terrain_map.end() ) {
-        return nullptr;
-    }
-    return lot->second;
-}
-
 glm::mat4 Terrains::get_lot_model_matrix(const glm::vec2 &pos) const
 {
     glm::mat4 model;
