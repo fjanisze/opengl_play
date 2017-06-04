@@ -249,6 +249,7 @@ public:
     std::size_t removel_all();
     std::size_t count() const;
     const Selected_model_info::container& get_selected();
+    bool is_selected( const Renderable::pointer& obj );
 private:
     Selected_model_info::container::iterator find( const Renderable::pointer& obj );
     Selected_model_info::container selected;
@@ -287,6 +288,12 @@ public:
      */
     Renderable::pointer pick( const GLuint x, const GLuint y );
     /*
+     * Work as the usual pick, but if one attempt to select
+     * twice the same renderable then the second selection
+     * works as unselection
+     */
+    Renderable::pointer pick_toggle( const GLuint x, const GLuint y );
+    /*
      * If any model is currently selected, unselect it
      */
     void unpick();
@@ -294,6 +301,7 @@ public:
      * Return all the currently selected models
      */
     std::vector< Renderable::pointer > get_selected();
+    std::vector< types::id_type > get_selected_ids();
     /*
      * Update the picking information for the provided model
      */

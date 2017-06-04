@@ -68,26 +68,28 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
         if( key_status[ GLFW_KEY_LEFT_SHIFT ] != key_status_t::pressed ) {
             renderer->picking()->unpick();
         }
-        renderer->picking()->pick( x, win_h - y );
+        renderer->picking()->pick_toggle( x, win_h - y );
     } else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
         /*
          * If there's a selected unit then move that unit
          * otherwise create a new one.
          * Do not support movement of multiple objects
          */
-        auto selected = renderer->picking()->get_selected();
+        auto selected = renderer->picking()->get_selected_ids();
         auto pointed_model = renderer->picking()->get_pointed_model();
         auto lot = game_terrain->find_lot( pointed_model );
         if( lot == nullptr ) {
             //The target must be always a terrain.
             return;
         }
-        if( selected.size() == 1 ) {
-            auto model = *selected.front();
+        if( selected.size() > 0 ) {
             //Try to move the unit
-            units->move_unit( model.rendering_data.id,
-                              lot );
-        } else if( selected.size() == 0 ) {
+            if( false == units->move_multiple_units( selected,
+                              lot ) ) {
+                //Unpick everything..
+                renderer->picking()->unpick();
+            }
+        } else {
             //Nothing selected, this must be a creation attempt
             auto new_unit = units->create_unit( unit_id );
             units->place_unit( new_unit, lot );
@@ -131,6 +133,9 @@ void opengl_ui::ui_keyboard_press(GLint button,
             glfwSetWindowShouldClose(window_ctx,1);
         } else {
             key_status[ button ] = key_status_t::pressed;
+        }
+        if( button ==  GLFW_KEY_SPACE ) {
+            renderer->picking()->unpick();
         }
     } else if( action == GLFW_RELEASE ) {
         key_status[ button ] = key_status_t::not_pressed;

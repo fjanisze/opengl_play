@@ -298,12 +298,33 @@ Renderable::pointer Model_picking::pick(
     auto obj = model_at_position( x, y );
     if( obj != nullptr )
     {
-        LOG3("Found: ", obj->rendering_data.id );
+        LOG3("Picking model with ID: ", obj->rendering_data.id );
         selected.add( obj );
         return obj;
     }
     unpick();
     return nullptr;
+}
+
+Renderable::pointer Model_picking::pick_toggle(
+        const GLuint x,
+        const GLuint y )
+{
+    auto obj = model_at_position( x, y );
+    if( obj == nullptr ) {
+        return nullptr;
+    }
+    if( true == selected.is_selected( obj ) ) {
+        LOG3("Model with ID:", obj->rendering_data.id,
+             " already selected, unselecting.");
+        //Already selected, toggle selection
+        selected.remove( obj );
+        return nullptr;
+    } else {
+        LOG3("Picking model with ID: ", obj->rendering_data.id );
+        selected.add( obj );
+    }
+    return obj;
 }
 
 void Model_picking::unpick()
@@ -319,6 +340,16 @@ std::vector< Renderable::pointer > Model_picking::get_selected()
         ret.push_back( sel->object );
     }
     return ret;
+}
+
+std::vector<types::id_type> Model_picking::get_selected_ids()
+{
+    auto rendrs =  selected.get_selected();
+    std::vector< types::id_type > ids;
+    for( auto&& sel : rendrs ) {
+        ids.push_back( sel->object->rendering_data.id );
+    }
+    return ids;
 }
 
 void Model_picking::update(
@@ -384,7 +415,11 @@ Renderable::pointer Model_picking::model_at_position( const GLuint x, const GLui
      */
     const types::color color( pixels[0], pixels[1], pixels[2], 1.0f );
     const uint64_t color_code = color_operations.get_color_code( color );
-    return color_to_rendr.find( color_code )->second;
+    auto it = color_to_rendr.find( color_code );
+    if( it != color_to_rendr.end() ) {
+        return it->second;
+    }
+    return nullptr;
 }
 
 Renderable::pointer Model_picking::set_pointed_model( const GLuint x,
@@ -527,6 +562,11 @@ std::size_t Selected_models::count() const
 const Selected_model_info::container &Selected_models::get_selected()
 {
     return selected;
+}
+
+bool Selected_models::is_selected(const Renderable::pointer &obj)
+{
+    return find( obj ) != selected.end();
 }
 
 Selected_model_info::container::iterator Selected_models::find(

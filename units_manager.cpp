@@ -69,7 +69,7 @@ bool Units::place_unit(Unit::pointer unit,
 }
 
 bool Units::move_unit( const types::id_type unit_id,
-                       game_terrains::Terrain_lot::pointer target_lot )
+                       game_terrains::Terrain_lot::pointer& target_lot )
 {
     auto unit_info = units_container.find( unit_id );
     if( unit_info != nullptr ) {
@@ -90,6 +90,26 @@ bool Units::move_unit( const types::id_type unit_id,
         return false;
     }
     return true;
+}
+
+bool Units::move_multiple_units(const std::vector<types::id_type> &units,
+                                 game_terrains::Terrain_lot::pointer& target_lot)
+{
+    LOG3("Attempt to move ", units.size()," units to lot ID:",
+         target_lot->rendering_data.id);
+    for( auto&& unit : units ) {
+        if( nullptr == units_container.find( unit ) ) {
+            //Not recognized unit, not able to move
+            return false;
+        }
+    }
+    bool ret{ true };
+    //Move them all..
+    for( auto&& unit :units ) {
+        ret = ret && move_unit( unit,
+                   target_lot );
+    }
+    return ret;
 }
 
 Unit_model::pointer Units::find_model(const uint64_t id)

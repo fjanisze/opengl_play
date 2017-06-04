@@ -78,7 +78,7 @@ class Unit : public renderer::Renderable
 {
 public:
     using pointer = std::shared_ptr< Unit >;
-    using container = std::shared_ptr< Units_container >;
+    using container = std::vector< pointer >;
     Unit( Unit_model::pointer unit_model );
 
     void render( ) override;

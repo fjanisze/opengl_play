@@ -77,7 +77,7 @@ public:
      */
     const GLfloat      altitude;
     Lot_model_textures textures;
-    game_units::Unit::container units;
+    game_units::Units_container::pointer units;
 
     /*
      * Rendering function

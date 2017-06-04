@@ -60,7 +60,14 @@ public:
      * target lot
      */
     bool move_unit( const types::id_type unit_id,
-                    game_terrains::Terrain_lot::pointer target_lot );
+                    game_terrains::Terrain_lot::pointer &target_lot );
+    /*
+     * Attempt to move multiple units, if any of the
+     * renderables provided is not a movable unit then the whole
+     * procedure fail.
+     */
+    bool move_multiple_units( const std::vector< types::id_type>& units,
+                              game_terrains::Terrain_lot::pointer &target_lot );
 private:
     /*
      * Those are the units we ca use for
