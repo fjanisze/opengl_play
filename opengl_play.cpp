@@ -59,17 +59,23 @@ void keyboard_press_callback(GLFWwindow* ctx,
 
 void opengl_ui::ui_mouse_click(GLint button, GLint action)
 {
-    if( button == GLFW_MOUSE_BUTTON_LEFT &&
-        action == GLFW_PRESS ) {
+    if( action != GLFW_PRESS ) {
+        return;
+    }
+    if( button == GLFW_MOUSE_BUTTON_LEFT ) {
         GLdouble x,y;
         glfwGetCursorPos( window_ctx, &x, &y );
+        if( key_status[ GLFW_KEY_LEFT_SHIFT ] != key_status_t::pressed ) {
+            renderer->picking()->unpick();
+        }
         renderer->picking()->pick( x, win_h - y );
-
-   /*     auto lot = game_terrain->selected_lot();
+    } else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
+        auto pointed_model = renderer->picking()->get_pointed_model();
+        auto lot = game_terrain->find_lot( pointed_model );
         if( lot != nullptr ) {
             auto new_unit = units->create_unit( unit_id );
             units->place_unit( new_unit, lot );
-        }*/
+        }
     }
 }
 
@@ -78,7 +84,7 @@ void opengl_ui::ui_mouse_move(GLdouble x, GLdouble y)
     mouse_x_pos = x;
     mouse_y_pos = y;
     movement_processor.mouse_input(x, win_h - y);
-    renderer->picking()->pointed_model( x, win_h - y );
+    renderer->picking()->set_pointed_model( x, win_h - y );
 }
 
 void opengl_ui::ui_mouse_enter_window(int state)

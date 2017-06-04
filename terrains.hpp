@@ -120,6 +120,11 @@ public:
      * Return the lot at the give coordinates
      */
     Terrain_lot::pointer find_lot( const glm::vec2 coord );
+    /*
+     * Return the lot terrain corresponding to the
+     * provided renderable, or null
+     */
+    Terrain_lot::pointer find_lot( const renderer::Renderable::pointer& rendr );
 private:
     renderer::Core_renderer_proxy renderer;
 

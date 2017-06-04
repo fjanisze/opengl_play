@@ -295,7 +295,7 @@ Renderable::pointer Model_picking::pick(
         const GLuint x,
         const GLuint y)
 {
-    auto obj = find( x, y );
+    auto obj = model_at_position( x, y );
     if( obj != nullptr )
     {
         LOG3("Found: ", obj->rendering_data.id );
@@ -354,7 +354,7 @@ void Model_picking::cleanup_after_update()
     framebuffers->unbind();
 }
 
-Renderable::pointer Model_picking::find(const GLuint x, const GLuint y)
+Renderable::pointer Model_picking::model_at_position( const GLuint x, const GLuint y )
 {
     /*
      * Read the color from the model picking
@@ -377,14 +377,14 @@ Renderable::pointer Model_picking::find(const GLuint x, const GLuint y)
     return color_to_rendr.find( color_code )->second;
 }
 
-Renderable::pointer Model_picking::pointed_model( const GLuint x,
+Renderable::pointer Model_picking::set_pointed_model( const GLuint x,
                                                         const GLuint y )
 {
-    pointed = find( x, y );
+    pointed = model_at_position( x, y );
     return pointed;
 }
 
-Renderable::pointer Model_picking::get_pointed_model()
+Renderable::pointer Model_picking::get_pointed_model() const
 {
     return pointed;
 }
@@ -483,8 +483,7 @@ void Selected_models::add( Renderable::pointer object )
      * Change the default color
      * to highlight the model
      */
-    object->rendering_data.default_color *= 1.4f;
-    object->rendering_data.default_color.a *= 1.0f;
+    object->rendering_data.default_color.r *= 20.0f;
 }
 
 bool Selected_models::remove( Renderable::pointer object )
@@ -522,9 +521,9 @@ Selected_model_info::raw_pointer Selected_models::find(
     return nullptr;
 }
 
-Renderable::pointer Core_renderer_proxy::pointed_model()
+Renderable::pointer Core_renderer_proxy::pointed_model() const
 {
-    return nullptr;
+    return core_renderer->picking()->get_pointed_model();
 }
 
 

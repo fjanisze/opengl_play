@@ -262,17 +262,16 @@ public:
      * be 'picked'. return the color assigned
      * to the model.
      */
-    types::color add_model(Renderable::pointer object );
+    types::color add_model( Renderable::pointer object );
     /*
-     * Return the pointed model, which is the model
-     * currently at position x,y
+     * Return the model at position x,y
      */
-    Renderable::pointer find( const GLuint x, const GLuint y );
+    Renderable::pointer model_at_position( const GLuint x, const GLuint y );
     /*
      * Set and Get the currently pointed model
      */
-    Renderable::pointer pointed_model( const GLuint x, const GLuint y );
-    Renderable::pointer get_pointed_model();
+    Renderable::pointer set_pointed_model( const GLuint x, const GLuint y );
+    Renderable::pointer get_pointed_model() const;
     /*
      * Given the position x,y returns the selected model
      * (if any), the model will have the default color
@@ -423,7 +422,7 @@ public:
      * The pointed mode is everything which is
      * currently 'under' the mouse
      */
-    Renderable::pointer pointed_model();
+    Renderable::pointer pointed_model() const;
 
 private:
     Core_renderer::pointer core_renderer;
