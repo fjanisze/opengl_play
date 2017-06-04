@@ -17,8 +17,6 @@ Units::Units( renderer::Core_renderer_proxy renderer ) :
     }
     LOG3("Completed! Amount of available units: ",
          available_models.size() );
-
-    units = factory< Units_container >::create();
 }
 
 Unit_model_data::container Units::buildable_units()
@@ -37,9 +35,9 @@ Unit::pointer Units::create_unit( uint64_t id )
     Unit::pointer new_unit = factory< Unit >::create(
                 model
                 );
-    units->add_unit( new_unit );
+    units_container.add( new_unit );
     LOG3("New unit created, unit ID:", new_unit->id,
-         ", total amount of units: ", units->size());
+         ", total amount of units: ", units_container.size());
     return new_unit;
 }
 
@@ -55,27 +53,43 @@ bool Units::place_unit(Unit::pointer unit,
     unit->rendering_state.set_disable();
     if( lot->units->add_unit( unit ) )
     {
-        const glm::mat4 lot_mod_matx = lot->rendering_data.model_matrix;
-        unit->rendering_data.model_matrix = lot_mod_matx;
-        /*
-         * In order to avoid units to be 'inside'
-         * the terrain model, we need to translate the
-         * model matrix of an amount equal to the 'altitude'
-         * of the terrain'
-         */
-        unit->rendering_data.model_matrix = glm::translate(
-                    unit->rendering_data.model_matrix,
-                    glm::vec3(
-                        0.0,
-                        0.0,
-                        lot->altitude
-                        ));
+        auto info = units_container.find( unit->rendering_data.id );
+        if( info == nullptr ) {
+            PANIC("Impossible to update the unit position! Unit ID:",unit->rendering_data.id,
+                  ", Unit not found in the info container!");
+        }
+        info->location_lot = lot;
+        update_unit_position( unit, lot );
         renderer.add_renderable( unit );
         unit->rendering_state.set_enable();
     } else {
         WARN2("Not possible to place!");
     }
     return false;
+}
+
+bool Units::move_unit( const types::id_type unit_id,
+                       game_terrains::Terrain_lot::pointer target_lot )
+{
+    auto unit_info = units_container.find( unit_id );
+    if( unit_info != nullptr ) {
+        unit_info->target_unit->rendering_state.set_disable();
+        /*
+         * Remove the unit from it's current location and place it
+         * in the new lot.
+         */
+        unit_info->location_lot->units->remove_unit( unit_info->target_unit );
+        target_lot->units->add_unit( unit_info->target_unit );
+        unit_info->location_lot = target_lot;
+        update_unit_position( unit_info->target_unit,
+                              target_lot );
+        unit_info->target_unit->rendering_state.set_enable();
+    } else {
+        WARN2("Unable to move unit with ID:", unit_id,
+             ", Unit not found!");
+        return false;
+    }
+    return true;
 }
 
 Unit_model::pointer Units::find_model(const uint64_t id)
@@ -86,5 +100,54 @@ Unit_model::pointer Units::find_model(const uint64_t id)
     }
     return nullptr;
 }
+
+void Units::update_unit_position( Unit::pointer &unit,
+                                  const game_terrains::Terrain_lot::pointer &lot )
+{
+    const glm::mat4 lot_mod_matx = lot->rendering_data.model_matrix;
+    unit->rendering_data.model_matrix = lot_mod_matx;
+    /*
+     * In order to avoid units to be 'inside'
+     * the terrain model, we need to translate the
+     * model matrix of an amount equal to the 'altitude'
+     * of the terrain'
+     */
+    unit->rendering_data.model_matrix = glm::translate(
+                unit->rendering_data.model_matrix,
+                glm::vec3(
+                    0.0,
+                    0.0,
+                    lot->altitude
+                    ));
+}
+
+Unit_info::pointer Unit_info_container::add( const Unit::pointer unit )
+{
+    LOG1("Adding new unit, ID:", unit->rendering_data.id );
+    const auto info = find( unit->rendering_data.id );
+    if( info != nullptr ) {
+        LOG1("Not able to add, unit already present!");
+        return nullptr;
+    }
+    auto new_info = factory< Unit_info >::create();
+    new_info->target_unit = unit;
+    data[ unit->rendering_data.id ] = new_info;
+    return new_info;
+}
+
+Unit_info::pointer Unit_info_container::find( const types::id_type id )
+{
+    const auto it = data.find( id );
+    if( it == data.end() ) {
+        return nullptr;
+    }
+    return it->second;
+}
+
+std::size_t Unit_info_container::size() const
+{
+    return data.size();
+}
+
 
 }

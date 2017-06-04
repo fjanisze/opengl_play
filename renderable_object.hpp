@@ -221,15 +221,21 @@ private:
  */
 struct Selected_model_info
 {
-    using container = std::vector< Selected_model_info >;
-    using raw_pointer = Selected_model_info*;
+    using pointer = std::shared_ptr< Selected_model_info >;
+    using container = std::vector< pointer >;
     /*
      * Selected models have a slightly different
      * color, the original color is stored here in order
      * to restore it when the model is unselected
      */
-    types::color        original_color;
+    const types::color  original_color;
     Renderable::pointer object;
+
+    Selected_model_info( const types::color color,
+                         Renderable::pointer pointer ) :
+        original_color{ color },
+        object{ pointer }
+    {}
 };
 
 /*
@@ -241,8 +247,10 @@ public:
     void add( Renderable::pointer object );
     bool remove( Renderable::pointer object );
     std::size_t removel_all();
+    std::size_t count() const;
+    const Selected_model_info::container& get_selected();
 private:
-    Selected_model_info::raw_pointer find( const Renderable::pointer& obj );
+    Selected_model_info::container::iterator find( const Renderable::pointer& obj );
     Selected_model_info::container selected;
 };
 
@@ -283,6 +291,10 @@ public:
      */
     void unpick();
     /*
+     * Return all the currently selected models
+     */
+    std::vector< Renderable::pointer > get_selected();
+    /*
      * Update the picking information for the provided model
      */
     void update( const Renderable::pointer& object ) const;
@@ -294,9 +306,9 @@ public:
     void prepare_to_update();
     void cleanup_after_update();
 private:
-    shaders::Shader::pointer game_shader;
-    GLuint shader_color_loc;
-    buffers::Framebuffers::pointer framebuffers;
+    shaders::Shader::pointer           game_shader;
+    GLuint                             shader_color_loc;
+    buffers::Framebuffers::pointer     framebuffers;
     buffers::Framebuffers::buffer_id_t picking_buffer_id;
     /*
      * Container of currently selected models

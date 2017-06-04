@@ -311,6 +311,16 @@ void Model_picking::unpick()
     selected.removel_all();
 }
 
+std::vector< Renderable::pointer > Model_picking::get_selected()
+{
+    auto rendrs =  selected.get_selected();
+    std::vector< Renderable::pointer > ret;
+    for( auto&& sel : rendrs ) {
+        ret.push_back( sel->object );
+    }
+    return ret;
+}
+
 void Model_picking::update(
         const Renderable::pointer &object
         ) const
@@ -470,15 +480,15 @@ void Selected_models::add( Renderable::pointer object )
     LOG3("Adding new selected model, ID: ",
          object->rendering_data.id,
          ", current size: ", selected.size() );
-    if( find( object ) != nullptr ) {
+    if( find( object ) != selected.end() ) {
         LOG3("Object already selected, cannot select twice!");
         return;
     }
-    Selected_model_info model_info = {
-        object->rendering_data.default_color,
-        object
-    };
-    selected.push_back( model_info );
+    auto new_model_info = factory< Selected_model_info >::create(
+                object->rendering_data.default_color,
+                object
+                );
+    selected.push_back( new_model_info );
     /*
      * Change the default color
      * to highlight the model
@@ -488,14 +498,13 @@ void Selected_models::add( Renderable::pointer object )
 
 bool Selected_models::remove( Renderable::pointer object )
 {
-    for( auto it = selected.begin() ; it != selected.end() ; ++it ) {
-        if( it->object == object ) {
-            LOG3("Removing selected model, ID:",
-                 object->rendering_data.id);
-            object->rendering_data.default_color = it->original_color;
-            selected.erase( it );
-            return true;
-        }
+    auto it = find( object );
+    if( it != selected.end() ) {
+        LOG3("Removing selected model, ID:",
+             object->rendering_data.id);
+        object->rendering_data.default_color = (*it)->original_color;
+        selected.erase( it );
+        return true;
     }
     return false;
 }
@@ -503,22 +512,32 @@ bool Selected_models::remove( Renderable::pointer object )
 std::size_t Selected_models::removel_all()
 {
     for( auto&& obj : selected ) {
-        obj.object->rendering_data.default_color = obj.original_color;
+        obj->object->rendering_data.default_color = obj->original_color;
     }
     const auto cnt = selected.size();
     selected.clear();
     return cnt;
 }
 
-Selected_model_info::raw_pointer Selected_models::find(
+std::size_t Selected_models::count() const
+{
+    return selected.size();
+}
+
+const Selected_model_info::container &Selected_models::get_selected()
+{
+    return selected;
+}
+
+Selected_model_info::container::iterator Selected_models::find(
         const Renderable::pointer &obj)
 {
-    for( auto& elem : selected ) {
-        if( elem.object == obj ) {
-            return &elem;
+    for( auto it = selected.begin() ; it != selected.end() ; ++it ) {
+        if( (*it)->object == obj ) {
+            return it;
         }
     }
-    return nullptr;
+    return selected.end();
 }
 
 Renderable::pointer Core_renderer_proxy::pointed_model() const

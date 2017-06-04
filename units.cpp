@@ -60,12 +60,15 @@ bool Units_container::add_unit( Unit::pointer unit )
         return false;
     }
     units.push_back( unit );
+    LOG1("Amount of units:", units.size());
     return true;
 }
 
 void Units_container::remove_unit( Unit::pointer unit )
 {
-    LOG3("Removing unit with ID:", unit->id);
+    LOG3("Removing unit with ID:", unit->id,
+         ", amount of units ", units.size(),
+         ", container ID:",id );
     units.erase( std::remove_if(
                      units.begin(),
                      units.end(),
@@ -73,6 +76,7 @@ void Units_container::remove_unit( Unit::pointer unit )
                          return ptr->id == unit->id;
                      }),
                  units.end());
+    LOG1("Amount of units after removal: ", units.size());
 }
 
 std::size_t Units_container::size() const

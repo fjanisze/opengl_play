@@ -70,9 +70,25 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
         }
         renderer->picking()->pick( x, win_h - y );
     } else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
+        /*
+         * If there's a selected unit then move that unit
+         * otherwise create a new one.
+         * Do not support movement of multiple objects
+         */
+        auto selected = renderer->picking()->get_selected();
         auto pointed_model = renderer->picking()->get_pointed_model();
         auto lot = game_terrain->find_lot( pointed_model );
-        if( lot != nullptr ) {
+        if( lot == nullptr ) {
+            //The target must be always a terrain.
+            return;
+        }
+        if( selected.size() == 1 ) {
+            auto model = *selected.front();
+            //Try to move the unit
+            units->move_unit( model.rendering_data.id,
+                              lot );
+        } else if( selected.size() == 0 ) {
+            //Nothing selected, this must be a creation attempt
             auto new_unit = units->create_unit( unit_id );
             units->place_unit( new_unit, lot );
         }
@@ -495,7 +511,7 @@ glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
 int main()
 {
     log_inst.set_thread_name("MAIN");
-    log_inst.set_logging_level( logging::severity_type::debug2 );
+    log_inst.set_logging_level( logging::severity_type::debug1 );
 
     opengl_play::opengl_ui entry(1920,1280);
     entry.prepare_for_main_loop();
