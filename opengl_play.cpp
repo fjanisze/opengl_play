@@ -516,7 +516,7 @@ glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
 int main()
 {
     log_inst.set_thread_name("MAIN");
-    log_inst.set_logging_level( logging::severity_type::debug1 );
+    log_inst.set_logging_level( logging::severity_type::debug2 );
 
     opengl_play::opengl_ui entry(1920,1280);
     entry.prepare_for_main_loop();

@@ -134,6 +134,7 @@ class Frustum
 {
 public:
     using pointer = std::shared_ptr< Frustum >;
+    using raw_pointer = Frustum*;
     explicit Frustum( Camera::pointer cam ,
                       const GLfloat fov_angle,
                       const GLfloat aspect_ratio,

@@ -7,6 +7,10 @@
 namespace renderer
 {
 
+constexpr std::size_t RENDR_BUF_CONTENT_SIZE{ 50000 };
+constexpr std::size_t RENDR_BUF_DEFAULT_HEAD_POS{ 25000 };
+
+
 Renderable::Renderable()
 {
     view_configuration.configure( View_config::supported_configs::world_space_coord );
@@ -26,6 +30,51 @@ std::string Renderable::nice_name()
 //////////////////////////////////////
 /// core_renderer
 /////////////////////////////////////
+
+Rendr_data_buffer::Rendr_data_buffer()
+{
+    LOG3("Creating the rendering data buffer, size: ",
+         RENDR_BUF_CONTENT_SIZE,", default head position:",
+         RENDR_BUF_DEFAULT_HEAD_POS);
+    /*
+     * This can be tuned to allow more elements.
+     */
+    try {
+        rendr_content_buffer = std::make_unique< Rendr::raw_pointer[] >( RENDR_BUF_CONTENT_SIZE );
+    } catch( std::exception& ex ) {
+        PANIC("Failed to allocate the buffer for the renderable object.");
+    }
+    rendr_content = rendr_content_buffer.get();
+    buffer_head = RENDR_BUF_DEFAULT_HEAD_POS + 1;
+    buffer_tail = RENDR_BUF_DEFAULT_HEAD_POS;
+}
+
+void Rendr_data_buffer::add_new_rendr( Rendr::pointer &rendr )
+{
+    /*
+     * object with view mode set to camera_space_coord
+     * should be rendered last.
+     */
+    if( false == rendr->object->view_configuration.is_camera_space() ) {
+        LOG1("Adding new rendr with ID:",
+             rendr->id," at the HEAD of the buffer, IDX:",
+             buffer_head);
+        if( buffer_head == 0 ) {
+            //TODO: Those panic can be removed.. in the future..
+            //Just shift the buffer or whatever else..
+            PANIC("No more buffer space at the head.");
+        }
+        rendr_content[ --buffer_head ] = rendr.get();
+    } else {
+        LOG1("Adding new rendr with ID:",
+             rendr->id," at the TAIL of the buffer, IDX:",
+             buffer_tail);
+        if( buffer_tail == RENDR_BUF_CONTENT_SIZE - 1 ) {
+            PANIC("No more buffer space at the tail!");
+        }
+        rendr_content[ ++buffer_tail ] = rendr.get();
+    }
+}
 
 Core_renderer::Core_renderer(const types::win_size &window,
                              const glm::mat4 &proj,
@@ -70,6 +119,7 @@ Core_renderer::Core_renderer(const types::win_size &window,
                             (GLfloat)window.width / (GLfloat)window.height,
                             1.0f,
                             100.0f);
+    frustum_raw_ptr = frustum.get();
 }
 
 types::id_type Core_renderer::add_renderable( Renderable::pointer object )
@@ -82,19 +132,21 @@ types::id_type Core_renderer::add_renderable( Renderable::pointer object )
          object->rendering_data.id, ", name: ",
          object->nice_name());
     Rendr::pointer new_rendr = factory< Rendr >::create();
-    new_rendr->object = object;
+    new_rendr->object = object.get();
     new_rendr->object->set_shader( shader.get() );
     renderables[ new_rendr->id ] = new_rendr;
+    LOG1("Assigned ID: ", new_rendr->id );
     /*
      * object with view mode set to camera_space_coord
      * should be rendered last.
      */
+    rendr_data.add_new_rendr( new_rendr );
+    /*
     if( object->view_configuration.is_camera_space() ) {
         rendering_content.insert( rendering_content.begin() , new_rendr.get() );
     } else {
         rendering_content.push_back( new_rendr.get() );
-    }
-    LOG1("Assigned ID: ", new_rendr->id );
+    }*/
     model_picking->add_model( object );
     return new_rendr->id;
 }
@@ -116,24 +168,31 @@ long Core_renderer::render()
      * the second time in order to update the mouse picking
      * data
      */
-    for( int_fast64_t idx = rendering_content.size() - 1;
-         idx >= 0 ;
-         --idx )
+    int_fast32_t buffer_idx_cnt = 0;
+    for( int_fast64_t idx = rendr_data.buffer_head;
+         idx <= rendr_data.buffer_tail;
+         ++idx )
     {
-        Rendr::raw_pointer cur = rendering_content[ idx ];
+        Rendr::raw_pointer cur = rendr_data.rendr_content[ idx ];
         if( Rendering_state::states::rendering_enabled !=
             cur->object->rendering_state.current() ) {
             return false;
         }
-        if( false == prepare_for_rendering( cur ) ) {
-            /*
-             * To avoid a second check on whether the object
-             * is inside the frustum (during the second loop)
-             * set the state of the Renderable to not_visible.
-             */
-            cur->object->rendering_state.set_not_visible();
+        /*
+         * We need all those variables only in the first rendering loop
+         */
+        const bool is_camera_space = cur->object->view_configuration.is_camera_space();
+        const glm::mat4& model = cur->object->rendering_data.model_matrix;
+        const glm::vec3 pos( model[3].x, model[3].y, model[3].z );
+        if( false == is_camera_space && frustum_raw_ptr->is_inside( pos ) < 0.0f ) {
             continue;
         }
+        prepare_for_rendering( cur );
+        /*
+         * Save the index of the renderables that are going to be
+         * rendered, not need to loop throught all the twice.
+         */
+        rendering_content_idx_buffer[ buffer_idx_cnt++ ] = idx;
         prepare_rendr_color( cur );
         cur->object->render( );
         cur->object->clean_after_render( );
@@ -143,28 +202,10 @@ long Core_renderer::render()
      * Second loop.
      */
     model_picking->prepare_to_update();
-    for( int_fast64_t idx = rendering_content.size() - 1;
-         idx > 0 ;
-         --idx )
+    for( int_fast32_t idx = 0 ; idx < buffer_idx_cnt; ++idx )
     {
-        Rendr::raw_pointer cur = rendering_content[ idx ];
-        if( renderer::Rendering_state::states::not_visible ==
-            cur->object->rendering_state.current() ) {
-            /*
-             * Set the state back to enabled, in
-             * the next rendering iteration we will know
-             * if the object is still not visible.
-             */
-            cur->object->rendering_state.set_enable();
-            continue;
-        }
-        if( Rendering_state::states::rendering_enabled !=
-            cur->object->rendering_state.current() ) {
-            return false;
-        }
-        if( false == prepare_for_rendering( cur ) ) {
-            continue;
-        }
+        Rendr::raw_pointer cur = rendr_data.rendr_content[ rendering_content_idx_buffer[ idx ] ];
+        prepare_for_rendering( cur );
         model_picking->update( cur->object );
         cur->object->clean_after_render( );
         ++num_of_render_op;
@@ -190,20 +231,7 @@ void Core_renderer::clear()
 
 bool Core_renderer::prepare_for_rendering( Rendr::raw_pointer cur )
 {
-    const glm::mat4& model = cur->object->rendering_data.model_matrix;
-    const glm::vec3 pos(glm::vec3(model[3].x,model[3].y,model[3].z));
     const bool is_camera_space = cur->object->view_configuration.is_camera_space();
-
-    /*
-     * The value of is_inside is used to tune the amount of objects
-     * rendered. The problem is that the rendered is stupid, to consider
-     * an object out of the frustum is sufficient that the border point
-     * if out of it! To avoid 'holes' of non rendered object on the border
-     * of the frustum the renderer render a little behing the frustum planes.
-     */
-    if( false == is_camera_space && frustum->is_inside( pos ) < 0.0f ) {
-        return false;
-    }
 
     switch_proper_perspective( cur->object );
 
@@ -237,7 +265,7 @@ void Core_renderer::prepare_rendr_color( Rendr::raw_pointer cur ) const
 }
 
 void Core_renderer::switch_proper_perspective(
-        const Renderable::pointer &obj
+        const Renderable::raw_pointer obj
         )
 {
     if( obj->view_configuration.is_camera_space() &&
@@ -353,7 +381,7 @@ std::vector<types::id_type> Model_picking::get_selected_ids()
 }
 
 void Model_picking::update(
-        const Renderable::pointer &object
+        const Renderable::raw_pointer object
         ) const
 {
     const auto it = rendrid_to_color.find( object->rendering_data.id );
@@ -584,6 +612,5 @@ Renderable::pointer Core_renderer_proxy::pointed_model() const
 {
     return core_renderer->picking()->get_pointed_model();
 }
-
 
 }

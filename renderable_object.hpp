@@ -15,8 +15,6 @@
 namespace renderer
 {
 
-
-
 /*
  * Specify how to calculate the position
  * of the object, if it should be in world position
@@ -162,7 +160,7 @@ struct Rendr
     using pointer = std::shared_ptr< Rendr >;
     using raw_pointer = Rendr*;
     id_factory< Rendr > id;
-    Renderable::pointer object;
+    Renderable::raw_pointer object;
 
     Rendr() = default;
 };
@@ -305,7 +303,7 @@ public:
     /*
      * Update the picking information for the provided model
      */
-    void update( const Renderable::pointer& object ) const;
+    void update(const Renderable::raw_pointer object ) const;
     /*
      * Two functions which ask Model_picking to be ready
      * for rendering next, or to cleanup after the rendering
@@ -359,6 +357,40 @@ struct Core_renderer_config
 };
 
 /*
+ * This buffer will contain all the renderable
+ * that we can render. When a new renderable is added
+ * to the core renderer it ends up in this buffer.
+ *
+ * This is a very heavily accessed structure so using
+ * vectors does not come into play (the [] operator overhead is
+ * not acceptable)
+ */
+class Rendr_data_buffer
+{
+public:
+    Rendr_data_buffer();
+
+    std::unique_ptr< Rendr::raw_pointer[] > rendr_content_buffer;
+    Rendr::raw_pointer* rendr_content;
+
+    /*
+     * Depending on the type of camera configuration
+     * the elements are put in front or at the back
+     * of the current set of renderables in the buffer.
+     */
+    void add_new_rendr( Rendr::pointer& rendr );
+    /*
+     * This is public to avoid setter/getter, do not mess anything!! :)
+     */
+    /*
+     * Used for rendering the rendr objects based
+     * on their priority (head first, tail last)
+     */
+    std::size_t buffer_head;
+    std::size_t buffer_tail;
+};
+
+/*
  * The core rendering object, given a properly
  * configured context it render the models
  * which are selected for rendering
@@ -402,13 +434,10 @@ private:
     shaders::Shader::pointer shader;
     scene::Camera::pointer   camera;
     scene::Frustum::pointer  frustum;
+    scene::Frustum::raw_pointer frustum_raw_ptr;//Save some performance.
     lighting::lighting_pointer     game_lights;
     buffers::Framebuffers::pointer framebuffers;
-    /*
-     * Used for rendering the rendr objects based
-     * on their priority (head first, tail last)
-     */
-    std::vector< Rendr::raw_pointer > rendering_content;
+    Rendr_data_buffer rendr_data;
     /*
      * For fast retrieval of renderable objects
      * by their ID
@@ -418,9 +447,14 @@ private:
      * Load the proper perspective matrix
      * to the shader
      */
-    void switch_proper_perspective(const Renderable::pointer &obj );
+    void switch_proper_perspective(const Renderable::raw_pointer obj );
 
     Model_picking::pointer model_picking;
+    /*
+     * Rendering index buffer, used to store the indexes
+     * of the visible renderable in rendering_content
+     */
+    types::id_type rendering_content_idx_buffer[ 1000 ];
 };
 
 /*
