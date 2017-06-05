@@ -118,6 +118,10 @@ struct Renderable_data
      */
     glm::mat4 model_matrix;
     /*
+     * Position of the renderable
+     */
+    glm::vec3 position;
+    /*
      * Default color applicable to the model
      */
     types::color default_color;
@@ -129,6 +133,17 @@ struct Renderable_data
     Renderable_data() :
         model_matrix{ glm::mat4() }
     {}
+    /*
+     * Utility functions
+     */
+    glm::vec3 update_pos_from_model_matrix() {
+        position = glm::vec3(
+                    model_matrix[3].x,
+                    model_matrix[3].y,
+                    model_matrix[3].z
+                    );
+        return position;
+    }
 };
 
 class Renderable

@@ -139,6 +139,7 @@ void Units::update_unit_position( Unit::pointer &unit,
                     0.0,
                     lot->altitude
                     ));
+    unit->rendering_data.update_pos_from_model_matrix();
 }
 
 Unit_info::pointer Unit_info_container::add( const Unit::pointer unit )

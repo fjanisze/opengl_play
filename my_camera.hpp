@@ -4,7 +4,6 @@
 #include "headers.hpp"
 #include <movable_object.hpp>
 #include <logger/logger.hpp>
-#include <optional>
 #include <types.hpp>
 
 namespace scene

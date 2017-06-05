@@ -182,9 +182,8 @@ long Core_renderer::render()
          * We need all those variables only in the first rendering loop
          */
         const bool is_camera_space = cur->object->view_configuration.is_camera_space();
-        const glm::mat4& model = cur->object->rendering_data.model_matrix;
-        const glm::vec3 pos( model[3].x, model[3].y, model[3].z );
-        if( false == is_camera_space && frustum_raw_ptr->is_inside( pos ) < 0.0f ) {
+        if( false == is_camera_space &&
+            frustum_raw_ptr->is_inside( cur->object->rendering_data.position ) < 0.0f ) {
             continue;
         }
         prepare_for_rendering( cur );

@@ -315,6 +315,7 @@ void Renderable_text::set_position(const glm::vec3 position)
     if( view_configuration.is_world_space() ) {
         rendering_data.model_matrix = glm::translate( rendering_data.model_matrix,
                                        position );
+        rendering_data.update_pos_from_model_matrix();
     }
 }
 
