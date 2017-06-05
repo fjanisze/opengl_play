@@ -269,6 +269,40 @@ private:
 };
 
 /*
+ * Currently pointed model
+ */
+struct Pointed_model_data
+{
+    //Screen coordinates
+    GLuint x;
+    GLuint y;
+    /*
+     * Set to true if the pointed
+     * model need to be updated
+     */
+    bool update_required;
+    //Actual pointed model;
+    Renderable::pointer pointed;
+};
+
+/*
+ * Entry for a pick request. Those
+ * structs are generated for each 'pick'
+ * coming from the UI.
+ */
+enum class pick_type
+{
+    simple,
+    toggle
+};
+struct Pick_request_data
+{
+    GLuint x;
+    GLuint y;
+    pick_type type;
+};
+
+/*
  * Implements the 'mouse picking' functionality,
  * allows for highlighting of a specific model.
  */
@@ -292,20 +326,20 @@ public:
     /*
      * Set and Get the currently pointed model
      */
-    Renderable::pointer set_pointed_model( const GLuint x, const GLuint y );
+    void set_pointed_model( const GLuint x, const GLuint y );
     Renderable::pointer get_pointed_model() const;
     /*
      * Given the position x,y returns the selected model
      * (if any), the model will have the default color
      * changed
      */
-    Renderable::pointer pick( const GLuint x, const GLuint y );
+    std::size_t pick( const GLuint x, const GLuint y );
     /*
      * Work as the usual pick, but if one attempt to select
      * twice the same renderable then the second selection
      * works as unselection
      */
-    Renderable::pointer pick_toggle( const GLuint x, const GLuint y );
+    std::size_t pick_toggle( const GLuint x, const GLuint y );
     /*
      * If any model is currently selected, unselect it
      */
@@ -325,16 +359,23 @@ public:
      * is completed
      */
     void prepare_to_update();
-    void cleanup_after_update();
+    void complete_update();
 private:
     shaders::Shader::pointer           game_shader;
     GLuint                             shader_color_loc;
     buffers::Framebuffers::pointer     framebuffers;
     buffers::Framebuffers::buffer_id_t picking_buffer_id;
     /*
+     * List of points for which was submitted
+     * a 'pick' operation
+     */
+    void process_pick_requests();
+    std::vector< Pick_request_data > pick_requests;
+    /*
      * Container of currently selected models
      */
     Selected_models     selected;
+    Pointed_model_data  pointed_model;
     Renderable::pointer pointed;
     Color_creator       color_operations;
     /*
@@ -424,7 +465,7 @@ public:
     types::id_type add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
-    Model_picking::pointer picking();
+    Model_picking::pointer     picking();
     /*
      * Clean the rendering buffers
      */

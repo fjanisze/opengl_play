@@ -23,6 +23,8 @@ extern logging::logger< logging::file_log_policy > log_inst;
 #define CURRENT_FUNCTION_NAME "(unknown)"
 #endif
 
+//LOG0 might hit the performance
+#define LOG0(...) log_inst.print< logging::severity_type::debug0 >(CURRENT_FUNCTION_NAME,": ",__VA_ARGS__)
 #define LOG1(...) log_inst.print< logging::severity_type::debug1 >(CURRENT_FUNCTION_NAME,": ",__VA_ARGS__)
 #define LOG2(...) log_inst.print< logging::severity_type::debug2 >(CURRENT_FUNCTION_NAME,": ",__VA_ARGS__)
 #define LOG3(...) log_inst.print< logging::severity_type::debug3 >(CURRENT_FUNCTION_NAME,": ",__VA_ARGS__)

@@ -60,6 +60,7 @@ public:
 
 enum class severity_type
 {
+    debug0 = 0,
     debug1 = 1,
     debug2,
     debug3,
@@ -171,6 +172,9 @@ void logger< log_policy >::print(Args&&...args)
 
     switch( severity )
     {
+    case severity_type::debug0:
+        log_stream<<"VERB ";
+        break;
     case severity_type::debug1:
     case severity_type::debug2:
     case severity_type::debug3:

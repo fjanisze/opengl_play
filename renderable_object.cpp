@@ -7,8 +7,8 @@
 namespace renderer
 {
 
-constexpr std::size_t RENDR_BUF_CONTENT_SIZE{ 50000 };
-constexpr std::size_t RENDR_BUF_DEFAULT_HEAD_POS{ 25000 };
+constexpr std::size_t RENDR_BUF_CONTENT_SIZE{ 100000 };
+constexpr std::size_t RENDR_BUF_DEFAULT_HEAD_POS{ 90000 };
 
 
 Renderable::Renderable()
@@ -209,7 +209,7 @@ long Core_renderer::render()
         cur->object->clean_after_render( );
         ++num_of_render_op;
     }
-    model_picking->cleanup_after_update();
+    model_picking->complete_update();
     return num_of_render_op;
 }
 
@@ -318,40 +318,26 @@ types::color Model_picking::add_model(
     return assigned_color;
 }
 
-Renderable::pointer Model_picking::pick(
+std::size_t Model_picking::pick(
         const GLuint x,
         const GLuint y)
 {
-    auto obj = model_at_position( x, y );
-    if( obj != nullptr )
-    {
-        LOG3("Picking model with ID: ", obj->rendering_data.id );
-        selected.add( obj );
-        return obj;
-    }
-    unpick();
-    return nullptr;
+    LOG3("New 'simple' pick request: ",
+         x,"/",y,". queue size: ",
+         pick_requests.size());
+    pick_requests.push_back( { x, y , pick_type::simple });
+    return pick_requests.size();
 }
 
-Renderable::pointer Model_picking::pick_toggle(
+std::size_t Model_picking::pick_toggle(
         const GLuint x,
         const GLuint y )
 {
-    auto obj = model_at_position( x, y );
-    if( obj == nullptr ) {
-        return nullptr;
-    }
-    if( true == selected.is_selected( obj ) ) {
-        LOG3("Model with ID:", obj->rendering_data.id,
-             " already selected, unselecting.");
-        //Already selected, toggle selection
-        selected.remove( obj );
-        return nullptr;
-    } else {
-        LOG3("Picking model with ID: ", obj->rendering_data.id );
-        selected.add( obj );
-    }
-    return obj;
+    LOG3("New 'toggle' pick request: ",
+         x,"/",y,". queue size: ",
+         pick_requests.size());
+    pick_requests.push_back( { x, y , pick_type::toggle });
+    return pick_requests.size();
 }
 
 void Model_picking::unpick()
@@ -411,8 +397,19 @@ void Model_picking::prepare_to_update()
     game_shader->disable_texture_calculations();
 }
 
-void Model_picking::cleanup_after_update()
+void Model_picking::complete_update()
 {
+    /*
+     * Good opportunity to update whatever need
+     * to be updated before cleaning up
+     */
+    if( pointed_model.update_required ) {
+        pointed_model.pointed = model_at_position( pointed_model.x,
+                                           pointed_model.y );
+        pointed_model.update_required = false;
+    }
+    process_pick_requests();
+    //Clean up
     game_shader->enable_texture_calculations();
     game_shader->enable_light_calculations();
 
@@ -422,20 +419,43 @@ void Model_picking::cleanup_after_update()
     framebuffers->unbind();
 }
 
+void Model_picking::process_pick_requests()
+{
+    for( auto&& req : pick_requests ) {
+        auto obj = model_at_position( req.x, req.y );
+        if( obj == nullptr ) {
+            continue;
+        }
+        if( req.type == pick_type::simple ) {
+            LOG0("Picking model with ID: ", obj->rendering_data.id );
+            selected.add( obj );
+        } else if( req.type == pick_type::toggle ) {
+            if( true == selected.is_selected( obj ) ) {
+                LOG0("Model with ID:", obj->rendering_data.id,
+                     " already selected, unselecting.");
+                //Already selected, toggle selection
+                selected.remove( obj );
+            } else {
+                LOG0("Picking model with ID: ", obj->rendering_data.id );
+                selected.add( obj );
+            }
+        }
+    }
+    pick_requests.clear();
+}
+
 Renderable::pointer Model_picking::model_at_position( const GLuint x, const GLuint y )
 {
     /*
      * Read the color from the model picking
      * frame buffer
      */
-    framebuffers->bind( picking_buffer_id );
     GLubyte pixels[3] = { 0,0,0 };
     glReadPixels( x, y,
                   1, 1,
                   GL_RGB,
                   GL_UNSIGNED_BYTE,
                   &pixels);
-    framebuffers->unbind();
     /*
      * Attempt to find the model corresponding
      * to the color
@@ -449,16 +469,18 @@ Renderable::pointer Model_picking::model_at_position( const GLuint x, const GLui
     return nullptr;
 }
 
-Renderable::pointer Model_picking::set_pointed_model( const GLuint x,
-                                                        const GLuint y )
+void Model_picking::set_pointed_model(
+        const GLuint x,
+        const GLuint y)
 {
-    pointed = model_at_position( x, y );
-    return pointed;
+    pointed_model.x = x;
+    pointed_model.y = y;
+    pointed_model.update_required = true;
 }
 
 Renderable::pointer Model_picking::get_pointed_model() const
 {
-    return pointed;
+    return pointed_model.pointed;
 }
 
 //////////////////////////////////////
@@ -539,11 +561,11 @@ types::color Color_creator::get_color_rgba(const uint64_t color_code) const
 
 void Selected_models::add( Renderable::pointer object )
 {
-    LOG3("Adding new selected model, ID: ",
+    LOG0("Adding new selected model, ID: ",
          object->rendering_data.id,
          ", current size: ", selected.size() );
     if( find( object ) != selected.end() ) {
-        LOG3("Object already selected, cannot select twice!");
+        LOG0("Object already selected, cannot select twice!");
         return;
     }
     auto new_model_info = factory< Selected_model_info >::create(
@@ -562,7 +584,7 @@ bool Selected_models::remove( Renderable::pointer object )
 {
     auto it = find( object );
     if( it != selected.end() ) {
-        LOG3("Removing selected model, ID:",
+        LOG0("Removing selected model, ID:",
              object->rendering_data.id);
         object->rendering_data.default_color = (*it)->original_color;
         selected.erase( it );
