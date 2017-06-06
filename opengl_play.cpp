@@ -338,6 +338,10 @@ void opengl_ui::setup_scene()
     game_terrain->load_highres_terrain("../models/Forest/Forest_complex.obj",
                                forest_id);
 
+    game_terrain->load_terrain("../models/Mountain/NewMountain.obj",
+                               glm::vec4(1.0),
+                               5);
+
 
     //Generate random terrain map
     const int map_size_x{ 100 };
@@ -345,7 +349,7 @@ void opengl_ui::setup_scene()
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );
-    std::uniform_int_distribution<long> dist(1,4);
+    std::uniform_int_distribution<long> dist(1,5);
 
     game_terrains::terrain_map_t terrain_map;
     terrain_map.resize( map_size_y );

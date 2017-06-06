@@ -31,6 +31,13 @@ private:
     std::unordered_map< types::id_type, Unit_info::pointer > data;
 };
 
+/*
+ * Process the 'animation' of a moving unit
+ */
+class Units_movement_animator
+{
+
+};
 
 /*
  * Object responsible for the processing of unit movements
