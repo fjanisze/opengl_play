@@ -77,6 +77,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
          */
         auto selected = renderer->picking()->get_selected_ids();
         auto pointed_model = renderer->picking()->get_pointed_model();
+        LOG0("ID:",pointed_model->id);
         auto lot = game_terrain->find_lot( pointed_model );
         if( lot == nullptr ) {
             //The target must be always a terrain.
@@ -84,7 +85,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
         }
         if( selected.size() > 0 ) {
             //Try to move the unit
-            if( false == units->move_multiple_units( selected,
+            if( false == units->movements().multiple_teleport( selected,
                               lot ) ) {
                 //Unpick everything..
                 renderer->picking()->unpick();
@@ -418,7 +419,7 @@ void opengl_ui::enter_main_loop()
         auto pointed = renderer->picking()->get_pointed_model();
         types::id_type pointed_id = 0;
         if( pointed != nullptr ) {
-            pointed_id = pointed->rendering_data.id;
+            pointed_id = pointed->id;
         }
 
         std::stringstream ss;
@@ -516,7 +517,7 @@ glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
 int main()
 {
     log_inst.set_thread_name("MAIN");
-    log_inst.set_logging_level( logging::severity_type::debug2 );
+    log_inst.set_logging_level( logging::severity_type::debug1 );
 
     opengl_play::opengl_ui entry(1920,1280);
     entry.prepare_for_main_loop();

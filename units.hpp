@@ -82,8 +82,6 @@ public:
     Unit( Unit_model::pointer unit_model );
 
     void render( ) override;
-public:
-    const id_factory< Unit > id;
 private:
     Unit_model::pointer model;
 };
@@ -96,16 +94,16 @@ class Units_container
 {
 public:
     using pointer = std::shared_ptr< Units_container >;
-    using container = std::vector< Unit::pointer >;
+    using container_type = std::vector< Unit::pointer >;
     Units_container();
-    bool add_unit( Unit::pointer unit );
-    void remove_unit( Unit::pointer unit );
+    bool add( Unit::pointer unit );
+    void remove( Unit::pointer unit );
     std::size_t size() const;
-    Unit::pointer find_unit( uint64_t id );
-    container get();
+    Unit::pointer find( uint64_t id );
+    container_type get();
 private:
     id_factory< Units_container > id;
-    container units;
+    container_type units;
 };
 
 }

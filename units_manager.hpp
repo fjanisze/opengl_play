@@ -5,6 +5,8 @@
 namespace game_units
 {
 
+using namespace game_terrains;
+
 /*
  * Information about a given unit,
  * like the terrain lot where it is &c.
@@ -14,11 +16,12 @@ struct Unit_info
     using pointer = std::shared_ptr< Unit_info >;
     Unit::pointer target_unit;
     game_terrains::Terrain_lot::pointer location_lot;
+    Unit_info() = default;
 };
 /*
  * Handle the Unit_info
  */
-class Unit_info_container
+class Units_movement_data
 {
 public:
     Unit_info::pointer add( const Unit::pointer unit );
@@ -26,6 +29,33 @@ public:
     std::size_t size() const;
 private:
     std::unordered_map< types::id_type, Unit_info::pointer > data;
+};
+
+
+/*
+ * Object responsible for the processing of unit movements
+ */
+class Units_movement_processor
+{
+public:
+    Units_movement_processor( Units_movement_data& container );
+    /*
+     * Teleport will just instantly move the unit
+     * from one place to another
+     */
+    bool teleport( types::id_type unit,
+                   Terrain_lot::pointer target_lot );
+    bool multiple_teleport( const std::vector< types::id_type>& units,
+                             game_terrains::Terrain_lot::pointer &target_lot );
+private:
+    /*
+     * Update the model matrix for the unit in order
+     * to make sure that it is placed on the given
+     * lot
+     */
+    void update_unit_position( Unit::pointer& unit,
+                               const game_terrains::Terrain_lot::pointer& lot );
+    Units_movement_data& units_container;
 };
 
 /*
@@ -55,19 +85,7 @@ public:
      */
     bool place_unit( Unit::pointer unit,
                      game_terrains::Terrain_lot::pointer lot );
-    /*
-     * Move the unit with ID to the provided
-     * target lot
-     */
-    bool move_unit( const types::id_type unit_id,
-                    game_terrains::Terrain_lot::pointer &target_lot );
-    /*
-     * Attempt to move multiple units, if any of the
-     * renderables provided is not a movable unit then the whole
-     * procedure fail.
-     */
-    bool move_multiple_units( const std::vector< types::id_type>& units,
-                              game_terrains::Terrain_lot::pointer &target_lot );
+    Units_movement_processor& movements();
 private:
     /*
      * Those are the units we ca use for
@@ -77,17 +95,11 @@ private:
     Unit_model::container available_models;
     Unit_model::pointer find_model( const uint64_t id );
     /*
-     * Update the model matrix for the unit in order
-     * to make sure that it is placed on the given
-     * lot
-     */
-    void update_unit_position( Unit::pointer& unit,
-                               const game_terrains::Terrain_lot::pointer& lot );
-    /*
      * Those are the units which were actually
      * create by the user (possibly placed somewhere).
      */
-    Unit_info_container units_container;
+    Units_movement_data           units_container;
+    Units_movement_processor      movement_processor;
     renderer::Core_renderer_proxy renderer;
 };
 

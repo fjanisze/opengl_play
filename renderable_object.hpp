@@ -125,10 +125,6 @@ struct Renderable_data
      * Default color applicable to the model
      */
     types::color default_color;
-    /*
-     * Unique ID
-     */
-    const id_factory< Renderable_data > id;
 
     Renderable_data() :
         model_matrix{ glm::mat4() }
@@ -163,6 +159,10 @@ public:
     virtual void clean_after_render( ) {}
 
     virtual std::string nice_name();
+    /*
+     * Unique ID
+     */
+    const id_factory< Renderable > id;
 
     virtual ~Renderable() {}
 };

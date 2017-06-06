@@ -14,7 +14,7 @@ constexpr std::size_t RENDR_BUF_DEFAULT_HEAD_POS{ 90000 };
 Renderable::Renderable()
 {
     view_configuration.configure( View_config::supported_configs::world_space_coord );
-    LOG1("New renderable, ID: ", rendering_data.id);
+    LOG0("New renderable, ID: ", id);
 }
 
 void Renderable::set_shader(shaders::Shader::raw_poiner shader)
@@ -56,7 +56,7 @@ void Rendr_data_buffer::add_new_rendr( Rendr::pointer &rendr )
      * should be rendered last.
      */
     if( false == rendr->object->view_configuration.is_camera_space() ) {
-        LOG1("Adding new rendr with ID:",
+        LOG0("Adding new rendr with ID:",
              rendr->id," at the HEAD of the buffer, IDX:",
              buffer_head);
         if( buffer_head == 0 ) {
@@ -66,7 +66,7 @@ void Rendr_data_buffer::add_new_rendr( Rendr::pointer &rendr )
         }
         rendr_content[ --buffer_head ] = rendr.get();
     } else {
-        LOG1("Adding new rendr with ID:",
+        LOG0("Adding new rendr with ID:",
              rendr->id," at the TAIL of the buffer, IDX:",
              buffer_tail);
         if( buffer_tail == RENDR_BUF_CONTENT_SIZE - 1 ) {
@@ -128,14 +128,14 @@ types::id_type Core_renderer::add_renderable( Renderable::pointer object )
         ERR("Invalid renderable provided");
         return -1;
     }
-    LOG3("Adding new renderable, ID ",
-         object->rendering_data.id, ", name: ",
+    LOG0("Adding new renderable, ID ",
+         object->id, ", name: ",
          object->nice_name());
     Rendr::pointer new_rendr = factory< Rendr >::create();
     new_rendr->object = object.get();
     new_rendr->object->set_shader( shader.get() );
     renderables[ new_rendr->id ] = new_rendr;
-    LOG1("Assigned ID: ", new_rendr->id );
+    LOG0("Assigned ID: ", new_rendr->id );
     /*
      * object with view mode set to camera_space_coord
      * should be rendered last.
@@ -311,9 +311,9 @@ types::color Model_picking::add_model(
     if( it != color_to_rendr.end() ) {
         PANIC("Not able to generate unique color codes.");
     }
-    LOG1("Adding new object with color code: ", color_code,
+    LOG0("Adding new object with color code: ", color_code,
          ", for the color: ", color_operations.denormalize_color( assigned_color ) );
-    rendrid_to_color[ object->rendering_data.id ] = color_code;
+    rendrid_to_color[ object->id ] = color_code;
     color_to_rendr[ color_code ] = object;
     return assigned_color;
 }
@@ -360,7 +360,7 @@ std::vector<types::id_type> Model_picking::get_selected_ids()
     auto rendrs =  selected.get_selected();
     std::vector< types::id_type > ids;
     for( auto&& sel : rendrs ) {
-        ids.push_back( sel->object->rendering_data.id );
+        ids.push_back( sel->object->id );
     }
     return ids;
 }
@@ -369,7 +369,7 @@ void Model_picking::update(
         const Renderable::raw_pointer object
         ) const
 {
-    const auto it = rendrid_to_color.find( object->rendering_data.id );
+    const auto it = rendrid_to_color.find( object->id );
     if( rendrid_to_color.end() != it ) {
         //The object exist in our 'database'
         auto color = color_operations.get_color_rgba( it->second );
@@ -406,7 +406,6 @@ void Model_picking::complete_update()
     if( pointed_model.update_required ) {
         pointed_model.pointed = model_at_position( pointed_model.x,
                                            pointed_model.y );
-        pointed_model.update_required = false;
     }
     process_pick_requests();
     //Clean up
@@ -427,16 +426,17 @@ void Model_picking::process_pick_requests()
             continue;
         }
         if( req.type == pick_type::simple ) {
-            LOG0("Picking model with ID: ", obj->rendering_data.id );
+            LOG0("Picking model with ID: ", obj->id );
             selected.add( obj );
         } else if( req.type == pick_type::toggle ) {
             if( true == selected.is_selected( obj ) ) {
-                LOG0("Model with ID:", obj->rendering_data.id,
+                LOG0("Model with ID:", obj->id,
                      " already selected, unselecting.");
                 //Already selected, toggle selection
                 selected.remove( obj );
             } else {
-                LOG0("Picking model with ID: ", obj->rendering_data.id );
+                LOG0("Picking model with ID: ", obj->id,
+                     ". Position: ", obj->rendering_data.position);
                 selected.add( obj );
             }
         }
@@ -444,7 +444,9 @@ void Model_picking::process_pick_requests()
     pick_requests.clear();
 }
 
-Renderable::pointer Model_picking::model_at_position( const GLuint x, const GLuint y )
+Renderable::pointer Model_picking::model_at_position(
+        const GLuint x,
+        const GLuint y )
 {
     /*
      * Read the color from the model picking
@@ -562,7 +564,7 @@ types::color Color_creator::get_color_rgba(const uint64_t color_code) const
 void Selected_models::add( Renderable::pointer object )
 {
     LOG0("Adding new selected model, ID: ",
-         object->rendering_data.id,
+         object->id,
          ", current size: ", selected.size() );
     if( find( object ) != selected.end() ) {
         LOG0("Object already selected, cannot select twice!");
@@ -585,7 +587,7 @@ bool Selected_models::remove( Renderable::pointer object )
     auto it = find( object );
     if( it != selected.end() ) {
         LOG0("Removing selected model, ID:",
-             object->rendering_data.id);
+             object->id);
         object->rendering_data.default_color = (*it)->original_color;
         selected.erase( it );
         return true;

@@ -33,7 +33,8 @@ models::my_mesh::meshes &Unit_model::get_meshes()
 Unit::Unit( Unit_model::pointer unit_model ) :
     model{ unit_model }
 {
-    LOG3("New unit with ID: ",id,", created! Pretty name: ",
+    LOG3("New unit with ID: ",id,
+         ", created! Pretty name: ",
          unit_model->model_data.pretty_name );
     rendering_data.default_color = unit_model->model_data.default_color;
 }
@@ -48,14 +49,14 @@ void Unit::render()
 
 Units_container::Units_container()
 {
-    LOG1("New container with ID:",id," Created!");
+    LOG0("New container with ID:",id," Created!");
 }
 
-bool Units_container::add_unit( Unit::pointer unit )
+bool Units_container::add( Unit::pointer unit )
 {
     LOG3( "Placing a new unit, ID:",unit->id,
           ", container ID:",id);
-    if( nullptr != find_unit( unit->id ) ) {
+    if( nullptr != find( unit->id ) ) {
         WARN2("A unit of the same ID is already here!");
         return false;
     }
@@ -64,7 +65,7 @@ bool Units_container::add_unit( Unit::pointer unit )
     return true;
 }
 
-void Units_container::remove_unit( Unit::pointer unit )
+void Units_container::remove( Unit::pointer unit )
 {
     LOG3("Removing unit with ID:", unit->id,
          ", amount of units ", units.size(),
@@ -84,7 +85,7 @@ std::size_t Units_container::size() const
     return units.size();
 }
 
-Unit::pointer Units_container::find_unit(uint64_t id)
+Unit::pointer Units_container::find(uint64_t id)
 {
     for( auto&& unit : units ) {
         if( unit->id == id ) {
@@ -94,7 +95,7 @@ Unit::pointer Units_container::find_unit(uint64_t id)
     return nullptr;
 }
 
-Units_container::container Units_container::get()
+Units_container::container_type Units_container::get()
 {
     return units;
 }

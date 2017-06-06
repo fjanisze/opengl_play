@@ -64,11 +64,6 @@ public:
      * the look of the terrain on the map.
      */
     const long terrain_model_id;
-    /*
-     * This is the unique lot ID for this
-     * lot of terrain
-     */
-    const id_factory< Terrain_lot > id;
     const glm::vec2    position;
     /*
      * The altitude (+Z) of a lot is important

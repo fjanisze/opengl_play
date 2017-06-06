@@ -127,7 +127,7 @@ bool Terrains::load_terrain_map(const terrain_map_t &map,
                 new_lot->rendering_state.set_enable();
                 long idx = get_position_idx( new_lot->position );
                 terrain_map[ idx ] = new_lot;
-                rendr_id_to_idx[ new_lot->rendering_data.id ] = idx;
+                rendr_id_to_idx[ new_lot->id ] = idx;
             }
         }
     }
@@ -149,7 +149,7 @@ Terrain_lot::pointer Terrains::find_lot(
         const renderer::Renderable::pointer &rendr
         )
 {
-    auto it = rendr_id_to_idx.find( rendr->rendering_data.id );
+    auto it = rendr_id_to_idx.find( rendr->id );
     if( it == rendr_id_to_idx.end() ) {
         return nullptr;
     }
@@ -184,7 +184,7 @@ Terrain_lot::Terrain_lot(const long model_id,
     position{ unique_position },
     altitude{ lot_altitude }
 {
-    LOG1("New lot created, ID:",id);
+    LOG0("New lot created, ID:",id);
     units = factory< game_units::Units_container >::create();
 }
 
