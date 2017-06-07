@@ -317,10 +317,13 @@ void opengl_ui::setup_scene()
                 renderer::Core_renderer_proxy( renderer ) );
 
 
-    game_terrain->load_terrain("../models/Grass/grass.obj",
+    game_terrain->load_terrain("../models/Mountains/Mountain1.obj",
                                glm::vec4(1.0),
                                1);
-
+    game_terrain->load_terrain("../models/Forests/Forest1.obj",
+                               glm::vec4(1.0),
+                               2);
+/*
     game_terrain->load_terrain("../models/Grass/grass2.obj",
                                glm::vec4(1.0),
                                2);
@@ -340,7 +343,7 @@ void opengl_ui::setup_scene()
 
     game_terrain->load_terrain("../models/Mountain/NewMountain.obj",
                                glm::vec4(1.0),
-                               5);
+                               5);*/
 
 
     //Generate random terrain map
@@ -349,7 +352,7 @@ void opengl_ui::setup_scene()
 
     std::random_device rd;
     std::mt19937_64 eng( rd() );
-    std::uniform_int_distribution<long> dist(1,5);
+    std::uniform_int_distribution<long> dist(1,2);
 
     game_terrains::terrain_map_t terrain_map;
     terrain_map.resize( map_size_y );
