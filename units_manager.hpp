@@ -24,10 +24,12 @@ struct Unit_info
 class Units_movement_data
 {
 public:
+    Units_movement_data();
     Unit_info::pointer add( const Unit::pointer unit );
     Unit_info::pointer find( const types::id_type id );
     std::size_t size() const;
 private:
+    const id_factory< Units_movement_data > id;
     std::unordered_map< types::id_type, Unit_info::pointer > data;
 };
 
@@ -49,6 +51,14 @@ public:
                              game_terrains::Terrain_lot::pointer &target_lot );
 private:
     /*
+     * The unit will point in the direction of the
+     * given terrain
+     */
+    void update_unit_heading( types::id_type unit_id,
+                       const Terrain_lot::pointer& target );
+    void update_unit_heading( Unit::pointer& unit,
+                       const Terrain_lot::pointer& target );
+    /*
      * Update the model matrix for the unit in order
      * to make sure that it is placed on the given
      * lot
@@ -56,6 +66,8 @@ private:
     void update_unit_position( Unit::pointer& unit,
                                const game_terrains::Terrain_lot::pointer& lot );
     Units_movement_data& units_container;
+    GLfloat calculate_heading( const types::point& source,
+                               const types::point& target ) const;
 };
 
 /*

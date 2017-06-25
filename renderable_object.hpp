@@ -122,12 +122,18 @@ struct Renderable_data
      */
     glm::vec3 position;
     /*
+     * The heading is the direction where the unit
+     * is pointing
+     */
+    GLfloat heading;
+    /*
      * Default color applicable to the model
      */
     types::color default_color;
 
     Renderable_data() :
-        model_matrix{ glm::mat4() }
+        model_matrix{ glm::mat4() },
+        heading{ 0 }
     {}
     /*
      * Utility functions

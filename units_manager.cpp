@@ -27,6 +27,8 @@ bool Units_movement_processor::teleport(
         } else {
             LOG3("Unit ID:", unit_id,", do not have a location.");
         }
+        update_unit_heading( unit_info->target_unit,
+                             target_lot );
         target_lot->units->add( unit_info->target_unit );
         unit_info->location_lot = target_lot;
         update_unit_position( unit_info->target_unit,
@@ -64,6 +66,32 @@ bool Units_movement_processor::multiple_teleport(
     return ret;
 }
 
+void Units_movement_processor::update_unit_heading(
+        types::id_type unit_id,
+        const Terrain_lot::pointer &target
+        )
+{
+     auto unit_info = units_container.find( unit_id );
+     if( unit_info != nullptr ) {
+         update_unit_heading( unit_info->target_unit, target );
+     }
+}
+
+void Units_movement_processor::update_unit_heading(
+        Unit::pointer &unit,
+        const Terrain_lot::pointer &target
+        )
+{
+    unit->rendering_data.heading = calculate_heading(
+                unit->rendering_data.position,
+                target->rendering_data.position );
+    unit->rendering_data.model_matrix = glm::rotate(
+                unit->rendering_data.model_matrix,
+                unit->rendering_data.heading,
+                glm::vec3( 0.0f , 0.0f , 1.0f ) );
+    std::cout<<"Heading: "<<unit->rendering_data.heading<<std::endl;
+}
+
 void Units_movement_processor::update_unit_position(
         Unit::pointer &unit,
         const game_terrains::Terrain_lot::pointer &lot )
@@ -83,9 +111,26 @@ void Units_movement_processor::update_unit_position(
                     0.0,
                     lot->altitude
                     ));
+    /*
+     * Account for the heading as well
+     */
+    unit->rendering_data.model_matrix = glm::rotate(
+                unit->rendering_data.model_matrix,
+                unit->rendering_data.heading,
+                glm::vec3( 0.0f , 0.0f , 1.0f ) );
     unit->rendering_data.update_pos_from_model_matrix();
 }
 
+GLfloat Units_movement_processor::calculate_heading(
+        const types::point &source,
+        const types::point &target) const
+{
+    if( source == target ) {
+        return 0.0f;
+    }
+    return std::atan2( target.y - source.y,
+                       target.x - source.x ) + glm::half_pi<GLfloat>();
+}
 
 Units::Units( renderer::Core_renderer_proxy renderer ) :
     renderer{ renderer },
@@ -156,9 +201,15 @@ Unit_model::pointer Units::find_model(const uint64_t id)
     return nullptr;
 }
 
+Units_movement_data::Units_movement_data()
+{
+    LOG3("New Units_movement_data, ID:", id);
+}
+
 Unit_info::pointer Units_movement_data::add( const Unit::pointer unit )
 {
-    LOG1("Adding new unit, ID:", unit->id );
+    LOG1("Adding new unit, ID:", unit->id ,
+         " container ID:", this->id);
     const auto info = find( unit->id );
     if( info != nullptr ) {
         LOG1("Not able to add, unit already present!");
@@ -174,6 +225,8 @@ Unit_info::pointer Units_movement_data::find( const types::id_type id )
 {
     const auto it = data.find( id );
     if( it == data.end() ) {
+        WARN1("Not able to find the requested unit ID:", id,
+              " in container ID:",this->id);
         return nullptr;
     }
     return it->second;
