@@ -13,20 +13,20 @@ using namespace game_terrains;
  */
 class Movements
 {
+public:
     GLfloat calculate_heading( const types::point& source,
                                const types::point& target ) const;
-public:
     /* The unit will point in the direction of the
     * given terrain
     */
-   void unit_heading( Unit::pointer& unit,
+   void change_unit_heading( Unit::pointer& unit,
                       const Terrain_lot::pointer& target );
    /*
     * Update the model matrix for the unit in order
     * to make sure that it is placed on the given
     * lot
     */
-   void unit_position( Unit::pointer& unit,
+   void place_unit_on_lot( Unit::pointer& unit,
                               const game_terrains::Terrain_lot::pointer& lot );
 };
 
@@ -62,6 +62,8 @@ private:
     types::timestamp start_time;
     types::timestamp arrival_time;
     Movements     movement_impl;
+    types::point  original_position;
+    GLfloat       heading;
 };
 
 /*
@@ -89,6 +91,11 @@ public:
     Units_data_container();
     Unit_info::pointer add( const Unit::pointer unit );
     Unit_info::pointer find( const types::id_type id );
+    /*
+     * The nofail version make the assumption that the unit
+     * must be in there somewhere, if not, then panic.
+     */
+    Unit_info::pointer find_nofail( const types::id_type id );
     std::size_t size() const;
 private:
     const id_factory< Units_data_container > id;

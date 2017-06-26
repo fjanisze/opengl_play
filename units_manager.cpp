@@ -3,7 +3,7 @@
 namespace game_units
 {
 
-void Movements::unit_heading(
+void Movements::change_unit_heading(
         Unit::pointer &unit,
         const Terrain_lot::pointer &target
         )
@@ -18,7 +18,7 @@ void Movements::unit_heading(
     unit->rendering_data.heading = new_heading;
 }
 
-void Movements::unit_position(
+void Movements::place_unit_on_lot(
         Unit::pointer &unit,
         const game_terrains::Terrain_lot::pointer &lot )
 {
@@ -63,16 +63,23 @@ Move_processor::Move_processor(
         Terrain_lot::pointer lot) :
     unit{ unit },
     target_lot{ lot },
-    status{ Move_processor::moving_status::READY }
+    status{ Move_processor::moving_status::READY },
+    original_position{ unit->rendering_data.position }
 {
     LOG2("Created, ID:",id,"! target unitID:", unit->id,
          ", target lot:",lot->id);
     const types::point from = unit->rendering_data.position;
-    const types::point to = lot->rendering_data.position;
+    const types::point to = glm::vec3(
+                lot->rendering_data.position.x,
+                lot->rendering_data.position.y,
+                lot->altitude );
     distance = glm::distance( from, to );
-    direction = glm::normalize( from - to );
+    direction = glm::normalize( to - from );
     LOG2("Distance: ", distance,
-         ", Direction: ", direction);
+         ", Direction: ", direction,
+         ", from:",from,
+         ", to:",to);
+    heading = movement_impl.calculate_heading( from, to );
 }
 
 Move_processor::~Move_processor()
@@ -94,7 +101,7 @@ void Move_processor::start()
     arrival_time = std::chrono::duration_cast< std::chrono::microseconds >
             (
                 start_time + std::chrono::seconds(
-                    static_cast< long int > ( glm::ceil( distance ) )
+                    static_cast< long int > ( glm::ceil( distance / 4.0f ) )
                     )
             );
     status = Move_processor::moving_status::MOVING;
@@ -102,19 +109,48 @@ void Move_processor::start()
          ", start:",start_time.count(),
          ", arrival:",arrival_time.count(),
          ", distance:",distance);
-    movement_impl.unit_heading( unit, target_lot );
 }
 
 Move_processor::moving_status Move_processor::step(
         const types::timestamp &current
         )
 {
+    /*
+     * The progress variable is needed to calculate at which
+     * point of the path the unit is
+     */
     const GLfloat progress =
             static_cast<GLfloat>( ( current - start_time ).count() ) /
             static_cast<GLfloat>( ( arrival_time - start_time ).count() );
 
+    const glm::vec3 new_dir = direction * distance * progress;
+    const glm::vec3 new_pos = original_position + new_dir;
+    glm::mat4 model;
 
-    return moving_status::MOVING;
+    unit->rendering_state.set_disable();
+    /*
+     * Set the position and heading of the unit
+     */
+    unit->rendering_data.model_matrix = glm::translate(
+                model,
+                new_pos );
+
+    unit->rendering_data.model_matrix = glm::rotate(
+                unit->rendering_data.model_matrix,
+                heading,
+                glm::vec3( 0.0f , 0.0f , 1.0f ) );
+
+    if( current > arrival_time ) {
+        /*
+         * Movement completed
+         */
+        LOG2("Complete! ID:",id);
+        status = moving_status::COMPLETED;
+        unit->rendering_data.heading = heading;
+        movement_impl.place_unit_on_lot( unit, target_lot );
+    }
+    unit->rendering_state.set_enable();
+    return status;
 }
 
 
@@ -131,6 +167,9 @@ bool Units_movement_processor::teleport(
         Terrain_lot::pointer target_lot )
 {
     auto unit_info = units_container.find( unit_id );
+    if( nullptr == unit_info ) {
+        return false;
+    }
     unit_info->unit->rendering_state.set_disable();
     /*
      * Remove the unit from it's current location and place it
@@ -141,11 +180,11 @@ bool Units_movement_processor::teleport(
     } else {
         LOG3("Unit ID:", unit_id,", do not have a location.");
     }
-    mov_impl.unit_heading( unit_info->unit,
+    mov_impl.change_unit_heading( unit_info->unit,
                          target_lot );
     target_lot->units->add( unit_info->unit );
     unit_info->location = target_lot;
-    mov_impl.unit_position( unit_info->unit,
+    mov_impl.place_unit_on_lot( unit_info->unit,
                           target_lot );
     unit_info->unit->rendering_state.set_enable();
     LOG1("Unit ID:",unit_id,", is now on position:",
@@ -162,8 +201,7 @@ bool Units_movement_processor::multiple_teleport(
     bool ret{ true };
     //Teleport them all..
     for( auto&& unit :units ) {
-        ret = ret && teleport( unit,
-                   target_lot );
+        ret = teleport( unit, target_lot ) && ret;
     }
     return ret;
 }
@@ -174,20 +212,29 @@ bool Units_movement_processor::move(
 {
     LOG1("Request to move unitID:",unit_id,
          " to lotID:",target_lot->id);
+
     auto unit_info = units_container.find( unit_id );
+    if( nullptr == unit_info ) {
+        return false;
+    }
+
     if( unit_info->movement != nullptr ) {
         WARN1("UnitID:",unit_id," already moving!");
         return false;
     }
+
     if( unit_info->location == target_lot ) {
         LOG1("Unit ", unit_id," is already at location ",
              target_lot->id);
         return false;
     }
+
     unit_info->location->units->remove( unit_info->unit );
     unit_info->movement = factory< Move_processor >::create(
                 unit_info->unit,
                 target_lot );
+    unit_info->location = target_lot;
+
     start_movement( unit_info );
 }
 
@@ -200,8 +247,7 @@ bool Units_movement_processor::multiple_move(
     bool ret{ true };
     //Move them all..
     for( auto&& unit :units ) {
-        ret = ret && move( unit,
-                   target_lot );
+        ret = move( unit, target_lot ) && ret;
     }
     return ret;
 }
@@ -216,16 +262,21 @@ void Units_movement_processor::process_movements()
                 std::chrono::high_resolution_clock::now().time_since_epoch()
                 );
     for( auto&& unit : in_movement ) {
-        unit->step( current_time );
-        units_container.find( unit->moving_unit_id() )->movement = nullptr;
+        if( unit->step( current_time ) == Move_processor::moving_status::COMPLETED ) {
+            auto unit_info = units_container.find_nofail( unit->moving_unit_id() );
+            /*
+             * Cleanup the 'movement' variable in the Unit_info to make
+             * sure that future movements are allowed
+             */
+            unit_info->movement = nullptr;
+        }
     }
-    in_movement.clear();
- /*   in_movement.erase(std::remove_if( in_movement.begin(),
+    in_movement.erase(std::remove_if( in_movement.begin(),
                                       in_movement.end(),
-                                      []( const Move_processor::pointer& ptr ) {
-                                          return ptr->status == Move_processor::moving_status::COMPLETED;
+                                      [ this ]( const Move_processor::pointer& ptr ) {
+                                            return ptr->get_status() == Move_processor::moving_status::COMPLETED;
                                       }),
-                      in_movement.end());*/
+                      in_movement.end());
 }
 
 void Units_movement_processor::start_movement(
@@ -236,8 +287,10 @@ void Units_movement_processor::start_movement(
     if( unit->movement == nullptr ) {
         PANIC("Requested to start unit movement, but no movement data available!");
     }
-    unit->movement->start();
     in_movement.push_back( unit->movement );
+
+    unit->movement->start();
+
     LOG2("Number of unit in movement: ", in_movement.size() );
 }
 
@@ -334,11 +387,20 @@ Unit_info::pointer Units_data_container::find( const types::id_type id )
 {
     const auto it = data.find( id );
     if( it == data.end() ) {
-        PANIC("Not able to find the requested unit ID:", id,
-              " in container ID:",this->id);
+        WARN2("UnitID:",id," not found!");
         return nullptr;
     }
     return it->second;
+}
+
+Unit_info::pointer Units_data_container::find_nofail(const types::id_type id)
+{
+    auto ptr = find( id );
+    if( ptr == nullptr ) {
+        PANIC("Not able to find the requested unit ID:", id,
+              " in container ID:",this->id);
+    }
+    return ptr;
 }
 
 std::size_t Units_data_container::size() const

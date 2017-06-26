@@ -66,7 +66,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
         GLdouble x,y;
         glfwGetCursorPos( window_ctx, &x, &y );
         if( key_status[ GLFW_KEY_LEFT_SHIFT ] != key_status_t::pressed ) {
-            renderer->picking()->unpick();
+        //    renderer->picking()->unpick();
         }
         renderer->picking()->pick_toggle( x, win_h - y );
     } else if( button == GLFW_MOUSE_BUTTON_RIGHT ) {
@@ -518,7 +518,7 @@ glm::vec2 opengl_ui::ray_z_hit_point(const types::ray_t &ray,
 int main()
 {
     log_inst.set_thread_name("MAIN");
-    log_inst.set_logging_level( logging::severity_type::debug1 );
+    log_inst.set_logging_level( logging::severity_type::debug0 );
 
     opengl_play::opengl_ui entry(1920,1280);
     entry.prepare_for_main_loop();
