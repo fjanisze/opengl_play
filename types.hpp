@@ -2,6 +2,7 @@
 #define TYPES_HPP
 
 #include <utility>
+#include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace types
@@ -39,6 +40,10 @@ using scan_code_t = int;
 using act_code_t = int;
 
 using id_type = uint64_t;
+
+using duration = std::chrono::duration< double >;
+using time_point = std::chrono::time_point< std::chrono::high_resolution_clock, duration >;
+using timestamp = std::chrono::microseconds;
 
 }
 

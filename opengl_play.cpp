@@ -85,7 +85,7 @@ void opengl_ui::ui_mouse_click(GLint button, GLint action)
         }
         if( selected.size() > 0 ) {
             //Try to move the unit
-            if( false == units->movements().multiple_teleport( selected,
+            if( false == units->movements().multiple_move( selected,
                               lot ) ) {
                 //Unpick everything..
                 renderer->picking()->unpick();
@@ -278,7 +278,7 @@ opengl_ui::opengl_ui(int win_width,
      * Disable vsync, which in turns disable the
      * 60fps limit.
      */
-    glfwSwapInterval(0);
+    //glfwSwapInterval(0);
 }
 
 void opengl_ui::prepare_for_main_loop()
@@ -399,6 +399,7 @@ void opengl_ui::enter_main_loop()
         glfwPollEvents();
         evaluate_key_status();
         movement_processor.process_movements();
+        units->movements().process_movements();
 
         auto current_time = std::chrono::system_clock::now();
         if(std::chrono::duration_cast<
