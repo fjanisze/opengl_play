@@ -111,6 +111,7 @@ void Move_processor::start()
          ", distance:",distance);
 }
 
+
 Move_processor::moving_status Move_processor::step(
         const types::timestamp &current
         )
@@ -119,11 +120,12 @@ Move_processor::moving_status Move_processor::step(
      * The progress variable is needed to calculate at which
      * point of the path the unit is
      */
-    const GLfloat progress =
+    const GLfloat progress = movement_impl.speed_function(
             static_cast<GLfloat>( ( current - start_time ).count() ) /
-            static_cast<GLfloat>( ( arrival_time - start_time ).count() );
+            static_cast<GLfloat>( ( arrival_time - start_time ).count() )
+                );
 
-    const glm::vec3 new_dir = direction * distance * progress;
+    const glm::vec3 new_dir = direction * progress * distance;
     const glm::vec3 new_pos = original_position + new_dir;
     glm::mat4 model;
 

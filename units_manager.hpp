@@ -28,6 +28,16 @@ public:
     */
    void place_unit_on_lot( Unit::pointer& unit,
                               const game_terrains::Terrain_lot::pointer& lot );
+   /*
+    * Usefull function that kind of emulate the acceleration
+    * and deceleration of a moving unit, when you start the movement
+    * you accelerate till a certain speed, then the unit slow down
+    * till it stops
+    */
+   constexpr GLfloat speed_function( const GLfloat x) {
+       return ( 2.0f*x - x*x ) * std::pow( sin( x * glm::half_pi<GLfloat>() ), 2.0f );
+   }
+
 };
 
 /*
