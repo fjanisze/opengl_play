@@ -5,27 +5,24 @@
 #include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace types
-{
+namespace types {
 //Source and direction
-using ray_t = std::pair<glm::vec3,glm::vec3>;
+using ray_t = std::pair<glm::vec3, glm::vec3>;
 
 using color = glm::vec4; //RGBA
 
 using point = glm::vec3;
 using vector = glm::vec3;
 
-namespace internal
-{
+namespace internal {
 
-struct window_size
-{
+struct window_size {
     const uint64_t width;
     const uint64_t height;
 
     window_size() = default;
     window_size( const uint64_t width,
-                 const uint64_t height) :
+                 const uint64_t height ) :
         width{ width },
         height{ height }
     {}

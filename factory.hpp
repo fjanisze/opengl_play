@@ -7,30 +7,30 @@
 #define FACTORY_HPP
 
 template< typename T >
-struct factory
-{
+struct factory {
     template< typename...Args >
-    static typename T::pointer create( Args&&...args )
-    try {
+    static typename T::pointer create( Args&& ...args )
+    try
+    {
         return std::make_shared< T >( std::forward<Args>( args )... );
-    } catch( std::exception& ex ) {
-        PANIC("Failed while creating a new object, message: ",
-              ex.what());
+    } catch ( std::exception& ex )
+    {
+        PANIC( "Failed while creating a new object, message: ",
+               ex.what() );
         throw;
     }
 };
 
-namespace constants
-{
+namespace constants {
 
 constexpr uint64_t INVALID_ID{ 0 };
 
 }
 
 template< typename T >
-struct ids
-{
-    static types::id_type create() {
+struct ids {
+    static types::id_type create()
+    {
         return next_id++;
     }
 
@@ -52,7 +52,8 @@ public:
     id_factory() :
         id{ ids< T >::create() }
     { }
-    operator types::id_type() const {
+    operator types::id_type() const
+    {
         return id;
     }
     const types::id_type id;

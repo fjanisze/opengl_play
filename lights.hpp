@@ -6,8 +6,7 @@
 #ifndef LIGHTS_HPP
 #define LIGHTS_HPP
 
-namespace lighting
-{
+namespace lighting {
 
 /*
  * Type of available lights,
@@ -30,7 +29,7 @@ class Core_lighting
 {
 public:
     Core_lighting();
-    void calculate_lighting(shaders::Shader::pointer &shader );
+    void calculate_lighting( shaders::Shader::pointer& shader );
     void add_light( light_ptr obj );
 private:
     std::vector< light_ptr > lights;
@@ -43,13 +42,13 @@ class Generic_light : public scene::Movable
 {
 public:
     Generic_light();
-    Generic_light(glm::vec3 position,
-                  glm::vec4 color,
-                  GLfloat   strength);
+    Generic_light( glm::vec3 position,
+                   glm::vec4 color,
+                   GLfloat   strength );
     virtual type_of_light light_type() = 0;
     GLfloat get_strength();
-    void    set_strength(GLfloat strength);
-    std::pair<glm::vec4,GLfloat> get_light_color();
+    void    set_strength( GLfloat strength );
+    std::pair<glm::vec4, GLfloat> get_light_color();
     void set_light_color( const glm::vec4& new_color );
     /*
      * get_light_data return a vector with
@@ -61,7 +60,7 @@ public:
      * depends on the light itself, but mostly contains
      * stuff like: type,position,color &c.
      */
-    virtual const std::vector<GLfloat> &get_light_data();
+    virtual const std::vector<GLfloat>& get_light_data();
     /*
      * Each light might have a different data
      * size since the amount of specific information
@@ -89,10 +88,11 @@ class point_light : public Generic_light
 {
 public:
     point_light() = default;
-    point_light(glm::vec3 position,
-                glm::vec4 color,
-                GLfloat   strength);
-    type_of_light light_type() {
+    point_light( glm::vec3 position,
+                 glm::vec4 color,
+                 GLfloat   strength );
+    type_of_light light_type()
+    {
         return type_of_light::Point_Light;
     }
     ~point_light();
@@ -108,11 +108,12 @@ class directional_light : public Generic_light
 {
 public:
     directional_light() = default;
-    directional_light(glm::vec3 direction,
-                      glm::vec4 color,
-                      GLfloat   strength);
+    directional_light( glm::vec3 direction,
+                       glm::vec4 color,
+                       GLfloat   strength );
 
-    type_of_light light_type(){
+    type_of_light light_type()
+    {
         return type_of_light::Directional_Light;
     }
 };
@@ -126,19 +127,20 @@ class spot_light : public Generic_light
 {
 protected:
     GLfloat cut_off,
-    out_cutoff;
+            out_cutoff;
     glm::vec3 light_direction;
     scene::Movable::pointer target_obj;
 public:
     spot_light() = default;
-    spot_light(glm::vec3 position,
-               glm::vec4 color,
-               GLfloat   strength,
-               glm::vec3 direction,
-               GLfloat cut_off_angle,
-               GLfloat out_cutoff_angle);
+    spot_light( glm::vec3 position,
+                glm::vec4 color,
+                GLfloat   strength,
+                glm::vec3 direction,
+                GLfloat cut_off_angle,
+                GLfloat out_cutoff_angle );
 
-    type_of_light light_type(){
+    type_of_light light_type()
+    {
         return type_of_light::Spot_light;
     }
 
@@ -156,13 +158,14 @@ class flash_light : public spot_light
     scene::Camera::pointer camera_ptr;
 public:
     flash_light() = default;
-    flash_light(scene::Camera::pointer camera,
-                glm::vec4 color,
-                GLfloat   strength,
-                GLfloat cut_off_angle,
-                GLfloat out_cutoff_angle);
+    flash_light( scene::Camera::pointer camera,
+                 glm::vec4 color,
+                 GLfloat   strength,
+                 GLfloat cut_off_angle,
+                 GLfloat out_cutoff_angle );
 
-    type_of_light light_type(){
+    type_of_light light_type()
+    {
         return type_of_light::Flash_light;
     }
 
@@ -170,11 +173,11 @@ public:
 };
 
 template<typename LightT>
-struct Light_factory
-{
+struct Light_factory {
     template<typename...Args>
-    static light_ptr create(Args&&...args) {
-        return std::make_shared<  LightT>(std::forward<Args>(args)...);
+    static light_ptr create( Args&& ...args )
+    {
+        return std::make_shared<  LightT>( std::forward<Args>( args )... );
     }
 };
 

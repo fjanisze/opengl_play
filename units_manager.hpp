@@ -2,8 +2,7 @@
 #include <units.hpp>
 #include <terrains.hpp>
 
-namespace game_units
-{
+namespace game_units {
 
 using namespace game_terrains;
 
@@ -19,24 +18,25 @@ public:
     /* The unit will point in the direction of the
     * given terrain
     */
-   void change_unit_heading( Unit::pointer& unit,
-                      const Terrain_lot::pointer& target );
-   /*
-    * Update the model matrix for the unit in order
-    * to make sure that it is placed on the given
-    * lot
-    */
-   void place_unit_on_lot( Unit::pointer& unit,
-                              const game_terrains::Terrain_lot::pointer& lot );
-   /*
-    * Usefull function that kind of emulate the acceleration
-    * and deceleration of a moving unit, when you start the movement
-    * you accelerate till a certain speed, then the unit slow down
-    * till it stops
-    */
-   constexpr GLfloat speed_function( const GLfloat x) {
-       return ( 2.0f*x - x*x ) * std::pow( sin( x * glm::half_pi<GLfloat>() ), 2.0f );
-   }
+    void change_unit_heading( Unit::pointer& unit,
+                              const Terrain_lot::pointer& target );
+    /*
+     * Update the model matrix for the unit in order
+     * to make sure that it is placed on the given
+     * lot
+     */
+    void place_unit_on_lot( Unit::pointer& unit,
+                            const game_terrains::Terrain_lot::pointer& lot );
+    /*
+     * Usefull function that kind of emulate the acceleration
+     * and deceleration of a moving unit, when you start the movement
+     * you accelerate till a certain speed, then the unit slow down
+     * till it stops
+     */
+    constexpr GLfloat speed_function( const GLfloat x )
+    {
+        return ( 2.0f * x - x * x ) * std::pow( sin( x * glm::half_pi<GLfloat>() ), 2.0f );
+    }
 
 };
 
@@ -59,7 +59,8 @@ public:
     moving_status get_status() const;
     void start();
     moving_status step( const types::timestamp& current );
-    types::id_type moving_unit_id() const {
+    types::id_type moving_unit_id() const
+    {
         return unit->id;
     }
 private:
@@ -80,8 +81,7 @@ private:
  * Information about a given unit,
  * like the terrain lot where it is &c.
  */
-struct Unit_info
-{
+struct Unit_info {
     using pointer = std::shared_ptr< Unit_info >;
     Unit::pointer unit;
     game_terrains::Terrain_lot::pointer location;
@@ -131,12 +131,12 @@ public:
     bool teleport( types::id_type unit,
                    Terrain_lot::pointer target_lot );
     bool multiple_teleport( const std::vector< types::id_type>& units,
-                             game_terrains::Terrain_lot::pointer &target_lot );
+                            game_terrains::Terrain_lot::pointer& target_lot );
     /*
      * This is initiate the movement 'animation' of the unit
      * to the target location
      */
-    bool move(types::id_type unit_id,
+    bool move( types::id_type unit_id,
                Terrain_lot::pointer target_lot );
     bool multiple_move( const std::vector< types::id_type >& units,
                         game_terrains::Terrain_lot::pointer& target_lot );

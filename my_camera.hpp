@@ -6,8 +6,7 @@
 #include <logger/logger.hpp>
 #include <types.hpp>
 
-namespace scene
-{
+namespace scene {
 
 using scene::movement::angle;
 using scene::movement::direction;
@@ -19,14 +18,14 @@ public:
     Plane() = default;
     void create( const point p0,
                  const point p1,
-                 const point p2);
+                 const point p2 );
 
     /*
      * Return the intersection point of
      * the vector with the plane
      */
-    types::point intersection(const glm::vec3& direction,
-            const types::point& position ) const;
+    types::point intersection( const glm::vec3& direction,
+                               const types::point& position ) const;
     /*
      * Return the distance of the point pt
      * from the plane
@@ -46,8 +45,7 @@ enum class camera_mode {
     eagle_mode  //The camera will not update the UP vector, forcing movements parallel to x/z
 };
 
-struct Camera_vectors
-{
+struct Camera_vectors {
     glm::vec3 front;
     glm::vec3 right;
     glm::vec3 up;
@@ -60,12 +58,12 @@ class Camera : public scene::Movable
 {
 public:
     using pointer = std::shared_ptr< Camera >;
-    Camera(glm::vec3 position,glm::vec3 target);
+    Camera( glm::vec3 position, glm::vec3 target );
     void update_view_matrix();
-    bool move(movement::direction direction, GLfloat amount) override;
-    void modify_angle(movement::angle angle,GLfloat amount) override;
+    bool move( movement::direction direction, GLfloat amount ) override;
+    void modify_angle( movement::angle angle, GLfloat amount ) override;
     glm::mat4 get_view();
-    void set_position(const glm::vec3& pos) override;
+    void set_position( const glm::vec3& pos ) override;
     const Camera_vectors& get_vectors();
     glm::vec3 get_camera_front();
     /*
@@ -74,8 +72,8 @@ public:
      * will emulate the eye of an eagle flying
      * over the terrain surface.
      */
-    bool eagle_mode(bool is_set = true);
-    void rotate_around(GLfloat amount) override;
+    bool eagle_mode( bool is_set = true );
+    void rotate_around( GLfloat amount ) override;
 private:
     void update_angles();
     void recalculate_vectors();
@@ -97,8 +95,7 @@ private:
  * the shape and size of the frustun
  */
 
-struct Frustum_geometry
-{
+struct Frustum_geometry {
     GLfloat far_height;
     GLfloat far_width;
     GLfloat far_distance;
@@ -134,7 +131,7 @@ class Frustum
 public:
     using pointer = std::shared_ptr< Frustum >;
     using raw_pointer = Frustum*;
-    explicit Frustum( Camera::pointer cam ,
+    explicit Frustum( Camera::pointer cam,
                       const GLfloat fov_angle,
                       const GLfloat aspect_ratio,
                       const GLfloat near_plane,

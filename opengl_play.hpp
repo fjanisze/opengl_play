@@ -12,23 +12,21 @@
 #include <framebuffers.hpp>
 #include <units_manager.hpp>
 
-namespace opengl_play
-{
+namespace opengl_play {
 
-void mouse_click_callback(GLFWwindow* ctx,
-                          int button,
-                          int action,
-                          int);
-void cursor_pos_callback(GLFWwindow* ctx,
-                         double x,
-                         double y);
-void window_resize_callback(GLFWwindow* ctx,
-                            int width,
-                            int height);
+void mouse_click_callback( GLFWwindow* ctx,
+                           int button,
+                           int action,
+                           int );
+void cursor_pos_callback( GLFWwindow* ctx,
+                          double x,
+                          double y );
+void window_resize_callback( GLFWwindow* ctx,
+                             int width,
+                             int height );
 
 static const int stat_key_array_size{ 1024 };
-enum class key_status_t
-{
+enum class key_status_t {
     pressed,
     not_pressed
 };
@@ -47,32 +45,32 @@ class opengl_ui
      */
     void verify_models_intersections( GLfloat x, GLfloat y );
 public:
-    opengl_ui(int win_width, int win_heigth);
+    opengl_ui( int win_width, int win_heigth );
     void        prepare_for_main_loop();
     void        enter_main_loop();
-    GLFWwindow *get_win_ctx();
-    void        update_viewport(int new_win_h,
-                                int new_win_w);
-    void		ui_mouse_click(GLint button,GLint action);
-    void        ui_mouse_move(GLdouble x,GLdouble y);
-    void		ui_mouse_enter_window(int state);
-    void		ui_wheel_move(GLdouble x,GLdouble y);
-    void		ui_keyboard_press(GLint button,GLint scode,GLint action);
+    GLFWwindow* get_win_ctx();
+    void        update_viewport( int new_win_h,
+                                 int new_win_w );
+    void        ui_mouse_click( GLint button, GLint action );
+    void        ui_mouse_move( GLdouble x, GLdouble y );
+    void        ui_mouse_enter_window( int state );
+    void        ui_wheel_move( GLdouble x, GLdouble y );
+    void        ui_keyboard_press( GLint button, GLint scode, GLint action );
     virtual ~opengl_ui();
 private:
     key_status_t  key_status[stat_key_array_size];
     GLFWwindow*   window_ctx;
-    glm::mat4	  projection;
+    glm::mat4     projection;
     glm::vec4     viewport;
     GLFWcursor*   cursor;
-    int			  mouse_line_idx;
+    int           mouse_line_idx;
     text_renderer::Renderable_text::pointer info_string;
     renderer::Core_renderer::pointer renderer;
     uint64_t unit_id;
 
     int win_h,
-    win_w;
-    scene::Camera::pointer		camera;
+        win_w;
+    scene::Camera::pointer      camera;
     /*
      * Ray casting utility
      */
@@ -84,7 +82,7 @@ private:
     game_units::Units::pointer units;
 
     lighting::light_ptr light_1,
-                        light_2;
+             light_2;
     GLfloat mouse_x_pos;
     GLfloat mouse_y_pos;
 

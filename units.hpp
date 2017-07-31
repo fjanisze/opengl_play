@@ -7,16 +7,14 @@
 #include <models.hpp>
 #include <renderable_object.hpp>
 
-namespace game_units
-{
+namespace game_units {
 
 /*
  * Information about a unit
  * data file: Blender obj file, default
  * color and a pretty name (human readable)
  */
-struct Unit_model_data
-{
+struct Unit_model_data {
     using container = std::vector< Unit_model_data >;
     /*
      * ID given by the configuration, shall uniquely
@@ -48,7 +46,8 @@ public:
     using container = std::vector< pointer >;
     explicit Unit_model( const Unit_model_data& data );
     models::my_mesh::meshes& get_meshes();
-    operator uint64_t() const {
+    operator uint64_t() const
+    {
         return model_data.id;
     }
 public:
@@ -57,8 +56,7 @@ private:
     models::model_loader::pointer model;
 };
 
-namespace internal
-{
+namespace internal {
 /*
  * TODO: Replace this static list
  * with some config file

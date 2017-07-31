@@ -12,16 +12,14 @@
 #include <types.hpp>
 #include <factory.hpp>
 
-namespace renderer
-{
+namespace renderer {
 
 /*
  * Specify how to calculate the position
  * of the object, if it should be in world position
  * or always in front of the camera
  */
-enum class view_method
-{
+enum class view_method {
     world_space_coord,
     camera_space_coord //Only X,Y are relevant. Draw in front of the camera
 };
@@ -38,8 +36,7 @@ enum class view_method
 class Rendering_state
 {
 public:
-    enum class states
-    {
+    enum class states {
         rendering_enabled,
         rendering_disabled,
         not_visible, //The rendering is enabled but the Renderable is not visible
@@ -51,16 +48,20 @@ public:
     Rendering_state( const states cur_state ) :
         current_state{ cur_state }
     {}
-    void set_enable() {
+    void set_enable()
+    {
         current_state = states::rendering_enabled;
     }
-    void set_disable() {
+    void set_disable()
+    {
         current_state = states::rendering_disabled;
     }
-    void set_not_visible() {
+    void set_not_visible()
+    {
         current_state = states::not_visible;
     }
-    states current() const {
+    states current() const
+    {
         return current_state;
     }
 private:
@@ -79,27 +80,32 @@ public:
      * of the object, if it should be in world position
      * or always in front of the camera
      */
-    enum class supported_configs
-    {
+    enum class supported_configs {
         world_space_coord,
         camera_space_coord //Only X,Y are relevant. Draw in front of the camera
     };
-    void configure( supported_configs new_config ) {
+    void configure( supported_configs new_config )
+    {
         current_setting = new_config;
     }
-    supported_configs current() {
+    supported_configs current()
+    {
         return current_setting;
     }
-    bool is_world_space() {
+    bool is_world_space()
+    {
         return current_setting == supported_configs::world_space_coord;
     }
-    bool is_camera_space() {
+    bool is_camera_space()
+    {
         return current_setting == supported_configs::camera_space_coord;
     }
-    void world_space() {
+    void world_space()
+    {
         current_setting = supported_configs::world_space_coord;
     }
-    void camera_space() {
+    void camera_space()
+    {
         current_setting = supported_configs::camera_space_coord;
     }
 private:
@@ -109,8 +115,7 @@ private:
 /*
  * In one place all the rendering data
  */
-struct Renderable_data
-{
+struct Renderable_data {
     shaders::Shader::raw_poiner shader;
     /*
      * Transformation matrices used
@@ -138,12 +143,13 @@ struct Renderable_data
     /*
      * Utility functions
      */
-    glm::vec3 update_pos_from_model_matrix() {
+    glm::vec3 update_pos_from_model_matrix()
+    {
         position = glm::vec3(
-                    model_matrix[3].x,
-                    model_matrix[3].y,
-                    model_matrix[3].z
-                    );
+                       model_matrix[3].x,
+                       model_matrix[3].y,
+                       model_matrix[3].z
+                   );
         return position;
     }
 };
@@ -176,8 +182,7 @@ public:
 /*
  * Implementes the rendering functionality
  */
-struct Rendr
-{
+struct Rendr {
     using pointer = std::shared_ptr< Rendr >;
     using raw_pointer = Rendr*;
     id_factory< Rendr > id;
@@ -191,8 +196,7 @@ struct Rendr
  *  projection: For common drawing
  *  ortho: Mostly for rendering stuff in front of the camera.
  */
-enum class perspective_type
-{
+enum class perspective_type {
     projection,
     ortho
 };
@@ -238,8 +242,7 @@ private:
  * Information about a selected
  * model
  */
-struct Selected_model_info
-{
+struct Selected_model_info {
     using pointer = std::shared_ptr< Selected_model_info >;
     using container = std::vector< pointer >;
     /*
@@ -277,8 +280,7 @@ private:
 /*
  * Currently pointed model
  */
-struct Pointed_model_data
-{
+struct Pointed_model_data {
     //Screen coordinates
     GLuint x;
     GLuint y;
@@ -296,13 +298,11 @@ struct Pointed_model_data
  * structs are generated for each 'pick'
  * coming from the UI.
  */
-enum class pick_type
-{
+enum class pick_type {
     simple,
     toggle
 };
-struct Pick_request_data
-{
+struct Pick_request_data {
     GLuint x;
     GLuint y;
     pick_type type;
@@ -317,7 +317,7 @@ class Model_picking
 public:
     using pointer = std::shared_ptr< Model_picking >;
 
-    Model_picking(shaders::Shader::pointer shader,
+    Model_picking( shaders::Shader::pointer shader,
                    buffers::Framebuffers::pointer framebuffers );
     /*
      * Add an additional model which might
@@ -358,7 +358,7 @@ public:
     /*
      * Update the picking information for the provided model
      */
-    void update(const Renderable::raw_pointer object ) const;
+    void update( const Renderable::raw_pointer object ) const;
     /*
      * Two functions which ask Model_picking to be ready
      * for rendering next, or to cleanup after the rendering
@@ -399,8 +399,7 @@ private:
  * that do not need to spam the name space
  * of Core_renderer
  */
-struct Core_renderer_config
-{
+struct Core_renderer_config {
     bool             is_def_view_matrix_loaded;
     glm::mat4        view_matrix;
     types::win_size  viewport_size;
@@ -464,10 +463,10 @@ public:
 public:
     Core_renderer() = default;
     Core_renderer(
-            const types::win_size& window,
-            const glm::mat4& proj,
-            const glm::mat4 &def_ortho,
-            const scene::Camera::pointer cam );
+        const types::win_size& window,
+        const glm::mat4& proj,
+        const glm::mat4& def_ortho,
+        const scene::Camera::pointer cam );
     types::id_type add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
@@ -491,7 +490,7 @@ private:
      * Setup the proper color for the Renderable and
      * load it to the shader
      */
-    void prepare_rendr_color(Rendr::raw_pointer cur) const;
+    void prepare_rendr_color( Rendr::raw_pointer cur ) const;
     Core_renderer_config     config;
     shaders::Shader::pointer shader;
     scene::Camera::pointer   camera;
@@ -509,7 +508,7 @@ private:
      * Load the proper perspective matrix
      * to the shader
      */
-    void switch_proper_perspective(const Renderable::raw_pointer obj );
+    void switch_proper_perspective( const Renderable::raw_pointer obj );
 
     Model_picking::pointer model_picking;
     /*
@@ -531,7 +530,8 @@ public:
     Core_renderer_proxy( Core_renderer::pointer renderer ) :
         core_renderer{ renderer }
     {}
-    auto add_renderable( Renderable::pointer&& object ) {
+    auto add_renderable( Renderable::pointer&& object )
+    {
         return core_renderer->add_renderable( std::forward< Renderable::pointer >( object ) );
     }
     /*

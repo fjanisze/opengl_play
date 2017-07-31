@@ -4,14 +4,12 @@
 #include <set>
 #include <types.hpp>
 
-namespace buffers
-{
+namespace buffers {
 /*
  * Internal rappresentation
  * of a framebuffer
  */
-struct Buffer
-{
+struct Buffer {
     Buffer() = default;
     Buffer( const GLuint fbo ) :
         FBO{ fbo } {}
@@ -20,11 +18,13 @@ struct Buffer
     GLuint texture{ GL_INVALID_INDEX };
     GLuint RBO{ GL_INVALID_INDEX };
 
-    operator GLuint() const {
+    operator GLuint() const
+    {
         return FBO;
     }
 
-    bool operator < ( const Buffer& other ) const {
+    bool operator < ( const Buffer& other ) const
+    {
         return FBO < other.FBO;
     }
 };

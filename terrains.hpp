@@ -12,8 +12,7 @@
 #include <renderable_object.hpp>
 #include <units.hpp>
 
-namespace game_terrains
-{
+namespace game_terrains {
 
 /*
  * For each lot we store up to two
@@ -21,8 +20,7 @@ namespace game_terrains
  * For closeup scenes 'terrains' will load the high
  * res model
  */
-struct Lot_model_textures
-{
+struct Lot_model_textures {
     types::color default_color;
     /*
      * If not provided, the high_res_model is the
@@ -49,7 +47,7 @@ public:
     using pointer = std::shared_ptr< Terrain_lot >;
 
     Terrain_lot( const long model_id,
-                 const glm::vec2 unique_position ,
+                 const glm::vec2 unique_position,
                  const GLfloat lot_altitude );
 
     /*
@@ -93,9 +91,9 @@ public:
      * Load a terrain model, the user might provide its
      * own identificator. If not, a new unique one will be created
      */
-    long load_terrain(const std::string& model_filename,
-                      const glm::vec4 &color,
-                      long terrain_id = -1);
+    long load_terrain( const std::string& model_filename,
+                       const glm::vec4& color,
+                       long terrain_id = -1 );
     /*
      * To load the highres model first the lowres need to be loaded,
      * the code will use the generated terrain_id from load_terrain
@@ -108,9 +106,9 @@ public:
      * the position of the loaded textures. The map should
      * contain the ID's used to load the terrains
      */
-    bool load_terrain_map(const terrain_map_t& map,
-                          GLfloat lot_size, //Each lot is a square: lot_size X lot_size
-                          glm::vec2 central_lot); //Position of the lot at the center (0,0)
+    bool load_terrain_map( const terrain_map_t& map,
+                           GLfloat lot_size, //Each lot is a square: lot_size X lot_size
+                           glm::vec2 central_lot ); //Position of the lot at the center (0,0)
     /*
      * Return the lot at the give coordinates
      */
@@ -134,7 +132,7 @@ private:
     /*
      * Map a renderable ID to a position index
      */
-    std::unordered_map< long , long > rendr_id_to_idx;
+    std::unordered_map< long, long > rendr_id_to_idx;
     glm::vec2 view_center;
     /*
      * The origins lot is the lot from which

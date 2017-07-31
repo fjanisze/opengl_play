@@ -18,8 +18,7 @@
 #include <SOIL/SOIL.h>
 #include <vector>
 
-namespace opengl_play
-{
+namespace opengl_play {
 
 }
 
