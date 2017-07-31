@@ -79,7 +79,7 @@ public:
     void set_color( glm::vec4 color );
 
     void prepare_for_render( ) override;
-    void render( ) override;
+    bool render( ) override;
     void clean_after_render( ) override;
 private:
     GLuint VAO, VBO;

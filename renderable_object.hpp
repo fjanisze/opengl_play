@@ -12,6 +12,8 @@
 #include <types.hpp>
 #include <factory.hpp>
 
+#define RENDR_CTX_BUF_SIZE 1024
+
 namespace renderer {
 
 /*
@@ -40,6 +42,7 @@ public:
         rendering_enabled,
         rendering_disabled,
         not_visible, //The rendering is enabled but the Renderable is not visible
+        rendering_error
     };
 public:
     Rendering_state() :
@@ -60,6 +63,11 @@ public:
     {
         current_state = states::not_visible;
     }
+    void set_error()
+    {
+        current_state = states::rendering_error;
+    }
+
     states current() const
     {
         return current_state;
@@ -167,7 +175,7 @@ public:
 
     void set_shader( shaders::Shader::raw_poiner shader );
     virtual void prepare_for_render( ) {}
-    virtual void render( ) {}
+    virtual bool render( ) {}
     virtual void clean_after_render( ) {}
 
     virtual std::string nice_name();
@@ -441,9 +449,6 @@ public:
      */
     void add_new_rendr( Rendr::pointer& rendr );
     /*
-     * This is public to avoid setter/getter, do not mess anything!! :)
-     */
-    /*
      * Used for rendering the rendr objects based
      * on their priority (head first, tail last)
      */
@@ -515,7 +520,7 @@ private:
      * Rendering index buffer, used to store the indexes
      * of the visible renderable in rendering_content
      */
-    types::id_type rendering_content_idx_buffer[ 1000 ];
+    types::id_type rendering_content_idx_buffer[ RENDR_CTX_BUF_SIZE ];
 };
 
 /*

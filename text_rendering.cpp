@@ -331,7 +331,7 @@ void Renderable_text::prepare_for_render( )
     rendering_data.shader->disable_light_calculations();
 }
 
-void Renderable_text::render()
+bool Renderable_text::render()
 {
     glBindVertexArray( VAO );
 
@@ -382,7 +382,7 @@ void Renderable_text::render()
     glActiveTexture( GL_TEXTURE0 );
     glBindVertexArray( 0 );
     glBindTexture( GL_TEXTURE_2D, 0 );
-
+    return true; //No rendering errors
 }
 
 void Renderable_text::clean_after_render( )

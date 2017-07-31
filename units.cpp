@@ -37,11 +37,14 @@ Unit::Unit( Unit_model::pointer unit_model ) :
     rendering_data.default_color = unit_model->model_data.default_color;
 }
 
-void Unit::render()
+bool Unit::render()
 {
     for ( auto&& mesh : model->get_meshes() ) {
-        mesh->render( rendering_data.shader );
+        if ( false == mesh->render( rendering_data.shader ) ) {
+            return false;
+        }
     }
+    return true;
 }
 
 

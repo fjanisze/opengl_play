@@ -75,7 +75,7 @@ public:
     /*
      * Rendering function
      */
-    void render( ) override;
+    bool render( ) override;
 };
 
 /*

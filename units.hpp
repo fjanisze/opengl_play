@@ -79,7 +79,7 @@ public:
     using container = std::vector< pointer >;
     Unit( Unit_model::pointer unit_model );
 
-    void render( ) override;
+    bool render( ) override;
 private:
     Unit_model::pointer model;
 };

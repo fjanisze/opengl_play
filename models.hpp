@@ -42,7 +42,7 @@ public:
              indices_ptr indx,
              textures_ptr texts );
     ~my_mesh();
-    void render( shaders::Shader* shader ) const;
+    bool render( shaders::Shader* shader ) const;
 private:
     void setup_mesh();
 private:

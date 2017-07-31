@@ -174,7 +174,7 @@ long Core_renderer::render()
         Rendr::raw_pointer cur = rendr_data.rendr_content[ idx ];
         if ( Rendering_state::states::rendering_enabled !=
                 cur->object->rendering_state.current() ) {
-            return false;
+            continue;
         }
         /*
          * We need all those variables only in the first rendering loop
@@ -189,9 +189,19 @@ long Core_renderer::render()
          * Save the index of the renderables that are going to be
          * rendered, not need to loop throught all the twice.
          */
+        if ( buffer_idx_cnt >= RENDR_CTX_BUF_SIZE ) {
+            ERR( "Rendering context buffer size exhausted! Current size: ",
+                 RENDR_CTX_BUF_SIZE, ", Interrupting the rendering!" );
+            return num_of_render_op;
+        }
         rendering_content_idx_buffer[ buffer_idx_cnt++ ] = idx;
         prepare_rendr_color( cur );
-        cur->object->render( );
+        if ( false == cur->object->render( ) ) {
+            ERR( "Rendering error for renderable ID:", cur->object->id,
+                 ", disabling rendering for this renderable!" );
+            cur->object->rendering_state.set_error();
+            continue;
+        }
         cur->object->clean_after_render( );
         ++num_of_render_op;
     }

@@ -70,7 +70,7 @@ my_mesh::~my_mesh()
     glDeleteBuffers( 1, &VAO );
 }
 
-void my_mesh::render( shaders::Shader* shader ) const
+bool my_mesh::render( shaders::Shader* shader ) const
 {
     glBindVertexArray( VAO );
     GLuint current_unit = 0;
@@ -108,6 +108,8 @@ void my_mesh::render( shaders::Shader* shader ) const
         } else {
             ERR( "Unable to setup the texture unit! ",
                  name );
+            glBindVertexArray( 0 );
+            return false;
         }
 
         glBindTexture( GL_TEXTURE_2D, current_tex.id );
@@ -117,6 +119,7 @@ void my_mesh::render( shaders::Shader* shader ) const
 
     glDrawElements( GL_TRIANGLES, indices->size(), GL_UNSIGNED_INT, 0 );
     glBindVertexArray( 0 );
+    return true;
 }
 
 //////////////////////////////////////
