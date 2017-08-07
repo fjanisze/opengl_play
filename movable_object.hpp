@@ -114,7 +114,6 @@ public:
      */
     virtual bool move( movement::direction direction, GLfloat amount );
     virtual void rotate_around( GLfloat amount );
-    virtual glm::mat4 get_model_matrix();
     movement_mapping& get_movement_setup();
 protected:
     glm::mat4 model;

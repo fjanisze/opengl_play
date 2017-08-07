@@ -141,11 +141,6 @@ void Movable::rotate_around( GLfloat amount )
     ERR( "NOT IMPLEMENTED" );
 }
 
-glm::mat4 Movable::get_model_matrix()
-{
-    return model;
-}
-
 movement_mapping& Movable::get_movement_setup()
 {
     return movement_setup;
