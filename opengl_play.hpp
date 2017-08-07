@@ -70,7 +70,7 @@ private:
 
     int win_h,
         win_w;
-    scene::Camera::pointer      camera;
+    graphic_scene::Camera::pointer      camera;
     /*
      * Ray casting utility
      */
@@ -78,7 +78,7 @@ private:
     glm::vec2    ray_z_hit_point( const types::ray_t& ray,
                                   const GLfloat z_value );
 
-    game_terrains::Terrains::pointer game_terrain;
+    graphic_terrains::Terrains::pointer game_terrain;
     game_units::Units::pointer units;
 
     lighting::light_ptr light_1,
@@ -86,7 +86,7 @@ private:
     GLfloat mouse_x_pos;
     GLfloat mouse_y_pos;
 
-    scene::Movement_processor movement_processor;
+    graphic_scene::Movement_processor movement_processor;
 };
 
 }

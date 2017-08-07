@@ -1,7 +1,7 @@
 #include "my_camera.hpp"
 #include <logger/logger.hpp>
 
-namespace scene {
+namespace graphic_scene {
 
 Camera::Camera( glm::vec3 position, glm::vec3 target ) :
     mode{ camera_mode::space_mode }

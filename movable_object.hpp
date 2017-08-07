@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <types.hpp>
 
-namespace scene {
+namespace graphic_scene {
 
 using namespace types;
 

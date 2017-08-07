@@ -110,6 +110,8 @@ file(GLOB SRC_LIST
     "*.cpp"
     "./logger/*.hpp"
     "./logger/*.cpp"
+    "./core/*.cpp"
+    "./core/*.hpp"
 )
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})

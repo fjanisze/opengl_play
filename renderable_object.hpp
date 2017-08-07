@@ -471,7 +471,7 @@ public:
         const types::win_size& window,
         const glm::mat4& proj,
         const glm::mat4& def_ortho,
-        const scene::Camera::pointer cam );
+        const graphic_scene::Camera::pointer cam );
     types::id_type add_renderable( Renderable::pointer object );
     long render();
     lighting::lighting_pointer scene_lights();
@@ -498,9 +498,9 @@ private:
     void prepare_rendr_color( Rendr::raw_pointer cur ) const;
     Core_renderer_config     config;
     shaders::Shader::pointer shader;
-    scene::Camera::pointer   camera;
-    scene::Frustum::pointer  frustum;
-    scene::Frustum::raw_pointer frustum_raw_ptr;//Save some performance.
+    graphic_scene::Camera::pointer   camera;
+    graphic_scene::Frustum::pointer  frustum;
+    graphic_scene::Frustum::raw_pointer frustum_raw_ptr;//Save some performance.
     lighting::lighting_pointer     game_lights;
     buffers::Framebuffers::pointer framebuffers;
     Rendr_data_buffer rendr_data;

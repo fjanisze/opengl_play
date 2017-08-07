@@ -19,7 +19,7 @@ void Movements::change_unit_heading(
 
 void Movements::place_unit_on_lot(
     Unit::pointer& unit,
-    const game_terrains::Terrain_lot::pointer& lot )
+    const graphic_terrains::Terrain_lot::pointer& lot )
 {
     const glm::mat4 lot_mod_matx = lot->rendering_data.model_matrix;
     unit->rendering_data.model_matrix = lot_mod_matx;
@@ -337,7 +337,7 @@ Unit::pointer Units::create_unit( uint64_t id )
 }
 
 bool Units::place_unit( Unit::pointer unit,
-                        game_terrains::Terrain_lot::pointer lot )
+                        graphic_terrains::Terrain_lot::pointer lot )
 {
     LOG2( "Placing unit ", unit->id,
           " on lot ", lot->id, ", at position:",

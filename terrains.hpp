@@ -12,7 +12,7 @@
 #include <renderable_object.hpp>
 #include <units.hpp>
 
-namespace game_terrains {
+namespace graphic_terrains {
 
 /*
  * For each lot we store up to two
@@ -31,12 +31,12 @@ struct Lot_model_textures {
 };
 
 template<typename T>
-using vec_of_vecs = std::vector< std::vector< T > >;
+using vec_matrix = std::vector< std::vector< T > >;
 /*
  * This is the type of the matrix which
  * define a 2D map in terms of terrain ID's
  */
-using terrain_map_t = vec_of_vecs< long >;
+using terrain_map_t = vec_matrix< long >;
 
 /*
  * Internal reppresentation of a terrain lot

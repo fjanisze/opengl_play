@@ -38,7 +38,7 @@ private:
 
 using lighting_pointer = std::shared_ptr< Core_lighting >;
 
-class Generic_light : public scene::Movable
+class Generic_light : public graphic_scene::Movable
 {
 public:
     Generic_light();
@@ -129,7 +129,7 @@ protected:
     GLfloat cut_off,
             out_cutoff;
     glm::vec3 light_direction;
-    scene::Movable::pointer target_obj;
+    graphic_scene::Movable::pointer target_obj;
 public:
     spot_light() = default;
     spot_light( glm::vec3 position,
@@ -155,10 +155,10 @@ public:
  */
 class flash_light : public spot_light
 {
-    scene::Camera::pointer camera_ptr;
+    graphic_scene::Camera::pointer camera_ptr;
 public:
     flash_light() = default;
-    flash_light( scene::Camera::pointer camera,
+    flash_light( graphic_scene::Camera::pointer camera,
                  glm::vec4 color,
                  GLfloat   strength,
                  GLfloat cut_off_angle,

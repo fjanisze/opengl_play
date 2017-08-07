@@ -116,7 +116,7 @@ void opengl_ui::ui_mouse_enter_window( int state )
 void opengl_ui::ui_wheel_move( GLdouble x, GLdouble y )
 {
     movement_processor.mouse_input( x, y,
-                                    scene::mouse_input_type::mouse_wheel );
+                                    graphic_scene::mouse_input_type::mouse_wheel );
 }
 
 void opengl_ui::ui_keyboard_press( GLint button,
@@ -226,7 +226,7 @@ opengl_ui::opengl_ui( int win_width,
         throw std::runtime_error( "GLEW Init failed!" );
     }
 
-    camera = factory< scene::Camera >::create(
+    camera = factory< graphic_scene::Camera >::create(
                  glm::vec3( 4.0, 4.0, 8 ),
                  glm::vec3( 0.0, 0.0, 0.0 )
              );
@@ -293,25 +293,25 @@ void opengl_ui::prepare_for_main_loop()
 void opengl_ui::setup_scene()
 {
     //Register the camera as movable object
-    scene::key_mapping_vec camera_keys = {
-        { GLFW_KEY_W, { scene::movement::direction::top, { 0.3 } } },
-        { GLFW_KEY_S, { scene::movement::direction::down, { 0.3 } } },
-        { GLFW_KEY_A, { scene::movement::direction::left, { 0.3 } } },
-        { GLFW_KEY_D, { scene::movement::direction::right, { 0.3 } } },
-        { GLFW_KEY_Q, { scene::movement::direction::rotate_left, { 2.0 } } },
-        { GLFW_KEY_E, { scene::movement::direction::rotate_right, { 2.0 } } },
+    graphic_scene::key_mapping_vec camera_keys = {
+        { GLFW_KEY_W, { graphic_scene::movement::direction::top, { 0.3 } } },
+        { GLFW_KEY_S, { graphic_scene::movement::direction::down, { 0.3 } } },
+        { GLFW_KEY_A, { graphic_scene::movement::direction::left, { 0.3 } } },
+        { GLFW_KEY_D, { graphic_scene::movement::direction::right, { 0.3 } } },
+        { GLFW_KEY_Q, { graphic_scene::movement::direction::rotate_left, { 2.0 } } },
+        { GLFW_KEY_E, { graphic_scene::movement::direction::rotate_right, { 2.0 } } },
     };
 
 
-    scene::mouse_mapping_vec camera_mouse = {
-        { scene::mouse_movement_types::wheel_up, { scene::movement::direction::forward, { 0.05 } } },
-        { scene::mouse_movement_types::wheel_down, { scene::movement::direction::backward, { 0.05 } } },
+    graphic_scene::mouse_mapping_vec camera_mouse = {
+        { graphic_scene::mouse_movement_types::wheel_up, { graphic_scene::movement::direction::forward, { 0.05 } } },
+        { graphic_scene::mouse_movement_types::wheel_down, { graphic_scene::movement::direction::backward, { 0.05 } } },
     };
 
     movement_processor.register_movable_object( camera, camera_keys );
     movement_processor.register_movable_object( camera, camera_mouse );
 
-    game_terrain = factory< game_terrains::Terrains >::create(
+    game_terrain = factory< graphic_terrains::Terrains >::create(
                        renderer::Core_renderer_proxy( renderer ) );
 
 
@@ -345,7 +345,7 @@ void opengl_ui::setup_scene()
     std::mt19937_64 eng( rd() );
     std::uniform_int_distribution<long> dist( 1, 4 );
 
-    game_terrains::terrain_map_t terrain_map;
+    graphic_terrains::terrain_map_t terrain_map;
     terrain_map.resize( map_size_y );
     for ( int y{ 0 } ; y < map_size_y ; ++y ) {
         terrain_map[ y ].resize( map_size_x );

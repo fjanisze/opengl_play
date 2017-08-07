@@ -256,7 +256,7 @@ const std::vector<GLfloat>& spot_light::get_light_data()
 }
 
 
-flash_light::flash_light( scene::Camera::pointer camera,
+flash_light::flash_light( graphic_scene::Camera::pointer camera,
                           glm::vec4 color,
                           GLfloat strength,
                           GLfloat cut_off_angle,

@@ -6,10 +6,10 @@
 #include <logger/logger.hpp>
 #include <types.hpp>
 
-namespace scene {
+namespace graphic_scene {
 
-using scene::movement::angle;
-using scene::movement::direction;
+using graphic_scene::movement::angle;
+using graphic_scene::movement::direction;
 
 //TODO: Place in the right.. place
 class Plane
@@ -54,7 +54,7 @@ struct Camera_vectors {
     Camera_vectors() = default;
 };
 
-class Camera : public scene::Movable
+class Camera : public graphic_scene::Movable
 {
 public:
     using pointer = std::shared_ptr< Camera >;

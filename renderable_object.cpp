@@ -78,7 +78,7 @@ void Rendr_data_buffer::add_new_rendr( Rendr::pointer& rendr )
 Core_renderer::Core_renderer( const types::win_size& window,
                               const glm::mat4& proj,
                               const glm::mat4& def_ortho,
-                              const scene::Camera::pointer cam ) :
+                              const graphic_scene::Camera::pointer cam ) :
     config( window ),
     camera{ cam }
 {
@@ -113,7 +113,7 @@ Core_renderer::Core_renderer( const types::win_size& window,
     game_lights = std::make_shared< lighting::Core_lighting >();
     model_picking = factory< Model_picking >::create( shader, framebuffers );
 
-    frustum = factory< scene::Frustum >::create( camera,
+    frustum = factory< graphic_scene::Frustum >::create( camera,
               45.0f,
               ( GLfloat )window.width / ( GLfloat )window.height,
               1.0f,

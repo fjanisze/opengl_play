@@ -2,7 +2,7 @@
 #include <logger/logger.hpp>
 #include <factory.hpp>
 
-namespace game_terrains {
+namespace graphic_terrains {
 
 Terrains::Terrains( renderer::Core_renderer_proxy renderer ) :
     renderer{ renderer }

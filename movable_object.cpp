@@ -2,7 +2,7 @@
 #include "logger/logger.hpp"
 #include <algorithm>
 
-namespace scene {
+namespace graphic_scene {
 
 //////////////////////////////////////
 /// movable_object implementation

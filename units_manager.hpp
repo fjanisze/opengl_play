@@ -4,7 +4,7 @@
 
 namespace game_units {
 
-using namespace game_terrains;
+using namespace graphic_terrains;
 
 /*
  * Here we have some utility functions
@@ -26,7 +26,7 @@ public:
      * lot
      */
     void place_unit_on_lot( Unit::pointer& unit,
-                            const game_terrains::Terrain_lot::pointer& lot );
+                            const graphic_terrains::Terrain_lot::pointer& lot );
     /*
      * Usefull function that kind of emulate the acceleration
      * and deceleration of a moving unit, when you start the movement
@@ -48,7 +48,7 @@ class Move_processor
 
 public:
     Move_processor( Unit::pointer unit,
-                    game_terrains::Terrain_lot::pointer lot );
+                    graphic_terrains::Terrain_lot::pointer lot );
     ~Move_processor();
     using pointer = std::shared_ptr< Move_processor >;
     enum struct moving_status {
@@ -84,7 +84,7 @@ private:
 struct Unit_info {
     using pointer = std::shared_ptr< Unit_info >;
     Unit::pointer unit;
-    game_terrains::Terrain_lot::pointer location;
+    graphic_terrains::Terrain_lot::pointer location;
     /*
      * The target location is the place where
      * the unit is moving towards
@@ -131,7 +131,7 @@ public:
     bool teleport( types::id_type unit,
                    Terrain_lot::pointer target_lot );
     bool multiple_teleport( const std::vector< types::id_type>& units,
-                            game_terrains::Terrain_lot::pointer& target_lot );
+                            graphic_terrains::Terrain_lot::pointer& target_lot );
     /*
      * This is initiate the movement 'animation' of the unit
      * to the target location
@@ -139,7 +139,7 @@ public:
     bool move( types::id_type unit_id,
                Terrain_lot::pointer target_lot );
     bool multiple_move( const std::vector< types::id_type >& units,
-                        game_terrains::Terrain_lot::pointer& target_lot );
+                        graphic_terrains::Terrain_lot::pointer& target_lot );
     /*
      * Called once for frame (at least), update
      * the units position, manage the movement etc
@@ -177,7 +177,7 @@ public:
      * Place a unit on a given terrain lot
      */
     bool place_unit( Unit::pointer unit,
-                     game_terrains::Terrain_lot::pointer lot );
+                     graphic_terrains::Terrain_lot::pointer lot );
     Units_movement_processor& movements();
 private:
     /*
