@@ -40,7 +40,7 @@ const Model_resource_def terrain_forest_def = {
     resource_type::terrain_lot,
     "Forest",
 
-    "../models/Grass/Forest.obj", //Low res model
+    "../models/Forest/Forest.obj", //Low res model
     "../models/Forest/Forest_complex.obj", //High res model
 };
 
@@ -49,8 +49,8 @@ const Model_resource_def terrain_mountain_def = {
     resource_type::terrain_lot,
     "Mountain",
 
-    "../models/Grass/mountain.obj", //Low res model
-    "../models/Grass/mountain_highres.obj", //High res model
+    "../models/Mountain/mountain.obj", //Low res model
+    "../models/Mountain/mountain_highres.obj", //High res model
 };
 
 }

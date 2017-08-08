@@ -385,52 +385,57 @@ void opengl_ui::setup_scene()
 
 void opengl_ui::enter_main_loop()
 {
-    setup_scene();
 
-    auto ref_time = std::chrono::system_clock::now();
-    int  current_fps = 0;
+    game_terrain = factory< graphic_terrains::Terrains >::create(
+                       renderer::Core_renderer_proxy( renderer ) );
+    core_maps::Maps maps( game_terrain );
 
-    LOG2( "Entering main loop!" );
-    std::string current_fps_string = "0 fps";
-    long num_of_rendering_cycles{ 0 };
-    while ( !glfwWindowShouldClose( window_ctx ) ) {
-        ++current_fps;
-        glfwPollEvents();
-        evaluate_key_status();
-        movement_processor.process_movements();
-        units->movements().process_movements();
+    /*  setup_scene();
 
-        auto current_time = std::chrono::system_clock::now();
-        if ( std::chrono::duration_cast <
-                std::chrono::milliseconds > (
-                    current_time - ref_time ).count() > 1000 ) {
-            ref_time = current_time;
-            current_fps_string = ( std::to_string( current_fps ) + " fps" );
-            current_fps = 0;
-        }
+      auto ref_time = std::chrono::system_clock::now();
+      int  current_fps = 0;
 
-        renderer->clear();
-        num_of_rendering_cycles = renderer->render();
+      LOG2( "Entering main loop!" );
+      std::string current_fps_string = "0 fps";
+      long num_of_rendering_cycles{ 0 };
+      while ( !glfwWindowShouldClose( window_ctx ) ) {
+          ++current_fps;
+          glfwPollEvents();
+          evaluate_key_status();
+          movement_processor.process_movements();
+          units->movements().process_movements();
 
-        auto yaw = camera->get_yaw(),
-             pitch = camera->get_pitch(),
-             roll = camera->get_roll();
-        glm::vec3 pos = camera->get_position();
-        auto pointed = renderer->picking()->get_pointed_model();
-        types::id_type pointed_id = 0;
-        if ( pointed != nullptr ) {
-            pointed_id = pointed->id;
-        }
+          auto current_time = std::chrono::system_clock::now();
+          if ( std::chrono::duration_cast <
+                  std::chrono::milliseconds > (
+                      current_time - ref_time ).count() > 1000 ) {
+              ref_time = current_time;
+              current_fps_string = ( std::to_string( current_fps ) + " fps" );
+              current_fps = 0;
+          }
 
-        std::stringstream ss;
-        ss << current_fps_string << " - " << std::setprecision( 2 ) << std::fixed << "yaw:" << yaw << ", pitch:" << pitch << ", roll:" << roll
-           << ". x:" << pos.x << ",y:" << pos.y << ",z:" << pos.z << ", rendr cycles:"
-           << num_of_rendering_cycles << ", Sel: " << pointed_id;
+          renderer->clear();
+          num_of_rendering_cycles = renderer->render();
 
-        info_string->set_text( ss.str() );
+          auto yaw = camera->get_yaw(),
+               pitch = camera->get_pitch(),
+               roll = camera->get_roll();
+          glm::vec3 pos = camera->get_position();
+          auto pointed = renderer->picking()->get_pointed_model();
+          types::id_type pointed_id = 0;
+          if ( pointed != nullptr ) {
+              pointed_id = pointed->id;
+          }
 
-        glfwSwapBuffers( window_ctx );
-    }
+          std::stringstream ss;
+          ss << current_fps_string << " - " << std::setprecision( 2 ) << std::fixed << "yaw:" << yaw << ", pitch:" << pitch << ", roll:" << roll
+             << ". x:" << pos.x << ",y:" << pos.y << ",z:" << pos.z << ", rendr cycles:"
+             << num_of_rendering_cycles << ", Sel: " << pointed_id;
+
+          info_string->set_text( ss.str() );
+
+          glfwSwapBuffers( window_ctx );
+      }*/
 }
 
 GLFWwindow* opengl_ui::get_win_ctx()
@@ -522,7 +527,5 @@ int main()
     opengl_play::opengl_ui entry( 1920, 1280 );
     entry.prepare_for_main_loop();
 
-    core_units::Units units;
-    core_maps::Maps maps;
-    //entry.enter_main_loop();
+    entry.enter_main_loop();
 }

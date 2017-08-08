@@ -45,16 +45,23 @@ const Terrain_lot_def terrain_definitions[] = {
     }
 };
 
-Maps::Maps()
+Maps::Maps( graphic_terrains::Terrains::pointer terrains ) :
+    terrains{ terrains }
 {
     LOG3( "Created!" );
-    if ( log_inst.current_log_level() <= logging::severity_type::debug0 ) {
-        for ( const auto& elem : terrain_definitions ) {
-            LOG0( "Lot ID:", elem.model_def.id, ", model name:", elem.model_def.pretty_name,
-                  ", model paths:", elem.model_def.model_path, ",",
-                  elem.model_def.high_res_model_path );
-
-        }
+    /*
+     * Load to the graphic terrains handler all the available
+     * terrains
+     */
+    for ( const auto& elem : terrain_definitions ) {
+        LOG0( "Lot ID:", elem.model_def.id, ", model name:", elem.model_def.pretty_name,
+              ", model paths:", elem.model_def.model_path, ",",
+              elem.model_def.high_res_model_path );
+        terrains->load_terrain( elem.model_def.model_path,
+                                glm::vec4( 1.0 ),
+                                elem.model_def.id );
+        terrains->load_highres_terrain( elem.model_def.high_res_model_path,
+                                        elem.model_def.id );
     }
 }
 

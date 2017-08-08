@@ -2,7 +2,9 @@
 #define CORE_MAPS_HPP
 #include <factory.hpp>
 #include <types.hpp>
+#include <memory>
 #include "resources.hpp"
+#include "terrains.hpp"
 
 namespace core_maps {
 
@@ -42,6 +44,7 @@ struct Terrain_lot_def {
 class Map
 {
 public:
+    using pointer = std::shared_ptr< Map >;
     Map( const std::string& name,
          const size_t size );
 };
@@ -49,8 +52,9 @@ public:
 class Maps
 {
 public:
-    Maps();
-
+    Maps( graphic_terrains::Terrains::pointer terrains );
+private:
+    graphic_terrains::Terrains::pointer terrains;
 };
 
 } //core_maps
