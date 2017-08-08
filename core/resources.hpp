@@ -40,7 +40,15 @@ struct Model_resource_def {
     const std::string    high_res_model_path;
 };
 
-extern const Model_resource_def resource_poldek_def;
+/*
+ * All the definitions
+ */
+extern const Model_resource_def unit_poldek_def;
+
+extern const Model_resource_def terrain_grass1_def;
+extern const Model_resource_def terrain_grass2_def;
+extern const Model_resource_def terrain_forest_def;
+extern const Model_resource_def terrain_mountain_def;
 
 }
 

@@ -6,7 +6,7 @@ namespace core_units {
 
 const Unit_def units_definitions[] = {
     {
-        resources::resource_poldek_def,
+        resources::unit_poldek_def,
         "Poldek",
         unit_type::small_vehicle,
         {

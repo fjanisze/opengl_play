@@ -27,6 +27,7 @@ struct Unit_specs {
 struct Unit_def {
     const resources::Model_resource_def& model_def;
     const std::string    name;
+
     const unit_type      type;
     const Unit_specs     specs;
 

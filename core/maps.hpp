@@ -2,6 +2,7 @@
 #define CORE_MAPS_HPP
 #include <factory.hpp>
 #include <types.hpp>
+#include "resources.hpp"
 
 namespace core_maps {
 
@@ -29,15 +30,13 @@ struct Terrain_lot_spec {
  * needed to draw the lot
  */
 struct Terrain_lot_def {
-    const types::id_type id;
+    const resources::Model_resource_def& model_def;
+    const std::string    name;
+
     const terrain_type   type;
     const Terrain_lot_spec specs;
 
-    const std::string    name;
     const std::string    desc;
-
-    const std::string    model_path;
-    const std::string    high_res_model_path;
 };
 
 class Map

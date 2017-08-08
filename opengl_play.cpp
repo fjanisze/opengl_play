@@ -3,6 +3,7 @@
 #include <thread>
 #include <chrono>
 #include <core/units.hpp>
+#include <core/maps.hpp>
 
 namespace opengl_play {
 
@@ -522,5 +523,6 @@ int main()
     entry.prepare_for_main_loop();
 
     core_units::Units units;
+    core_maps::Maps maps;
     //entry.enter_main_loop();
 }
