@@ -1,6 +1,6 @@
 #include <units_manager.hpp>
 
-namespace game_units {
+namespace graphic_units {
 
 void Movements::change_unit_heading(
     Unit::pointer& unit,

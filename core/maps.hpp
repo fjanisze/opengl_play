@@ -1,5 +1,5 @@
-#ifndef MAPS_HPP
-#define MAPS_HPP
+#ifndef CORE_MAPS_HPP
+#define CORE_MAPS_HPP
 #include <factory.hpp>
 #include <types.hpp>
 
@@ -32,6 +32,7 @@ struct Terrain_lot_def {
     const types::id_type id;
     const terrain_type   type;
     const Terrain_lot_spec specs;
+
     const std::string    name;
     const std::string    desc;
 
@@ -39,6 +40,20 @@ struct Terrain_lot_def {
     const std::string    high_res_model_path;
 };
 
-}
+class Map
+{
+public:
+    Map( const std::string& name,
+         const size_t size );
+};
 
-#endif
+class Maps
+{
+public:
+    Maps();
+
+};
+
+} //core_maps
+
+#endif //CORE_MAPS_HPP

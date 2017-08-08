@@ -2,7 +2,7 @@
 #include <units.hpp>
 #include <terrains.hpp>
 
-namespace game_units {
+namespace graphic_units {
 
 using namespace graphic_terrains;
 

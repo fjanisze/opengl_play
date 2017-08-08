@@ -1,4 +1,5 @@
 #include "maps.hpp"
+#include <logger/logger.hpp>
 
 namespace core_maps {
 
@@ -38,5 +39,10 @@ const Terrain_lot_def terrain_definitions[] = {
     "../models/Forest/Forest.obj",
     "../models/Forest/Forest_complex.obj",
 };
+
+Maps::Maps()
+{
+    LOG3( "Created!" );
+}
 
 }

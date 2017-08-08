@@ -181,7 +181,7 @@ Terrain_lot::Terrain_lot( const long model_id,
     altitude{ lot_altitude }
 {
     LOG0( "New lot created, ID:", id );
-    units = factory< game_units::Units_container >::create();
+    units = factory< graphic_units::Units_container >::create();
 }
 
 bool Terrain_lot::render( )

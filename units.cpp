@@ -1,11 +1,17 @@
 #include <units.hpp>
+#include <core/resources.hpp>
 
-namespace game_units {
+namespace graphic_units {
 
 namespace internal {
 
 Unit_model_data::container units = {
-    { 1, "../models/SimpleCar/SimpleCar.obj", types::color( 1.0f ), "Poldek" }
+    {
+        resources::id_unit_poldek,
+        "../models/SimpleCar/SimpleCar.obj",
+        types::color( 1.0f ),
+        "Poldek"
+    }
 };
 
 }

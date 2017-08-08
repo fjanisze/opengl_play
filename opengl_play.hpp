@@ -79,7 +79,7 @@ private:
                                   const GLfloat z_value );
 
     graphic_terrains::Terrains::pointer game_terrain;
-    game_units::Units::pointer units;
+    graphic_units::Units::pointer units;
 
     lighting::light_ptr light_1,
              light_2;

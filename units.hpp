@@ -7,7 +7,7 @@
 #include <models.hpp>
 #include <renderable_object.hpp>
 
-namespace game_units {
+namespace graphic_units {
 
 /*
  * Information about a unit

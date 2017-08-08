@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <core/units.hpp>
 
 namespace opengl_play {
 
@@ -360,7 +361,7 @@ void opengl_ui::setup_scene()
                                     glm::vec2( map_size_x / 2,
                                             map_size_y / 2 ) );
 
-    units = factory< game_units::Units >::create(
+    units = factory< graphic_units::Units >::create(
                 renderer::Core_renderer_proxy( renderer ) );
 
     auto list_of_units = units->buildable_units();
@@ -515,9 +516,11 @@ glm::vec2 opengl_ui::ray_z_hit_point( const types::ray_t& ray,
 int main()
 {
     log_inst.set_thread_name( "MAIN" );
-    log_inst.set_logging_level( logging::severity_type::debug1 );
+    log_inst.set_logging_level( logging::severity_type::debug0 );
 
     opengl_play::opengl_ui entry( 1920, 1280 );
     entry.prepare_for_main_loop();
-    entry.enter_main_loop();
+
+    core_units::Units units;
+    //entry.enter_main_loop();
 }

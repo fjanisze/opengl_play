@@ -119,7 +119,7 @@ Font_texture_loader::glyph_buffer_ptr
 Font_texture_loader::create_glyph_buffer(
     const FT_Face& font_face )
 {
-    LOG1( "Create the RGBA glyph buffer." );
+    LOG0( "Create the RGBA glyph buffer." );
     constexpr std::size_t buf_size{ 2048 };
     auto glyph_buffer = std::make_unique<GLuint[]>( buf_size );
     /*
@@ -156,7 +156,7 @@ GLuint Font_texture_loader::create_texture(
     Font_texture_loader::glyph_buffer_ptr glyph_buffer,
     const FT_Face& font_face )
 {
-    LOG1( "Creating the font texture." );
+    LOG0( "Creating the font texture." );
     GLuint texture;
 
     // Generate texture
@@ -193,7 +193,7 @@ GLuint Font_texture_loader::create_texture(
     glTexParameteri( GL_TEXTURE_2D,
                      GL_TEXTURE_MAX_LEVEL, 0 );
 
-    LOG1( "Texture ready, ID:", texture );
+    LOG0( "Texture ready, ID:", texture );
     return texture;
 }
 
