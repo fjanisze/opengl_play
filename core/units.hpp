@@ -36,6 +36,14 @@ struct Unit_def {
 };
 
 /*
+ * Reppresentation of a single unit
+ */
+class Unit
+{
+
+};
+
+/*
  * Unit creation/destruction, placement on the map &c.
  */
 class Units

@@ -60,10 +60,11 @@ public:
     using pointer = std::shared_ptr< Map_lot >;
     using row_type = std::vector< pointer >;
     using container = std::vector< row_type >;
-    Map_lot( );
+    Map_lot( const types::point position );
 
     Lot_specs::pointer specification;
     const id_factory< Map_lot > id;
+    const types::point position;
 };
 
 /*

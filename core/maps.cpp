@@ -46,7 +46,8 @@ const Terrain_lot_def terrain_definitions[] = {
     }
 };
 
-Map_lot::Map_lot()
+Map_lot::Map_lot( const types::point position ):
+    position{ position }
 {
 }
 
@@ -54,10 +55,11 @@ void Map::allocate_map()
 try
 {
     map_data.resize( size );
-    for ( int i{0}; i < size; ++i ) {
-        map_data[ i ].resize( size );
-        for ( int j{0}; j < size; ++j ) {
-            map_data[i][j] = factory< Map_lot >::create();
+    for ( int x{0}; x < size; ++x ) {
+        map_data[ x ].resize( size );
+        for ( int y{0}; y < size; ++y ) {
+            map_data[x][y] = factory< Map_lot >::create(
+                                 types::point( x, y, 0 ) );
         }
     }
 } catch ( std::exception& ex )
@@ -80,11 +82,13 @@ void Maps::assign_random_lots( Map::pointer& map )
     std::mt19937_64 eng( rd() );
     std::uniform_int_distribution<long> dist( 0,
             all_terrain_ids.size() - 1 );
-    for ( int i{ 0 } ; i < map->size; ++i ) {
-        for ( int j{ 0 }; j < map->size; ++j ) {
+    for ( int x{ 0 } ; x < map->size; ++x ) {
+        for ( int y{ 0 }; y < map->size; ++y ) {
             types::id_type terrain_id_idx = dist( eng );
             auto terrain = find_terrain_definition( all_terrain_ids[ terrain_id_idx ] );
-            map->map_data[ i ][ j ]->specification = factory< Lot_specs >::create( terrain );
+            auto map_data = map->map_data[ x ][ y ];
+
+            map_data->specification = factory< Lot_specs >::create( terrain );
         }
     }
 }
