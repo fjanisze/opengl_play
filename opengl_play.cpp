@@ -316,9 +316,6 @@ void opengl_ui::setup_scene()
     game_terrain = factory< graphic_terrains::Terrains >::create(
                        renderer::Core_renderer_proxy( renderer ) );
 
-
-    game_terrain = factory< graphic_terrains::Terrains >::create(
-                       renderer::Core_renderer_proxy( renderer ) );
     core_maps::Maps maps( game_terrain );
     auto new_map = maps.create_random_map( 8 );
 
