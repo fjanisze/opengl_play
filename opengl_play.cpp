@@ -77,6 +77,10 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
          */
         auto selected = renderer->picking()->get_selected_ids();
         auto pointed_model = renderer->picking()->get_pointed_model();
+        if ( nullptr == pointed_model ) {
+            //Nothing to do here.
+            return;
+        }
         LOG0( "ID:", pointed_model->id );
         auto lot = game_terrain->find_lot( pointed_model );
         if ( lot == nullptr ) {
