@@ -11,6 +11,7 @@
 #include <types.hpp>
 #include <framebuffers.hpp>
 #include <units_manager.hpp>
+#include <core/maps.hpp>
 
 namespace opengl_play {
 
@@ -80,6 +81,8 @@ private:
 
     graphic_terrains::Terrains::pointer game_terrain;
     graphic_units::Units::pointer units;
+
+    core_maps::Map::pointer game_map;
 
     lighting::light_ptr light_1,
              light_2;

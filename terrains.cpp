@@ -67,7 +67,7 @@ long Terrains::load_highres_terrain( const std::string& model_filename,
     return terrain_id;
 }
 
-bool Terrains::load_terrain_map( const terrain_map_t& map,
+bool Terrains::load_terrain_map( terrain_map_t& map,
                                  GLfloat lot_size,
                                  glm::vec2 central_lot )
 {
@@ -93,20 +93,22 @@ bool Terrains::load_terrain_map( const terrain_map_t& map,
             return false;
         }
         for ( std::size_t x{ 0 } ; x < map[y].size() ; ++x ) {
-            long id = map[ y ][ x ];
+            long model_id = map[ y ][ x ];
             /*
             * Is the lot model available?
             */
-            auto it = terrain_container.find( id );
+            auto it = terrain_container.find( model_id );
             if ( it == terrain_container.end() ) {
                 PANIC( "The model for the terrain ID: ",
-                       id, " is not loaded.." );
+                       model_id, " is not loaded.." );
             }
+            const glm::vec2 lot_position = glm::vec2( x - central_lot.x,
+                                           y - central_lot.y );
+            const long lot_idx = get_position_idx( lot_position );
 
             Terrain_lot::pointer new_lot = factory< Terrain_lot >::create(
-                                               id,
-                                               glm::vec2( x - central_lot.x,
-                                                       y - central_lot.y ),
+                                               model_id,
+                                               lot_position,
                                                it->second.low_res_model->get_model_height()
                                            );
 
@@ -117,7 +119,6 @@ bool Terrains::load_terrain_map( const terrain_map_t& map,
             new_lot->terrain_model_id ].default_color;
             new_lot->textures = it->second;
 
-            long lot_idx = get_position_idx( new_lot->position );
             if ( terrain_map.find( lot_idx ) != terrain_map.end() ) {
                 ERR( "Attempt to add twice a lot at the same idx: ",
                      lot_idx, " number of loaded lots: ", terrain_map.size() );
@@ -127,6 +128,11 @@ bool Terrains::load_terrain_map( const terrain_map_t& map,
                 long idx = get_position_idx( new_lot->position );
                 terrain_map[ idx ] = new_lot;
                 rendr_id_to_idx[ new_lot->id ] = idx;
+                /*
+                 * Update the original map with the identifier
+                 * for the newly created lot.
+                 */
+                map[ y ][ x ] = new_lot->id;
             }
         }
     }

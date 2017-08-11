@@ -106,7 +106,7 @@ public:
      * the position of the loaded textures. The map should
      * contain the ID's used to load the terrains
      */
-    bool load_terrain_map( const terrain_map_t& map,
+    bool load_terrain_map( terrain_map_t& map,
                            GLfloat lot_size, //Each lot is a square: lot_size X lot_size
                            glm::vec2 central_lot ); //Position of the lot at the center (0,0)
     /*

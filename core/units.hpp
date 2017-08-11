@@ -18,7 +18,7 @@ enum class unit_type {
  * Some specification details about the units
  */
 struct Unit_specs {
-    const int num_of_movements;
+    int num_of_movements;
 };
 
 /*
@@ -35,12 +35,30 @@ struct Unit_def {
     const std::string    desc;
 };
 
+struct Unit_config {
+    using pointer = std::shared_ptr< Unit_config >;
+    const Unit_def def;
+
+    Unit_specs current_specs;
+
+    Unit_config( const Unit_def& definition ) :
+        def{ definition },
+        current_specs{ definition.specs }
+    {}
+};
+
 /*
  * Reppresentation of a single unit
  */
 class Unit
 {
+public:
+    using pointer = std::shared_ptr< Unit >;
+    Unit( const Unit_def& definition );
 
+    Unit_config::pointer unit;
+    types::point position;
+    const id_factory< Unit > id;
 };
 
 /*
@@ -48,10 +66,20 @@ class Unit
  */
 class Units
 {
+    const Unit_def& find_unit_definition( const types::id_type id );
 public:
     Units( graphic_units::Units::pointer );
+    Unit::pointer create( const types::id_type id );
 private:
-    graphic_units::Units::pointer units;
+    /*
+     * Pointer to the graphical reppresentation
+     * of the units
+     */
+    graphic_units::Units::pointer rendr_units;
+    /*
+     * Contains all the units
+     */
+    std::map< types::id_type, Unit::pointer > units;
 };
 
 }

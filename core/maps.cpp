@@ -55,11 +55,11 @@ void Map::allocate_map()
 try
 {
     map_data.resize( size );
-    for ( int x{0}; x < size; ++x ) {
-        map_data[ x ].resize( size );
-        for ( int y{0}; y < size; ++y ) {
-            map_data[x][y] = factory< Map_lot >::create(
-                                 types::point( x, y, 0 ) );
+    for ( int y{0}; y < size; ++y ) {
+        map_data[ y ].resize( size );
+        for ( int x{0}; x < size; ++x ) {
+            map_data[ y ][ x ] = factory< Map_lot >::create(
+                                     types::point( x, y, 0 ) );
         }
     }
 } catch ( std::exception& ex )
@@ -71,8 +71,19 @@ try
 Map::Map( const size_t size ) :
     size{ size }
 {
-    LOG3( "New map size: ", size );
+    LOG3( "New map size: ", size, ",mapID:", id );
     allocate_map();
+}
+
+void Map::update_rendr_core_mapping(
+    const graphic_terrains::terrain_map_t& ids_map )
+{
+    LOG3( "Updating the mapping!" );
+    for ( int y{ 0 }; y < size; ++y ) {
+        for ( int x{ 0 } ; x < size ; ++x ) {
+            rendr_to_core_mapping[ ids_map[ y ][ x ] ] = map_data[ y ][ x ];
+        }
+    }
 }
 
 void Maps::assign_random_lots( Map::pointer& map )
@@ -82,13 +93,13 @@ void Maps::assign_random_lots( Map::pointer& map )
     std::mt19937_64 eng( rd() );
     std::uniform_int_distribution<long> dist( 0,
             all_terrain_ids.size() - 1 );
-    for ( int x{ 0 } ; x < map->size; ++x ) {
-        for ( int y{ 0 }; y < map->size; ++y ) {
+    for ( int y{ 0 } ; y < map->size; ++y ) {
+        for ( int x{ 0 }; x < map->size; ++x ) {
             types::id_type terrain_id_idx = dist( eng );
             auto terrain = find_terrain_definition( all_terrain_ids[ terrain_id_idx ] );
-            auto map_data = map->map_data[ x ][ y ];
+            auto map_data = map->map_data[ y ][ x ];
 
-            map_data->specification = factory< Lot_specs >::create( terrain );
+            map_data->lot = factory< Lot_config >::create( terrain );
         }
     }
 }
@@ -148,16 +159,23 @@ Map::pointer Maps::create_random_map( const size_t size )
      */
     graphic_terrains::terrain_map_t terrain_map;
     terrain_map.resize( size );
-    for ( int x{ 0 }; x < size; ++x ) {
-        terrain_map[x].resize( size );
-        for ( int y{ 0 } ; y < size ; ++y ) {
-            terrain_map[ x ][ y ] = new_map->map_data[ x ][ y ]->specification->def.model_def.id;
+    for ( int y{ 0 }; y < size; ++y ) {
+        terrain_map[ y ].resize( size );
+        for ( int x{ 0 } ; x < size ; ++x ) {
+            terrain_map[ y ][ x ] = new_map->map_data[ y ][ x ]->lot->def.model_def.id;
         }
     }
     terrains->load_terrain_map( terrain_map,
                                 2,
                                 glm::vec2( size / 2,
                                            size / 2 ) );
+    /*
+     * load_terrain_map update the provided map with the ID's
+     * of the lots for each map coordinate, we need those information
+     * to map core operations with the graphics engine
+     */
+    new_map->update_rendr_core_mapping( terrain_map );
+
     maps[ new_map->id ] = new_map;
     LOG3( "New map creation completed, amount of maps:", maps.size() );
     return new_map;

@@ -3,6 +3,7 @@
 #include <factory.hpp>
 #include <types.hpp>
 #include <memory>
+#include <iostream>
 #include "resources.hpp"
 #include "terrains.hpp"
 
@@ -23,7 +24,7 @@ enum class traversable_lot {
  * Characteristics of a terrain lot, if units can move over it,
  * if there's a penalty for the move etc.
  */
-struct Terrain_lot_spec {
+struct Lot_spec {
     traversable_lot traversable;
 };
 
@@ -36,21 +37,21 @@ struct Terrain_lot_def {
     const std::string    name;
 
     const terrain_type   type;
-    const Terrain_lot_spec specs;
+    const Lot_spec specs;
 
     const std::string    desc;
 };
 
-struct Lot_specs {
-    using pointer = std::shared_ptr< Lot_specs >;
+struct Lot_config {
+    using pointer = std::shared_ptr< Lot_config >;
     //Those are the default values for the lot
     const Terrain_lot_def def;
     //Those are the current values
-    Terrain_lot_spec current;
+    Lot_spec current_specs;
 
-    Lot_specs( const Terrain_lot_def definition ) :
+    Lot_config( const Terrain_lot_def definition ) :
         def{ definition },
-        current{ definition.specs }
+        current_specs{ definition.specs }
     {}
 };
 
@@ -62,7 +63,7 @@ public:
     using container = std::vector< row_type >;
     Map_lot( const types::point position );
 
-    Lot_specs::pointer specification;
+    Lot_config::pointer lot;
     const id_factory< Map_lot > id;
     const types::point position;
 };
@@ -73,13 +74,35 @@ public:
 class Map
 {
     void allocate_map();
+    /*
+     * Update the mapping from renderer lot information
+     * to core lot information
+     */
+    void update_rendr_core_mapping( const graphic_terrains::terrain_map_t& ids_map );
 public:
     using pointer = std::shared_ptr< Map >;
     Map( const size_t size );
+    void print_debug( types::id_type id )
+    {
+        auto elem = rendr_to_core_mapping[ id ];
+        std::cout << "Model ID:" << id << ", map to lot: "
+                  << elem->lot->def.name << ", which is: "
+                  << ( ( elem->lot->current_specs.traversable == traversable_lot::yes ) ?
+                       "traversable" : "not traversable" ) << std::endl;
+    }
+
 
     const id_factory< Map_lot > id;
     const size_t      size;
+private:
     Map_lot::container map_data;
+    /*
+     * This mapping is needed to find which core lot
+     * is related with a terrain lot as seen by the
+     * graphic renderer.
+     */
+    std::map< types::id_type, Map_lot::pointer > rendr_to_core_mapping;
+    friend class Maps;
 };
 
 class Maps
