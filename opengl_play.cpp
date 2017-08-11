@@ -327,7 +327,7 @@ void opengl_ui::setup_scene()
                 renderer::Core_renderer_proxy( renderer ) );
 
     auto list_of_units = units->buildable_units();
-    unit_id = list_of_units.front().id;
+    unit_id = list_of_units.front().def.id;
 
     light_1 = lighting::Light_factory<lighting::directional_light>::create(
                   glm::vec3( 30, 30, 30 ),

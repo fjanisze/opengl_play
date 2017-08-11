@@ -1,3 +1,6 @@
+#ifndef UNITS_MANAGER_HPP
+#define UNITS_MANAGER_HPP
+
 #include <headers.hpp>
 #include <units.hpp>
 #include <terrains.hpp>
@@ -197,3 +200,5 @@ private:
 };
 
 }
+
+#endif //UNITS_MANAGER_HPP

@@ -6,6 +6,7 @@
 #include <factory.hpp>
 #include <models.hpp>
 #include <renderable_object.hpp>
+#include "core/resources.hpp"
 
 namespace graphic_units {
 
@@ -17,14 +18,9 @@ namespace graphic_units {
 struct Unit_model_data {
     using container = std::vector< Unit_model_data >;
     /*
-     * ID given by the configuration, shall uniquely
-     * identify a Model_unit_data
+     * Model definition
      */
-    const uint64_t     id;
-    /*
-     * Path for the obj blender file
-     */
-    const std::string  model_path;
+    const resources::Model_resource_def& def;
     /*
      * Color applicable to this unit
      */
@@ -48,7 +44,7 @@ public:
     models::my_mesh::meshes& get_meshes();
     operator uint64_t() const
     {
-        return model_data.id;
+        return model_data.def.id;
     }
 public:
     Unit_model_data model_data;

@@ -357,7 +357,7 @@ Units_movement_processor& Units::movements()
 Unit_model::pointer Units::find_model( const uint64_t id )
 {
     for ( auto&& model : available_models ) {
-        if ( model->model_data.id == id ) {
+        if ( model->model_data.def.id == id ) {
             return model;
         }
     }

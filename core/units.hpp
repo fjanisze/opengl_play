@@ -3,6 +3,7 @@
 #include <types.hpp>
 #include <string>
 #include "resources.hpp"
+#include "../units_manager.hpp"
 
 namespace core_units {
 
@@ -40,7 +41,9 @@ struct Unit_def {
 class Units
 {
 public:
-    Units();
+    Units( graphic_units::Units::pointer );
+private:
+    graphic_units::Units::pointer units;
 };
 
 }

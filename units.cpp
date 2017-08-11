@@ -7,8 +7,7 @@ namespace internal {
 
 Unit_model_data::container units = {
     {
-        resources::id_unit_poldek,
-        "../models/SimpleCar/SimpleCar.obj",
+        resources::unit_poldek_def,
         types::color( 1.0f ),
         "Poldek"
     }
@@ -19,10 +18,10 @@ Unit_model_data::container units = {
 Unit_model::Unit_model( const Unit_model_data& data ) :
     model_data{ data }
 {
-    LOG3( "Loading model, path: ", data.model_path,
+    LOG3( "Loading model, path: ", data.def.model_path,
           ", default color: ", data.default_color );
     model = factory< models::model_loader >::create(
-                data.model_path
+                data.def.model_path
             );
     if ( false == model->load_model() ) {
         PANIC( "Not able to load the requested model!" );
