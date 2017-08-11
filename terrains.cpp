@@ -105,13 +105,16 @@ bool Terrains::load_terrain_map( const terrain_map_t& map,
 
             Terrain_lot::pointer new_lot = factory< Terrain_lot >::create(
                                                id,
-                                               glm::vec2( x - central_lot.x, y - central_lot.y ),
+                                               glm::vec2( x - central_lot.x,
+                                                       y - central_lot.y ),
                                                it->second.low_res_model->get_model_height()
                                            );
 
-            new_lot->rendering_data.model_matrix = get_lot_model_matrix( new_lot->position );
+            new_lot->rendering_data.model_matrix = get_lot_model_matrix(
+                    new_lot->position );
             new_lot->rendering_data.update_pos_from_model_matrix();
-            new_lot->rendering_data.default_color = terrain_container[ new_lot->terrain_model_id ].default_color;
+            new_lot->rendering_data.default_color = terrain_container[
+            new_lot->terrain_model_id ].default_color;
             new_lot->textures = it->second;
 
             long lot_idx = get_position_idx( new_lot->position );

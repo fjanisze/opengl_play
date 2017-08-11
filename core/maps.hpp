@@ -24,7 +24,7 @@ enum class traversable_lot {
  * if there's a penalty for the move etc.
  */
 struct Terrain_lot_spec {
-    const traversable_lot traversable;
+    traversable_lot traversable;
 };
 
 /*
@@ -41,20 +41,61 @@ struct Terrain_lot_def {
     const std::string    desc;
 };
 
-class Map
+struct Lot_specs {
+    using pointer = std::shared_ptr< Lot_specs >;
+    //Those are the default values for the lot
+    const Terrain_lot_def def;
+    //Those are the current values
+    Terrain_lot_spec current;
+
+    Lot_specs( const Terrain_lot_def definition ) :
+        def{ definition },
+        current{ definition.specs }
+    {}
+};
+
+class Map_lot
 {
 public:
+    using pointer = std::shared_ptr< Map_lot >;
+    using row_type = std::vector< pointer >;
+    using container = std::vector< row_type >;
+    Map_lot( );
+
+    Lot_specs::pointer specification;
+    const id_factory< Map_lot > id;
+};
+
+/*
+ * This object reppresent a..MAP!
+ */
+class Map
+{
+    void allocate_map();
+public:
     using pointer = std::shared_ptr< Map >;
-    Map( const std::string& name,
-         const size_t size );
+    Map( const size_t size );
+
+    const id_factory< Map_lot > id;
+    const size_t      size;
+    Map_lot::container map_data;
 };
 
 class Maps
 {
+    void assign_random_lots( Map::pointer& map );
+    /*
+     * This function looks for the terrain definition in the
+     * global array terrain_definitions
+     */
+    const Terrain_lot_def& find_terrain_definition( const types::id_type id );
 public:
     Maps( graphic_terrains::Terrains::pointer terrains );
+    Map::pointer create_random_map( const size_t size );
 private:
     graphic_terrains::Terrains::pointer terrains;
+    std::vector< types::id_type > all_terrain_ids;
+    std::map< types::id_type, Map::pointer > maps;
 };
 
 } //core_maps

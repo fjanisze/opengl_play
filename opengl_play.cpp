@@ -317,50 +317,10 @@ void opengl_ui::setup_scene()
                        renderer::Core_renderer_proxy( renderer ) );
 
 
-    game_terrain->load_terrain( "../models/Grass/grass.obj",
-                                glm::vec4( 1.0 ),
-                                1 );
-
-    game_terrain->load_terrain( "../models/Grass/grass2.obj",
-                                glm::vec4( 1.0 ),
-                                2 );
-
-    long mountain_id = game_terrain->load_terrain( "../models/Mountain/mountain.obj",
-                       glm::vec4( 1.0 ),
-                       3 );
-    game_terrain->load_highres_terrain( "../models/Mountain/mountain_highres.obj",
-                                        mountain_id );
-
-    long forest_id = game_terrain->load_terrain( "../models/Forest/Forest.obj",
-                     glm::vec4( 1.0 ),
-                     4 );
-
-    game_terrain->load_highres_terrain( "../models/Forest/Forest_complex.obj",
-                                        forest_id );
-
-
-    //Generate random terrain map
-    const int map_size_x{ 100 };
-    const int map_size_y{ 100 };
-
-    std::random_device rd;
-    std::mt19937_64 eng( rd() );
-    std::uniform_int_distribution<long> dist( 1, 4 );
-
-    graphic_terrains::terrain_map_t terrain_map;
-    terrain_map.resize( map_size_y );
-    for ( int y{ 0 } ; y < map_size_y ; ++y ) {
-        terrain_map[ y ].resize( map_size_x );
-        for ( int x{ 0 } ; x < map_size_x ; ++x ) {
-            terrain_map[ y ][ x ] = dist( eng );
-        }
-    }
-
-
-    game_terrain->load_terrain_map( terrain_map,
-                                    2,
-                                    glm::vec2( map_size_x / 2,
-                                            map_size_y / 2 ) );
+    game_terrain = factory< graphic_terrains::Terrains >::create(
+                       renderer::Core_renderer_proxy( renderer ) );
+    core_maps::Maps maps( game_terrain );
+    auto new_map = maps.create_random_map( 8 );
 
     units = factory< graphic_units::Units >::create(
                 renderer::Core_renderer_proxy( renderer ) );
@@ -386,56 +346,51 @@ void opengl_ui::setup_scene()
 void opengl_ui::enter_main_loop()
 {
 
-    game_terrain = factory< graphic_terrains::Terrains >::create(
-                       renderer::Core_renderer_proxy( renderer ) );
-    core_maps::Maps maps( game_terrain );
+    setup_scene();
+    auto ref_time = std::chrono::system_clock::now();
+    int  current_fps = 0;
 
-    /*  setup_scene();
+    LOG2( "Entering main loop!" );
+    std::string current_fps_string = "0 fps";
+    long num_of_rendering_cycles{ 0 };
+    while ( !glfwWindowShouldClose( window_ctx ) ) {
+        ++current_fps;
+        glfwPollEvents();
+        evaluate_key_status();
+        movement_processor.process_movements();
+        units->movements().process_movements();
 
-      auto ref_time = std::chrono::system_clock::now();
-      int  current_fps = 0;
+        auto current_time = std::chrono::system_clock::now();
+        if ( std::chrono::duration_cast <
+                std::chrono::milliseconds > (
+                    current_time - ref_time ).count() > 1000 ) {
+            ref_time = current_time;
+            current_fps_string = ( std::to_string( current_fps ) + " fps" );
+            current_fps = 0;
+        }
 
-      LOG2( "Entering main loop!" );
-      std::string current_fps_string = "0 fps";
-      long num_of_rendering_cycles{ 0 };
-      while ( !glfwWindowShouldClose( window_ctx ) ) {
-          ++current_fps;
-          glfwPollEvents();
-          evaluate_key_status();
-          movement_processor.process_movements();
-          units->movements().process_movements();
+        renderer->clear();
+        num_of_rendering_cycles = renderer->render();
 
-          auto current_time = std::chrono::system_clock::now();
-          if ( std::chrono::duration_cast <
-                  std::chrono::milliseconds > (
-                      current_time - ref_time ).count() > 1000 ) {
-              ref_time = current_time;
-              current_fps_string = ( std::to_string( current_fps ) + " fps" );
-              current_fps = 0;
-          }
+        auto yaw = camera->get_yaw(),
+             pitch = camera->get_pitch(),
+             roll = camera->get_roll();
+        glm::vec3 pos = camera->get_position();
+        auto pointed = renderer->picking()->get_pointed_model();
+        types::id_type pointed_id = 0;
+        if ( pointed != nullptr ) {
+            pointed_id = pointed->id;
+        }
 
-          renderer->clear();
-          num_of_rendering_cycles = renderer->render();
+        std::stringstream ss;
+        ss << current_fps_string << " - " << std::setprecision( 2 ) << std::fixed << "yaw:" << yaw << ", pitch:" << pitch << ", roll:" << roll
+           << ". x:" << pos.x << ",y:" << pos.y << ",z:" << pos.z << ", rendr cycles:"
+           << num_of_rendering_cycles << ", Sel: " << pointed_id;
 
-          auto yaw = camera->get_yaw(),
-               pitch = camera->get_pitch(),
-               roll = camera->get_roll();
-          glm::vec3 pos = camera->get_position();
-          auto pointed = renderer->picking()->get_pointed_model();
-          types::id_type pointed_id = 0;
-          if ( pointed != nullptr ) {
-              pointed_id = pointed->id;
-          }
+        info_string->set_text( ss.str() );
 
-          std::stringstream ss;
-          ss << current_fps_string << " - " << std::setprecision( 2 ) << std::fixed << "yaw:" << yaw << ", pitch:" << pitch << ", roll:" << roll
-             << ". x:" << pos.x << ",y:" << pos.y << ",z:" << pos.z << ", rendr cycles:"
-             << num_of_rendering_cycles << ", Sel: " << pointed_id;
-
-          info_string->set_text( ss.str() );
-
-          glfwSwapBuffers( window_ctx );
-      }*/
+        glfwSwapBuffers( window_ctx );
+    }
 }
 
 GLFWwindow* opengl_ui::get_win_ctx()
