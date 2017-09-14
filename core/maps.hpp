@@ -85,10 +85,12 @@ public:
     void print_debug( types::id_type id )
     {
         auto elem = rendr_to_core_mapping[ id ];
-        std::cout << "Model ID:" << id << ", map to lot: "
-                  << elem->lot->def.name << ", which is: "
-                  << ( ( elem->lot->current_specs.traversable == traversable_lot::yes ) ?
-                       "traversable" : "not traversable" ) << std::endl;
+        if ( nullptr != elem ) {
+            std::cout << "Model ID:" << id << ", map to lot: "
+                      << elem->lot->def.name << ", which is: "
+                      << ( ( elem->lot->current_specs.traversable == traversable_lot::yes ) ?
+                           "traversable" : "not traversable" ) << std::endl;
+        }
     }
 
 

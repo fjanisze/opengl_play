@@ -69,9 +69,6 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             //    renderer->picking()->unpick();
         }
         renderer->picking()->pick_toggle( x, win_h - y );
-
-        auto pointed_model = renderer->picking()->get_pointed_model();
-        game_map->print_debug( pointed_model->id );
     } else if ( button == GLFW_MOUSE_BUTTON_RIGHT ) {
         /*
          * If there's a selected unit then move that unit
@@ -102,6 +99,9 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             auto new_unit = units->create_unit( unit_id );
             units->place_unit( new_unit, lot );
         }
+    } else if ( button == GLFW_MOUSE_BUTTON_MIDDLE ) {
+        auto pointed_model = renderer->picking()->get_pointed_model();
+        game_map->print_debug( pointed_model->id );
     }
 }
 
@@ -111,6 +111,7 @@ void opengl_ui::ui_mouse_move( GLdouble x, GLdouble y )
     mouse_y_pos = y;
     movement_processor.mouse_input( x, win_h - y );
     renderer->picking()->set_pointed_model( x, win_h - y );
+    auto pointed_model = renderer->picking()->get_pointed_model();
 }
 
 void opengl_ui::ui_mouse_enter_window( int state )

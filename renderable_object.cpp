@@ -423,6 +423,7 @@ void Model_picking::complete_update()
      * return to default framebuffer
      */
     framebuffers->unbind();
+    pointed_model.update_required = false;
 }
 
 void Model_picking::process_pick_requests()
