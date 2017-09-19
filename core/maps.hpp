@@ -9,52 +9,6 @@
 
 namespace core_maps {
 
-enum class terrain_type {
-    grass,
-    mountain,
-    forest,
-};
-
-enum class traversable_lot {
-    yes,
-    no
-};
-
-/*
- * Characteristics of a terrain lot, if units can move over it,
- * if there's a penalty for the move etc.
- */
-struct Lot_spec {
-    traversable_lot traversable;
-};
-
-/*
- * Definition of a terrain lot, include all the information
- * needed to draw the lot
- */
-struct Terrain_lot_def {
-    const resources::Model_resource_def& model_def;
-    const std::string    name;
-
-    const terrain_type   type;
-    const Lot_spec specs;
-
-    const std::string    desc;
-};
-
-struct Lot_config {
-    using pointer = std::shared_ptr< Lot_config >;
-    //Those are the default values for the lot
-    const Terrain_lot_def def;
-    //Those are the current values
-    Lot_spec current_specs;
-
-    Lot_config( const Terrain_lot_def definition ) :
-        def{ definition },
-        current_specs{ definition.specs }
-    {}
-};
-
 class Map_lot
 {
 public:
@@ -66,10 +20,17 @@ public:
     Lot_config::pointer lot;
     const id_factory< Map_lot > id;
     const types::point position;
+    graphic_terrains::Terrain_lot::pointer rendr_lot;
+
+    /*
+     * Those are the ID's of the units placed on this
+     * map lot
+     */
+    std::set< types::id_type > units;
 };
 
 /*
- * This object reppresent a..MAP!
+ * This object reppresent a...MAP!
  */
 class Map
 {
@@ -96,6 +57,9 @@ public:
 
     const id_factory< Map_lot > id;
     const size_t      size;
+public:
+    Map_lot::pointer get_lot( types::point& position );
+    Map_lot::pointer get_lot( types::id_type rendr_lot_id );
 private:
     Map_lot::container map_data;
     /*
@@ -106,6 +70,7 @@ private:
     std::map< types::id_type, Map_lot::pointer > rendr_to_core_mapping;
     friend class Maps;
 };
+
 
 class Maps
 {

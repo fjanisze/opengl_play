@@ -4,48 +4,9 @@
 #include <string>
 #include "resources.hpp"
 #include "../units_manager.hpp"
+#include "maps.hpp"
 
 namespace core_units {
-
-/*
- * One entry for each possible type of unit
- */
-enum class unit_type {
-    small_vehicle,
-};
-
-/*
- * Some specification details about the units
- */
-struct Unit_specs {
-    int num_of_movements;
-};
-
-/*
- * Definition of a unit, there should be a definition for
- * each available unit.
- */
-struct Unit_def {
-    const resources::Model_resource_def& model_def;
-    const std::string    name;
-
-    const unit_type      type;
-    const Unit_specs     specs;
-
-    const std::string    desc;
-};
-
-struct Unit_config {
-    using pointer = std::shared_ptr< Unit_config >;
-    const Unit_def def;
-
-    Unit_specs current_specs;
-
-    Unit_config( const Unit_def& definition ) :
-        def{ definition },
-        current_specs{ definition.specs }
-    {}
-};
 
 /*
  * Reppresentation of a single unit
@@ -59,6 +20,8 @@ public:
     Unit_config::pointer unit;
     types::point position;
     const id_factory< Unit > id;
+
+    graphic_units::Unit::pointer rendr_unit;
 };
 
 /*
@@ -68,8 +31,13 @@ class Units
 {
     const Unit_def& find_unit_definition( const types::id_type id );
 public:
+    using pointer = std::shared_ptr< Units >;
     Units( graphic_units::Units::pointer );
     Unit::pointer create( const types::id_type id );
+    /*
+     * Place a unit on a given lot
+     */
+    bool place( Unit::pointer& unit, core_maps::Map_lot::pointer& lot );
 private:
     /*
      * Pointer to the graphical reppresentation

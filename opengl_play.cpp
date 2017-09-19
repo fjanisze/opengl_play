@@ -81,7 +81,6 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             //Nothing to do here.
             return;
         }
-        LOG0( "ID:", pointed_model->id );
         auto lot = game_terrain->find_lot( pointed_model );
         if ( lot == nullptr ) {
             //The target must be always a terrain.
@@ -96,8 +95,9 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             }
         } else {
             //Nothing selected, this must be a creation attempt
-            auto new_unit = units->create_unit( unit_id );
-            units->place_unit( new_unit, lot );
+            auto new_unit = game_units->create( unit_id );
+            auto target_lot = game_map->get_lot( lot->id );
+            game_units->place( new_unit, target_lot );
         }
     } else if ( button == GLFW_MOUSE_BUTTON_MIDDLE ) {
         auto pointed_model = renderer->picking()->get_pointed_model();
@@ -324,11 +324,12 @@ void opengl_ui::setup_scene()
     game_terrain = factory< graphic_terrains::Terrains >::create(
                        renderer::Core_renderer_proxy( renderer ) );
 
-    core_maps::Maps maps( game_terrain );
-    game_map = maps.create_random_map( 8 );
+    core_maps::Maps maps_mgr( game_terrain );
+    game_map = maps_mgr.create_random_map( 8 );
 
     units = factory< graphic_units::Units >::create(
                 renderer::Core_renderer_proxy( renderer ) );
+    game_units = factory< core_units::Units >::create( units );
 
     auto list_of_units = units->buildable_units();
     unit_id = list_of_units.front().def.id;

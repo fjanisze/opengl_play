@@ -75,6 +75,21 @@ Map::Map( const size_t size ) :
     allocate_map();
 }
 
+Map_lot::pointer Map::get_lot( types::point& position )
+{
+    return map_data[ position.y ][ position.x ];
+}
+
+Map_lot::pointer Map::get_lot( types::id_type rendr_lot_id )
+{
+    auto lot = rendr_to_core_mapping.find( rendr_lot_id );
+    if ( lot != rendr_to_core_mapping.end() ) {
+        return lot->second;
+    }
+    PANIC( "Not able to find the lot with rendrID:", rendr_lot_id );
+    return nullptr;
+}
+
 void Map::update_rendr_core_mapping(
     const graphic_terrains::terrain_map_t& ids_map )
 {
@@ -86,6 +101,10 @@ void Map::update_rendr_core_mapping(
     }
 }
 
+/*
+ * Given the list of available terrain lots, assign to
+ * each of the lots of the map a random terrain.
+ */
 void Maps::assign_random_lots( Map::pointer& map )
 {
     LOG3( "Assigning random lots to mapID:", map->id );
@@ -104,6 +123,10 @@ void Maps::assign_random_lots( Map::pointer& map )
     }
 }
 
+/*
+ * Given the provided ID return the terrain definition
+ * for that ID or PANIC.
+ */
 const Terrain_lot_def& Maps::find_terrain_definition(
     const types::id_type id )
 {
@@ -152,6 +175,8 @@ Map::pointer Maps::create_random_map( const size_t size )
     }
     auto new_map = factory<Map>::create( size );
     assign_random_lots( new_map );
+    const glm::vec2 central_lot( size / 2,
+                                 size / 2 );
     /*
      * Generate the terrain_map needed by the graphic
      * renderer to render the map and load it to the
@@ -167,8 +192,22 @@ Map::pointer Maps::create_random_map( const size_t size )
     }
     terrains->load_terrain_map( terrain_map,
                                 2,
-                                glm::vec2( size / 2,
-                                           size / 2 ) );
+                                central_lot );
+    LOG3( "Terrain map loaded, setting up the Terrain_lot pointers!" );
+    /*
+     * Assign to each Map_lot it's counterpart from the
+     * renderer structures
+     */
+    for ( int y{ 0 }; y < size; ++y ) {
+        for ( int x{ 0 } ; x < size ; ++x ) {
+            auto& map_lot = new_map->map_data[ y ][ x ];
+            map_lot->rendr_lot = terrains->find_lot( glm::vec2( x, y ) - central_lot );
+            if ( nullptr == map_lot->rendr_lot ) {
+                PANIC( "Not able to set the Terrain_lot pointer for MapID:", map_lot->id,
+                       " at position ", map_lot->position );
+            }
+        }
+    }
     /*
      * load_terrain_map update the provided map with the ID's
      * of the lots for each map coordinate, we need those information
