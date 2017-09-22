@@ -147,12 +147,17 @@ void Units::highlight_path( core_maps::Map_lot::pointer& target_lot )
 {
     if ( nullptr != selection->selected_unit ) {
         if ( target_lot->id != selection->cur_target_lot_id ) {
-            LOG3( "Attempt to find a path for the UnitID:", selection->selected_unit->id,
-                  ",to the target LotID:", target_lot->id );
+            LOG0( "Attempt to find a path for the UnitID:", selection->selected_unit->id,
+                  ",to the target LotID:", target_lot->id, ", which is traversable: ",
+                  target_lot->is_traversable() );
             core_maps::Map_lot::pointer root = data.game_map->get_lot( selection->selected_unit->position );
             if ( nullptr == root ) {
                 PANIC( "Not able to find the ROOT lot!" );
             }
+            /*
+             * Some lots might be highlighted from the former operation,
+             * clean those lots (dehighlight)
+             */
             if ( false == selection->selected_path.empty() ) {
                 for ( auto&& elem : selection->selected_path ) {
                     bool do_not_dehighlight{ false };
@@ -168,12 +173,18 @@ void Units::highlight_path( core_maps::Map_lot::pointer& target_lot )
                 }
                 selection->selected_path.clear();
             }
-            auto path = data.game_map->paths.shortest( root, target_lot );
-            if ( false == path.empty() ) {
-                /*
-                 * Highlight the path!
-                 */
-                selection->selected_path = path;
+            /*
+             * Now look for the path to highlight
+             */
+            if ( target_lot->is_traversable() ) {
+                auto path = data.game_map->paths.shortest( root, target_lot );
+                if ( false == path.empty() ) {
+                    /*
+                     * Highlight the path!
+                     */
+                    selection->selected_path = path;
+                    selection->cur_target_lot_id = target_lot->id;
+                }
             }
         }
         /*
@@ -182,7 +193,6 @@ void Units::highlight_path( core_maps::Map_lot::pointer& target_lot )
         for ( auto&& lot : selection->selected_path ) {
             lot->rendr_lot->highlight();
         }
-        selection->cur_target_lot_id = target_lot->id;
     }
 
 }

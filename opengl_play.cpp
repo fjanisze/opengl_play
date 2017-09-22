@@ -349,7 +349,7 @@ void opengl_ui::setup_scene()
                        renderer::Core_renderer_proxy( renderer ) );
 
     core_maps::Maps maps_mgr( game_terrain );
-    game_map = maps_mgr.create_random_map( 16 );
+    game_map = maps_mgr.create_random_map( 32 );
 
     units = factory< graphic_units::Units >::create(
                 renderer::Core_renderer_proxy( renderer ) );

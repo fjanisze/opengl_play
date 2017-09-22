@@ -279,7 +279,8 @@ Map_paths::path_elems Map_paths::shortest(
     auto stop = std::chrono::high_resolution_clock::now();
     LOG3( "The shortest path has length:",
           shortest_path.size(), ",required time: ",
-          std::chrono::duration_cast<std::chrono::seconds>( stop - start ).count() );
+          std::chrono::duration_cast<std::chrono::seconds>( stop - start ).count(),
+          "sec" );
     return shortest_path;
 }
 
