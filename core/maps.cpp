@@ -274,9 +274,12 @@ Map_paths::path_elems Map_paths::shortest(
     visited.clear();
     shortest_path.clear();
     parents.clear();
+    auto start = std::chrono::high_resolution_clock::now();
     bfs( root );
+    auto stop = std::chrono::high_resolution_clock::now();
     LOG3( "The shortest path has length:",
-          shortest_path.size() );
+          shortest_path.size(), ",required time: ",
+          std::chrono::duration_cast<std::chrono::seconds>( stop - start ).count() );
     return shortest_path;
 }
 

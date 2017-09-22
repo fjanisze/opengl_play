@@ -69,7 +69,7 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             //    renderer->picking()->unpick();
         }
         renderer->picking()->pick_toggle( x, win_h - y );
-        game_units->unselect();
+        game_units->selection->unselect();
     } else if ( button == GLFW_MOUSE_BUTTON_RIGHT ) {
         /*
          * If there's a selected unit then move that unit
@@ -349,7 +349,7 @@ void opengl_ui::setup_scene()
                        renderer::Core_renderer_proxy( renderer ) );
 
     core_maps::Maps maps_mgr( game_terrain );
-    game_map = maps_mgr.create_random_map( 8 );
+    game_map = maps_mgr.create_random_map( 16 );
 
     units = factory< graphic_units::Units >::create(
                 renderer::Core_renderer_proxy( renderer ) );
@@ -426,7 +426,7 @@ void opengl_ui::enter_main_loop()
         auto selected = renderer->picking()->get_selected_ids();
         if ( 1 == selected.size() ) {
             //Trigger the unit selection, if possible
-            game_units->select( selected[ 0 ] );
+            game_units->selection->select( selected[ 0 ] );
         }
 
         info_string->set_text( ss.str() );

@@ -37,17 +37,17 @@ Unit::Unit( const Unit_def& definition ) :
 }
 
 Units::Units( graphic_units::Units::pointer units,
-              core_maps::Map::pointer map ) :
-    game_map{ map },
-    rendr_units{ units }
+              core_maps::Map::pointer map )
 {
     LOG3( "Created!" );
+    data.game_map = map;
+    data.rendr_units = units;
     for ( const auto& elem : units_definitions ) {
         LOG0( "Unit ID:", elem.model_def.id, ", model name:", elem.model_def.pretty_name,
               ", model paths:", elem.model_def.model_path, ",",
               elem.model_def.high_res_model_path );
-
     }
+    selection = factory< Unit_selection >::create( data );
 }
 
 Unit::pointer Units::create( const types::id_type id )
@@ -56,13 +56,13 @@ Unit::pointer Units::create( const types::id_type id )
     auto& unit_def = find_unit_definition( id );
 
     auto new_unit = factory< Unit >::create( unit_def );
-    new_unit->rendr_unit = rendr_units->create_unit( id );
+    new_unit->rendr_unit = data.rendr_units->create_unit( id );
     if ( nullptr == new_unit->rendr_unit ) {
         ERR( "Creation failed!" );
         return nullptr;
     }
     units[ new_unit->id ] = new_unit;
-    rendr_to_unit[ new_unit->rendr_unit->id ] = new_unit;
+    data.rendr_to_unit[ new_unit->rendr_unit->id ] = new_unit;
     LOG3( "Number of units created so far: ", units.size() );
     return new_unit;
 }
@@ -84,10 +84,10 @@ bool Units::place( Unit::pointer& unit,
     unit->position = lot->position;
     LOG0( "UnitID placed at position ", unit->position,
           ",turning ON rendering of the model" );
-    return rendr_units->place_unit( unit->rendr_unit, lot->rendr_lot );
+    return data.rendr_units->place_unit( unit->rendr_unit, lot->rendr_lot );
 }
 
-void Units::select( Unit::pointer& unit )
+void Unit_selection::select( Unit::pointer& unit )
 {
     if ( unit->config->current_specs.has_avail_movements() ) {
         LOG0( "Attempt to selected UnitID:", unit->id );
@@ -100,7 +100,7 @@ void Units::select( Unit::pointer& unit )
         const float sy{ unit->position.y };
         for ( float x{ sx - mov_cnt } ; x <= sx + mov_cnt ; ++x ) {
             for ( float y{ sy - mov_cnt } ; y <= sy + mov_cnt ; ++y ) {
-                auto lot = game_map->get_lot( types::point( x, y, 0 ) );
+                auto lot = data.game_map->get_lot( types::point( x, y, 0 ) );
                 if ( nullptr != lot && lot->is_traversable() ) {
                     auto& rendr = lot->rendr_lot;
                     rendr->highlight();
@@ -114,10 +114,10 @@ void Units::select( Unit::pointer& unit )
     }
 }
 
-void Units::select( const types::id_type renderable_id )
+void Unit_selection::select( const types::id_type renderable_id )
 {
-    auto it = rendr_to_unit.find( renderable_id );
-    if ( rendr_to_unit.end() != it ) {
+    auto it = data.rendr_to_unit.find( renderable_id );
+    if ( data.rendr_to_unit.end() != it ) {
         if ( selected_unit == nullptr ||
                 it->second->id != selected_unit->id ) {
             select( it->second );
@@ -127,7 +127,7 @@ void Units::select( const types::id_type renderable_id )
     }
 }
 
-void Units::unselect()
+void Unit_selection::unselect()
 {
     if ( false == affected_by_selection.empty() ) {
         LOG0( "Unselecting, number of affected terrains: ",
@@ -145,38 +145,44 @@ void Units::unselect()
 
 void Units::highlight_path( core_maps::Map_lot::pointer& target_lot )
 {
-    if ( nullptr != selected_unit ) {
-        LOG3( "Attempt to find a path for the UnitID:", selected_unit->id,
-              ",to the target LotID:", target_lot->id );
-        core_maps::Map_lot::pointer root = game_map->get_lot( selected_unit->position );
-        if ( nullptr == root ) {
-            PANIC( "Not able to find the ROOT lot!" );
-        }
-        if ( false == selected_path.empty() ) {
-            for ( auto&& elem : selected_path ) {
-                bool do_not_dehighlight{ false };
-                for ( auto&& selected : affected_by_selection ) {
-                    if ( selected->id == elem->rendr_lot->id ) {
-                        do_not_dehighlight = true;
-                        break;
+    if ( nullptr != selection->selected_unit ) {
+        if ( target_lot->id != selection->cur_target_lot_id ) {
+            LOG3( "Attempt to find a path for the UnitID:", selection->selected_unit->id,
+                  ",to the target LotID:", target_lot->id );
+            core_maps::Map_lot::pointer root = data.game_map->get_lot( selection->selected_unit->position );
+            if ( nullptr == root ) {
+                PANIC( "Not able to find the ROOT lot!" );
+            }
+            if ( false == selection->selected_path.empty() ) {
+                for ( auto&& elem : selection->selected_path ) {
+                    bool do_not_dehighlight{ false };
+                    for ( auto&& selected : selection->affected_by_selection ) {
+                        if ( selected->id == elem->rendr_lot->id ) {
+                            do_not_dehighlight = true;
+                            break;
+                        }
+                    }
+                    if ( false == do_not_dehighlight ) {
+                        elem->rendr_lot->dehighlight();
                     }
                 }
-                if ( false == do_not_dehighlight ) {
-                    elem->rendr_lot->dehighlight();
-                }
+                selection->selected_path.clear();
             }
-            selected_path.clear();
-        }
-        auto path = game_map->paths.shortest( root, target_lot );
-        if ( false == path.empty() ) {
-            /*
-             * Highlight the path!
-             */
-            selected_path = path;
-            for ( auto&& lot : path ) {
-                lot->rendr_lot->highlight();
+            auto path = data.game_map->paths.shortest( root, target_lot );
+            if ( false == path.empty() ) {
+                /*
+                 * Highlight the path!
+                 */
+                selection->selected_path = path;
             }
         }
+        /*
+         * Highlight the path!
+         */
+        for ( auto&& lot : selection->selected_path ) {
+            lot->rendr_lot->highlight();
+        }
+        selection->cur_target_lot_id = target_lot->id;
     }
 
 }
