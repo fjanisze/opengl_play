@@ -79,6 +79,7 @@ public:
 
     void highlight();
     void dehighlight();
+
 private:
     /*
      * In order to be able to restore the color

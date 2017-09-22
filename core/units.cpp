@@ -1,6 +1,7 @@
 #include "units.hpp"
 #include <logger/logger.hpp>
 #include "resources.hpp"
+#include <stack>
 
 namespace core_units {
 
@@ -95,10 +96,10 @@ void Units::select( Unit::pointer& unit )
          * highlight the accessible lots
          */
         const int mov_cnt{ unit->config->current_specs.num_of_movements };
-        const int sx{ unit->position.x };
-        const int sy{ unit->position.y };
-        for ( int x{ sx - mov_cnt } ; x <= sx + mov_cnt ; ++x ) {
-            for ( int y{ sy - mov_cnt } ; y <= sy + mov_cnt ; ++y ) {
+        const float sx{ unit->position.x };
+        const float sy{ unit->position.y };
+        for ( float x{ sx - mov_cnt } ; x <= sx + mov_cnt ; ++x ) {
+            for ( float y{ sy - mov_cnt } ; y <= sy + mov_cnt ; ++y ) {
                 auto lot = game_map->get_lot( types::point( x, y, 0 ) );
                 if ( nullptr != lot && lot->is_traversable() ) {
                     auto& rendr = lot->rendr_lot;
@@ -115,10 +116,12 @@ void Units::select( Unit::pointer& unit )
 
 void Units::select( const types::id_type renderable_id )
 {
-    LOG0( "Attempting to select RendrID:", renderable_id );
     auto it = rendr_to_unit.find( renderable_id );
     if ( rendr_to_unit.end() != it ) {
-        select( it->second );
+        if ( selected_unit == nullptr ||
+                it->second->id != selected_unit->id ) {
+            select( it->second );
+        }
     } else {
         LOG0( "No mapping to UnitID from the RendrID" );
     }
@@ -133,29 +136,48 @@ void Units::unselect()
     for ( auto&& elem : affected_by_selection ) {
         elem->dehighlight();
     }
+    for ( auto&& elem : selected_path ) {
+        elem->rendr_lot->dehighlight();
+    }
     affected_by_selection.clear();
     selected_unit.reset();
 }
 
-void Units::move( core_maps::Map_lot::pointer& target_lot )
+void Units::highlight_path( core_maps::Map_lot::pointer& target_lot )
 {
-    if ( nullptr == selected_unit ) {
-        WARN1( "Can't move anything, select some unit first!" );
-    } else {
-        LOG3( "Attempt to move the UnidID:", selected_unit->id,
+    if ( nullptr != selected_unit ) {
+        LOG3( "Attempt to find a path for the UnitID:", selected_unit->id,
               ",to the target LotID:", target_lot->id );
         core_maps::Map_lot::pointer root = game_map->get_lot( selected_unit->position );
         if ( nullptr == root ) {
-            PANIC( "Not able to find the ROOT lot for the move operation!" );
+            PANIC( "Not able to find the ROOT lot!" );
         }
-        calculate_path( root, target_lot );
+        if ( false == selected_path.empty() ) {
+            for ( auto&& elem : selected_path ) {
+                bool do_not_dehighlight{ false };
+                for ( auto&& selected : affected_by_selection ) {
+                    if ( selected->id == elem->rendr_lot->id ) {
+                        do_not_dehighlight = true;
+                        break;
+                    }
+                }
+                if ( false == do_not_dehighlight ) {
+                    elem->rendr_lot->dehighlight();
+                }
+            }
+            selected_path.clear();
+        }
+        auto path = game_map->paths.shortest( root, target_lot );
+        if ( false == path.empty() ) {
+            /*
+             * Highlight the path!
+             */
+            selected_path = path;
+            for ( auto&& lot : path ) {
+                lot->rendr_lot->highlight();
+            }
+        }
     }
-
-}
-
-void Units::calculate_path( core_maps::Map_lot::pointer& root,
-                            core_maps::Map_lot::pointer& target )
-{
 
 }
 

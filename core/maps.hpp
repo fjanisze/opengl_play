@@ -32,6 +32,34 @@ public:
     {
         return traversable_lot::yes == lot->current_specs.traversable;
     }
+    /*
+     * Pointers to the neighbourhood Lot's
+     */
+    std::vector< pointer > adjacent_lots;
+    void add_adjacent( pointer adj_lot )
+    {
+        if ( nullptr != adj_lot ) {
+            adjacent_lots.push_back( adj_lot );
+        }
+    }
+};
+
+/*
+ * contains the functionality which calculate the shortest
+ * path between two lots
+ */
+class Map_paths
+{
+    void bfs( Map_lot::pointer& root );
+public:
+    using path_elems = std::vector< Map_lot::pointer >;
+    path_elems shortest( Map_lot::pointer& root,
+                         Map_lot::pointer& target );
+private:
+    Map_lot::pointer target_lot;
+    path_elems shortest_path;
+    std::map< types::id_type, bool > visited;
+    std::map< types::id_type, Map_lot::pointer > parents;
 };
 
 /*
@@ -39,6 +67,9 @@ public:
  */
 class Map
 {
+    /*
+     * It creates all the empty Map_lot for the map
+     */
     void allocate_map();
     /*
      * Update the mapping from renderer lot information
@@ -54,6 +85,7 @@ public:
 public:
     Map_lot::pointer get_lot( const types::point& position );
     Map_lot::pointer get_lot( types::id_type rendr_lot_id );
+    Map_paths paths;
 private:
     Map_lot::container map_data;
     /*
@@ -64,7 +96,6 @@ private:
     std::map< types::id_type, Map_lot::pointer > rendr_to_core_mapping;
     friend class Maps;
 };
-
 
 class Maps
 {

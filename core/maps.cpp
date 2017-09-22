@@ -54,6 +54,7 @@ Map_lot::Map_lot( const types::point position ):
 void Map::allocate_map()
 try
 {
+    LOG3( "Allocating the Lots for the MapID:", id );
     map_data.resize( size );
     for ( int y{0}; y < size; ++y ) {
         map_data[ y ].resize( size );
@@ -78,9 +79,11 @@ Map::Map( const size_t size ) :
 Map_lot::pointer Map::get_lot( const types::point& position )
 {
     if ( position.y < 0 || position.y >= map_data.size() ) {
-        PANIC( "Requested Y is out of bound! Y:", position.y );
+        WARN1( "Requested Y is out of bound! Y:", position.y );
+        return nullptr;
     } else if ( position.x < 0 || position.x >= map_data[0].size() ) {
-        PANIC( "Requested X is out of bound! X:", position.x );
+        WARN1( "Requested X is out of bound! X:", position.x );
+        return nullptr;
     }
     return map_data[ position.y ][ position.x ];
 }
@@ -201,7 +204,7 @@ Map::pointer Maps::create_random_map( const size_t size )
     LOG3( "Terrain map loaded, setting up the Terrain_lot pointers!" );
     /*
      * Assign to each Map_lot it's counterpart from the
-     * renderer structures
+     * renderer structures and update the Map_lot links
      */
     for ( int y{ 0 }; y < size; ++y ) {
         for ( int x{ 0 } ; x < size ; ++x ) {
@@ -211,6 +214,14 @@ Map::pointer Maps::create_random_map( const size_t size )
                 PANIC( "Not able to set the Terrain_lot pointer for MapID:", map_lot->id,
                        " at position ", map_lot->position );
             }
+            /*
+             * Setup the links betweent the lots, each
+             * Map_lot have four links to the neighbourhoods Map_lot
+             */
+            map_lot->add_adjacent( new_map->get_lot( types::point( x - 1, y, 0 ) ) );
+            map_lot->add_adjacent( new_map->get_lot( types::point( x + 1, y, 0 ) ) );
+            map_lot->add_adjacent( new_map->get_lot( types::point( x, y - 1, 0 ) ) );
+            map_lot->add_adjacent( new_map->get_lot( types::point( x, y + 1, 0 ) ) );
         }
     }
     /*
@@ -223,6 +234,50 @@ Map::pointer Maps::create_random_map( const size_t size )
     maps[ new_map->id ] = new_map;
     LOG3( "New map creation completed, amount of maps:", maps.size() );
     return new_map;
+}
+
+void Map_paths::bfs( Map_lot::pointer& root )
+{
+    std::queue< Map_lot::pointer > lots;
+    lots.push( root );
+    while ( false == lots.empty() ) {
+        auto& cur = lots.front();
+        lots.pop();
+        if ( target_lot == cur ) {
+            LOG3( "Shortest path found to LotID:",
+                  root->id, ", has been found!" );
+            auto path = parents[ target_lot->id ];
+            shortest_path.push_back( target_lot );
+            while ( path != nullptr ) {
+                shortest_path.push_back( path );
+                path = parents[ path->id ];
+            }
+            break;
+        }
+        visited[ cur->id ] = true;
+        for ( auto&& adj : cur->adjacent_lots ) {
+            if ( false == visited[ adj->id ] && adj->is_traversable() ) {
+                lots.push( adj );
+                parents[ adj->id ] = cur;
+            }
+        }
+    }
+}
+
+Map_paths::path_elems Map_paths::shortest(
+    Map_lot::pointer& root,
+    Map_lot::pointer& target )
+{
+    LOG3( "Looking for the shortest path from LotID:", root->id,
+          ",to LotID:", target->id );
+    target_lot = target;
+    visited.clear();
+    shortest_path.clear();
+    parents.clear();
+    bfs( root );
+    LOG3( "The shortest path has length:",
+          shortest_path.size() );
+    return shortest_path;
 }
 
 }

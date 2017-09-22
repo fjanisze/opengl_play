@@ -205,13 +205,19 @@ bool Terrain_lot::render( )
 
 void Terrain_lot::highlight()
 {
-    saved_def_color = rendering_data.default_color;
-    rendering_data.default_color.g *= 1.25;
+    if ( saved_def_color == types::color( 0.0 ) ) {
+        saved_def_color = rendering_data.default_color;
+        rendering_data.default_color.g *= 1.25;
+    }
 }
 
 void Terrain_lot::dehighlight()
 {
-    rendering_data.default_color = saved_def_color;
+    if ( types::color( 0.0 ) != saved_def_color ) {
+        rendering_data.default_color = saved_def_color;
+        saved_def_color = types::color( 0.0 );
+    }
 }
+
 
 }

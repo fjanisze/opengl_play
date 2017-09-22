@@ -69,6 +69,7 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             //    renderer->picking()->unpick();
         }
         renderer->picking()->pick_toggle( x, win_h - y );
+        game_units->unselect();
     } else if ( button == GLFW_MOUSE_BUTTON_RIGHT ) {
         /*
          * If there's a selected unit then move that unit
@@ -88,16 +89,18 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
         }
         if ( selected.size() > 0 ) {
             //Try to move the unit
-            if ( false == units->movements().multiple_move( selected,
-                    lot ) ) {
-                //Unpick everything..
-                renderer->picking()->unpick();
-            }
+            /*           if ( false == units->movements().multiple_move( selected,
+                               lot ) ) {
+                           //Unpick everything..
+                           renderer->picking()->unpick();
+                       }*/
 
-            if ( 1 == selected.size() ) {
-                auto target_lot = game_map->get_lot( lot->id );
-                game_units->move( target_lot );
-            }
+            /*   if ( 1 == selected.size() ) {
+                   auto target_lot = game_map->get_lot( lot->id );
+                   if ( nullptr != target_lot ) {
+                       game_units->move( target_lot );
+                   }
+               }*/
         } else {
             //Nothing selected, this must be a creation attempt
             auto new_unit = game_units->create( unit_id );
@@ -113,7 +116,26 @@ void opengl_ui::ui_mouse_move( GLdouble x, GLdouble y )
     mouse_y_pos = y;
     movement_processor.mouse_input( x, win_h - y );
     renderer->picking()->set_pointed_model( x, win_h - y );
+
     auto pointed_model = renderer->picking()->get_pointed_model();
+    if ( nullptr == pointed_model ) {
+        //Nothing to do here.
+        return;
+    }
+
+    auto pointed_lot = game_terrain->find_lot( pointed_model );
+    if ( nullptr == pointed_lot ) {
+        return ;
+    }
+
+    auto selected = renderer->picking()->get_selected_ids();
+    if ( 1 == selected.size() ) {
+        const auto id = selected[ 0 ];
+        auto target_lot = game_map->get_lot( pointed_lot->id );
+        if ( nullptr != target_lot ) {
+            game_units->highlight_path( target_lot );
+        }
+    }
 }
 
 void opengl_ui::ui_mouse_enter_window( int state )
@@ -400,7 +422,7 @@ void opengl_ui::enter_main_loop()
          * and see if it's till valid in this round of
          * rendering
          */
-        game_units->unselect();
+        //game_units->unselect();
         auto selected = renderer->picking()->get_selected_ids();
         if ( 1 == selected.size() ) {
             //Trigger the unit selection, if possible
