@@ -76,6 +76,15 @@ public:
      * Rendering function
      */
     bool render( ) override;
+
+    void highlight();
+    void dehighlight();
+private:
+    /*
+     * In order to be able to restore the color
+     * after an highlighting operation
+     */
+    types::color saved_def_color;
 };
 
 /*

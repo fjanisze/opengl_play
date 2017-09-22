@@ -99,9 +99,6 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
             auto target_lot = game_map->get_lot( lot->id );
             game_units->place( new_unit, target_lot );
         }
-    } else if ( button == GLFW_MOUSE_BUTTON_MIDDLE ) {
-        auto pointed_model = renderer->picking()->get_pointed_model();
-        game_map->print_debug( pointed_model->id );
     }
 }
 
@@ -329,7 +326,7 @@ void opengl_ui::setup_scene()
 
     units = factory< graphic_units::Units >::create(
                 renderer::Core_renderer_proxy( renderer ) );
-    game_units = factory< core_units::Units >::create( units );
+    game_units = factory< core_units::Units >::create( units, game_map );
 
     auto list_of_units = units->buildable_units();
     unit_id = list_of_units.front().def.id;
@@ -392,6 +389,18 @@ void opengl_ui::enter_main_loop()
         ss << current_fps_string << " - " << std::setprecision( 2 ) << std::fixed << "yaw:" << yaw << ", pitch:" << pitch << ", roll:" << roll
            << ". x:" << pos.x << ",y:" << pos.y << ",z:" << pos.z << ", rendr cycles:"
            << num_of_rendering_cycles << ", Sel: " << pointed_id;
+
+        /*
+         * If anything was selected, remove the selection
+         * and see if it's till valid in this round of
+         * rendering
+         */
+        game_units->unselect();
+        auto selected = renderer->picking()->get_selected_ids();
+        if ( 1 == selected.size() ) {
+            //Trigger the unit selection, if possible
+            game_units->select( selected[ 0 ] );
+        }
 
         info_string->set_text( ss.str() );
 

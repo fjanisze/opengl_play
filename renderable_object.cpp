@@ -587,7 +587,8 @@ void Selected_models::add( Renderable::pointer object )
      * Change the default color
      * to highlight the model
      */
-    object->rendering_data.default_color.r *= 20.0f;
+    object->rendering_data.default_color.r *= 2.0f;
+    object->rendering_data.default_color.g *= 1.4f;
 }
 
 bool Selected_models::remove( Renderable::pointer object )

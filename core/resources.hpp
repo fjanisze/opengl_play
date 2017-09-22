@@ -67,6 +67,11 @@ enum class unit_type {
  */
 struct Unit_specs {
     int num_of_movements;
+
+    bool has_avail_movements() const
+    {
+        return 0 < num_of_movements;
+    }
 };
 
 /*

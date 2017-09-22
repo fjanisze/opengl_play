@@ -203,4 +203,15 @@ bool Terrain_lot::render( )
     return true;
 }
 
+void Terrain_lot::highlight()
+{
+    saved_def_color = rendering_data.default_color;
+    rendering_data.default_color.g *= 1.25;
+}
+
+void Terrain_lot::dehighlight()
+{
+    rendering_data.default_color = saved_def_color;
+}
+
 }

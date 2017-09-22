@@ -10,7 +10,7 @@ const Unit_def units_definitions[] = {
         "Poldek",
         unit_type::small_vehicle,
         {
-            2 //Number of movements
+            1 //Number of movements
         },
         "The best car on the planet!",
     }
@@ -32,10 +32,12 @@ Unit::Unit( const Unit_def& definition ) :
     LOG3( "Creating a new unit, modelID:", definition.model_def.id,
           ",name:", definition.model_def.pretty_name,
           ", unitID:", id );
-    unit = factory< Unit_config >::create( definition );
+    config = factory< Unit_config >::create( definition );
 }
 
-Units::Units( graphic_units::Units::pointer units ) :
+Units::Units( graphic_units::Units::pointer units,
+              core_maps::Map::pointer map ) :
+    game_map{ map },
     rendr_units{ units }
 {
     LOG3( "Created!" );
@@ -59,6 +61,7 @@ Unit::pointer Units::create( const types::id_type id )
         return nullptr;
     }
     units[ new_unit->id ] = new_unit;
+    rendr_to_unit[ new_unit->rendr_unit->id ] = new_unit;
     LOG3( "Number of units created so far: ", units.size() );
     return new_unit;
 }
@@ -68,7 +71,7 @@ bool Units::place( Unit::pointer& unit,
 {
     LOG3( "Attempting to place the UnitID:", unit->id,
           " on the LotID:", lot->id );
-    if ( lot->lot->current_specs.traversable != core_maps::traversable_lot::yes ) {
+    if ( false == lot->is_traversable() ) {
         WARN1( "This lot is not traversable, unit placement failed" );
         return false;
     }
@@ -81,6 +84,55 @@ bool Units::place( Unit::pointer& unit,
     LOG0( "UnitID placed at position ", unit->position,
           ",turning ON rendering of the model" );
     return rendr_units->place_unit( unit->rendr_unit, lot->rendr_lot );
+}
+
+void Units::select( Unit::pointer& unit )
+{
+    if ( unit->config->current_specs.has_avail_movements() ) {
+        LOG0( "Attempt to selected UnitID:", unit->id );
+        /*
+         * Show the reachable area for this unit,
+         * highlight the accessible lots
+         */
+        const int mov_cnt{ unit->config->current_specs.num_of_movements };
+        const int sx{ unit->position.x };
+        const int sy{ unit->position.y };
+        for ( int x{ sx - mov_cnt } ; x <= sx + mov_cnt ; ++x ) {
+            for ( int y{ sy - mov_cnt } ; y <= sy + mov_cnt ; ++y ) {
+                auto lot = game_map->get_lot( types::point( x, y, 0 ) );
+                if ( nullptr != lot && lot->is_traversable() ) {
+                    auto& rendr = lot->rendr_lot;
+                    rendr->highlight();
+                    affected_by_selection.push_back( rendr );
+                }
+            }
+        }
+    } else {
+        LOG0( "The unit has 0 number of movements!" );
+    }
+}
+
+void Units::select( const types::id_type renderable_id )
+{
+    LOG0( "Attempting to select RendrID:", renderable_id );
+    auto it = rendr_to_unit.find( renderable_id );
+    if ( rendr_to_unit.end() != it ) {
+        select( it->second );
+    } else {
+        LOG0( "No mapping to UnitID from the RendrID" );
+    }
+}
+
+void Units::unselect()
+{
+    if ( false == affected_by_selection.empty() ) {
+        LOG0( "Unselecting, number of affected terrains: ",
+              affected_by_selection.size() );
+    }
+    for ( auto&& elem : affected_by_selection ) {
+        elem->dehighlight();
+    }
+    affected_by_selection.clear();
 }
 
 } //core_units

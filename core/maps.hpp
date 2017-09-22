@@ -27,6 +27,11 @@ public:
      * map lot
      */
     std::set< types::id_type > units;
+
+    bool is_traversable() const
+    {
+        return traversable_lot::yes == lot->current_specs.traversable;
+    }
 };
 
 /*
@@ -43,22 +48,11 @@ class Map
 public:
     using pointer = std::shared_ptr< Map >;
     Map( const size_t size );
-    void print_debug( types::id_type id )
-    {
-        auto elem = rendr_to_core_mapping[ id ];
-        if ( nullptr != elem ) {
-            std::cout << "Model ID:" << id << ", map to lot: "
-                      << elem->lot->def.name << ", which is: "
-                      << ( ( elem->lot->current_specs.traversable == traversable_lot::yes ) ?
-                           "traversable" : "not traversable" ) << std::endl;
-        }
-    }
-
 
     const id_factory< Map_lot > id;
     const size_t      size;
 public:
-    Map_lot::pointer get_lot( types::point& position );
+    Map_lot::pointer get_lot( types::point&& position );
     Map_lot::pointer get_lot( types::id_type rendr_lot_id );
 private:
     Map_lot::container map_data;

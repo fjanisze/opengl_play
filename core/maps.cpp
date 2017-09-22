@@ -75,7 +75,7 @@ Map::Map( const size_t size ) :
     allocate_map();
 }
 
-Map_lot::pointer Map::get_lot( types::point& position )
+Map_lot::pointer Map::get_lot( types::point&& position )
 {
     return map_data[ position.y ][ position.x ];
 }
