@@ -47,7 +47,16 @@ public:
     void select( Unit::pointer& unit );
     void select( const types::id_type renderable_id );
     void unselect();
+    /*
+     * Calculate the path and setup the unit
+     * for a movement to the target lot
+     */
+    void move( core_maps::Map_lot::pointer& target_lot );
 private:
+    /*
+     * This is the actually selected unit.
+     */
+    Unit::pointer selected_unit;
     /*
      * The map where those units are going to be
      * placed, moved &c
@@ -73,6 +82,12 @@ private:
      * when unselecting make sure to dehighlight them
      */
     std::vector< graphic_terrains::Terrain_lot::pointer > affected_by_selection;
+    /*
+     * Run DFS on the map and attempt to find the
+     * shortest path to the given target
+     */
+    void calculate_path( core_maps::Map_lot::pointer& root,
+                         core_maps::Map_lot::pointer& target );
 };
 
 }

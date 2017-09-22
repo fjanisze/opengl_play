@@ -107,6 +107,7 @@ void Units::select( Unit::pointer& unit )
                 }
             }
         }
+        selected_unit = unit;
     } else {
         LOG0( "The unit has 0 number of movements!" );
     }
@@ -133,6 +134,29 @@ void Units::unselect()
         elem->dehighlight();
     }
     affected_by_selection.clear();
+    selected_unit.reset();
+}
+
+void Units::move( core_maps::Map_lot::pointer& target_lot )
+{
+    if ( nullptr == selected_unit ) {
+        WARN1( "Can't move anything, select some unit first!" );
+    } else {
+        LOG3( "Attempt to move the UnidID:", selected_unit->id,
+              ",to the target LotID:", target_lot->id );
+        core_maps::Map_lot::pointer root = game_map->get_lot( selected_unit->position );
+        if ( nullptr == root ) {
+            PANIC( "Not able to find the ROOT lot for the move operation!" );
+        }
+        calculate_path( root, target_lot );
+    }
+
+}
+
+void Units::calculate_path( core_maps::Map_lot::pointer& root,
+                            core_maps::Map_lot::pointer& target )
+{
+
 }
 
 } //core_units

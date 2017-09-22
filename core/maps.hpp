@@ -52,7 +52,7 @@ public:
     const id_factory< Map_lot > id;
     const size_t      size;
 public:
-    Map_lot::pointer get_lot( types::point&& position );
+    Map_lot::pointer get_lot( const types::point& position );
     Map_lot::pointer get_lot( types::id_type rendr_lot_id );
 private:
     Map_lot::container map_data;

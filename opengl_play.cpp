@@ -93,6 +93,11 @@ void opengl_ui::ui_mouse_click( GLint button, GLint action )
                 //Unpick everything..
                 renderer->picking()->unpick();
             }
+
+            if ( 1 == selected.size() ) {
+                auto target_lot = game_map->get_lot( lot->id );
+                game_units->move( target_lot );
+            }
         } else {
             //Nothing selected, this must be a creation attempt
             auto new_unit = game_units->create( unit_id );

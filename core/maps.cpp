@@ -75,8 +75,13 @@ Map::Map( const size_t size ) :
     allocate_map();
 }
 
-Map_lot::pointer Map::get_lot( types::point&& position )
+Map_lot::pointer Map::get_lot( const types::point& position )
 {
+    if ( position.y < 0 || position.y >= map_data.size() ) {
+        PANIC( "Requested Y is out of bound! Y:", position.y );
+    } else if ( position.x < 0 || position.x >= map_data[0].size() ) {
+        PANIC( "Requested X is out of bound! X:", position.x );
+    }
     return map_data[ position.y ][ position.x ];
 }
 
